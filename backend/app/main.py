@@ -1,7 +1,8 @@
 from fastapi import FastAPI
+from app.core import firebase  # initializes Firebase
 
-app = FastAPI(title="Smart Product Recommender API")
+app = FastAPI(title="Smart Product Recommendation API")
 
 @app.get("/")
 def root():
-    return {"status": "Backend running"}
+    return {"status": "Backend + Firebase connected"}
