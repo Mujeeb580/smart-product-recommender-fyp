@@ -7,52 +7,82 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 
-def scrape_phone_specs(driver, product_url):
+def scrape_product_specs(driver, product_url, category):
     """Scrape detailed specifications from individual product page"""
     try:
         driver.get(product_url)
         time.sleep(3)  # Wait for page to load
         
         specs = {}
+        brand = ""
+        model = ""
         
-        # Try to find specifications table or list
         try:
-            spec_items = driver.find_elements(By.CSS_SELECTOR, ".spec-item, .specification-item, tr")
-            for spec_item in spec_items:
-                try:
-                    # Try different patterns for spec name and value
-                    spec_name = spec_item.find_element(By.CSS_SELECTOR, ".spec-name, .spec-key, td:first-child, th").text.strip()
-                    spec_value = spec_item.find_element(By.CSS_SELECTOR, ".spec-value, td:last-child").text.strip()
-                    
-                    if spec_name and spec_value:
-                        # Extract common specs
-                        if "ram" in spec_name.lower():
-                            specs["ram"] = spec_value
-                        elif "storage" in spec_name.lower() or "memory" in spec_name.lower() or "rom" in spec_name.lower():
-                            specs["storage"] = spec_value
-                        elif "camera" in spec_name.lower() and "back" in spec_name.lower():
-                            specs["back_camera"] = spec_value
-                        elif "camera" in spec_name.lower() and "front" in spec_name.lower():
-                            specs["front_camera"] = spec_value
-                        elif "battery" in spec_name.lower():
-                            specs["battery"] = spec_value
-                        elif "screen" in spec_name.lower() or "display" in spec_name.lower():
-                            specs["display"] = spec_value
-                        elif "processor" in spec_name.lower() or "chipset" in spec_name.lower():
-                            specs["processor"] = spec_value
-                except:
-                    continue
-        except:
-            pass
+            # Extract brand and model from URL
+            url_parts = product_url.split('/')
+            if len(url_parts) >= 3:
+                brand = url_parts[-2].replace('-', ' ').title()
+                model = url_parts[-1].replace('-', ' ').title()
+            
+            # Look for data-vars-location attributes which contain spec categories
+            spec_elements = driver.find_elements(By.CSS_SELECTOR, "[data-vars-location]")
+            
+            if spec_elements:
+                print(f"      Found {len(spec_elements)} spec elements")
+                
+                for elem in spec_elements:
+                    try:
+                        # Get the location/category name
+                        location = elem.get_attribute("data-vars-location")
+                        
+                        # Get the text value from span inside
+                        span = elem.find_element(By.CSS_SELECTOR, "span")
+                        value = span.text.strip() if span else ""
+                        
+                        if location and value:
+                            # Normalize location names
+                            location_lower = location.lower()
+                            if location_lower == "storage":
+                                specs["storage"] = value
+                                # Parse storage and RAM from combined value
+                                if "-" in value:
+                                    parts = value.split("-")
+                                    if len(parts) >= 2:
+                                        specs["storage"] = parts[0].strip()
+                                        specs["ram"] = parts[1].strip()
+                            elif location_lower == "ram":
+                                specs["ram"] = value
+                            elif "processor" in location_lower or "cpu" in location_lower:
+                                specs["processor"] = value
+                            elif "display" in location_lower or "screen" in location_lower:
+                                specs["display"] = value
+                            elif "battery" in location_lower:
+                                specs["battery"] = value
+                            elif "camera" in location_lower:
+                                if "front" in location_lower or "selfie" in location_lower:
+                                    specs["front_camera"] = value
+                                else:
+                                    specs["back_camera"] = value
+                    except Exception as e:
+                        continue
+            
+            # Add brand and model to specs
+            if brand:
+                specs["brand"] = brand
+            if model:
+                specs["model"] = model
+                
+        except Exception as e:
+            print(f"      Error parsing specs: {str(e)}")
         
         return specs
     except Exception as e:
-        print(f"    Error getting specs: {str(e)}")
+        print(f"      Error getting specs: {str(e)}")
         return {}
 
 
-def scrape_priceoye_phones():
-    url = "https://priceoye.pk/mobiles"
+def scrape_products(url, category_name, limit=None):
+    """Generic scraper for products with specs"""
     
     # Add options for better compatibility
     options = webdriver.ChromeOptions()
@@ -64,79 +94,91 @@ def scrape_priceoye_phones():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     
     try:
-        print("Opening PriceOye URL...")
-        driver.get(url)
-        
-        print("Waiting for page to load...")
-        time.sleep(10)  # Wait for page to load
-        
-        # Save page source for debugging
-        with open("priceoye_debug.html", "w", encoding="utf-8") as f:
-            f.write(driver.page_source)
-        print("Page source saved to priceoye_debug.html")
-        
         products = []
+        page = 1
         
-        # Try to find product items with multiple selectors
-        items = driver.find_elements(By.CSS_SELECTOR, ".productBox")
-        print(f"Found {len(items)} items with selector .productBox")
-        
-        # If not found, try alternative selectors
-        if len(items) == 0:
-            items = driver.find_elements(By.CSS_SELECTOR, ".product-card")
-            print(f"Found {len(items)} items with alternative selector .product-card")
-        
-        if len(items) == 0:
-            items = driver.find_elements(By.CSS_SELECTOR, "[class*='product']")
-            print(f"Found {len(items)} items with generic product selector")
-        
-        if len(items) == 0:
-            print("No product items found!")
+        while True:
+            # If limit is None, keep going until no more products. Otherwise check limit
+            if limit and len(products) >= limit:
+                break
             
-        for i, item in enumerate(items[:15]):
-            try:
-                # Extract name from .p-title h4 or h5
-                name_elem = item.find_element(By.CSS_SELECTOR, ".p-title")
-                name = name_elem.text.strip()
-                
-                # Extract price from .price-box span
-                price_elem = item.find_element(By.CSS_SELECTOR, ".price-box span")
-                price = price_elem.text.strip()
-                
-                # Extract product URL
-                product_link = item.find_element(By.CSS_SELECTOR, "a")
-                product_url = product_link.get_attribute("href")
-                if not product_url.startswith("http"):
-                    product_url = "https://priceoye.pk" + product_url
+            page_url = f"{url}?page={page}"
+            print(f"\n📄 Scraping {category_name} - Page {page}...")
+            
+            driver.get(page_url)
+            time.sleep(3)  # Wait for page to load
+            
+            # Find product items
+            items = driver.find_elements(By.CSS_SELECTOR, ".productBox")
+            
+            if len(items) == 0:
+                print(f"No more products found on page {page}. Stopping scrape.")
+                break
+            
+            print(f"Found {len(items)} items on page {page}")
+            
+            # Extract all product data from listing page first
+            page_products = []
+            for i, item in enumerate(items):
+                # Stop if we have enough products (if limit is set)
+                if limit and len(products) + len(page_products) >= limit:
+                    break
+                    
+                try:
+                    # Extract name
+                    name_elem = item.find_element(By.CSS_SELECTOR, ".p-title")
+                    name = name_elem.text.strip()
+                    
+                    # Extract price
+                    price_elem = item.find_element(By.CSS_SELECTOR, ".price-box span")
+                    price = price_elem.text.strip()
+                    
+                    # Extract product URL
+                    product_link = item.find_element(By.CSS_SELECTOR, "a")
+                    product_url = product_link.get_attribute("href")
+                    if not product_url.startswith("http"):
+                        product_url = "https://priceoye.pk" + product_url
 
-                if name and price:
-                    print(f"  {i+1}. {name[:60]}... - {price}")
-                    print(f"    Getting specs from: {product_url}")
+                    if name and price:
+                        page_products.append({
+                            "name": name[:100],
+                            "price": price,
+                            "url": product_url,
+                            "category": category_name
+                        })
+                        print(f"  [{len(products)+len(page_products):3d}] {name[:50]:50s} - {price:15s}")
+                        
+                except Exception as e:
+                    print(f"  Error extracting item {i+1}: {str(e)}")
+                    continue
+            
+            # Now scrape specs for each product from this page
+            print(f"  Fetching specs for {len(page_products)} products...")
+            for product in page_products:
+                try:
+                    specs = scrape_product_specs(driver, product["url"], category_name)
+                    product["specs"] = specs
                     
-                    # Get detailed specifications
-                    specs = scrape_phone_specs(driver, product_url)
+                    # Extract important specs for display
+                    ram = specs.get('ram', 'N/A')
+                    storage = specs.get('storage', 'N/A')
+                    brand = specs.get('brand', 'N/A')
                     
-                    product_data = {
-                        "name": name[:100],
-                        "price": price,
-                        "category": "Phone",
-                        "source": "PriceOye",
-                        "url": product_url,
-                        "specs": specs
-                    }
-                    
-                    products.append(product_data)
-                    print(f"    Specs: {specs}")
-                    
-                    # Go back to main listing page
-                    driver.back()
-                    time.sleep(2)
-                    
-            except Exception as e:
-                print(f"  Error extracting item {i+1}: {str(e)}")
-                continue
+                    if specs:
+                        print(f"    ✓ {brand} | RAM: {ram} | Storage: {storage}")
+                    else:
+                        print(f"    ✗ NO specs found for {product['name'][:40]}")
+                except Exception as e:
+                    print(f"    Error getting specs: {str(e)}")
+                    product["specs"] = {}
+                    continue
+            
+            # Add page products to main list
+            products.extend(page_products)
+            
+            page += 1
         
-        print(f"\nTotal products scraped: {len(products)}")
+        print(f"\n✓ Total {category_name} scraped: {len(products)}")
         return products
         
     except Exception as e:
@@ -145,3 +187,13 @@ def scrape_priceoye_phones():
     
     finally:
         driver.quit()
+
+
+def scrape_priceoye_phones(limit=None):
+    """Scrape phones from Priceoye"""
+    return scrape_products("https://priceoye.pk/mobiles", "Phones", limit)
+
+
+def scrape_priceoye_laptops(limit=None):
+    """Scrape laptops from Priceoye"""
+    return scrape_products("https://priceoye.pk/laptops", "Laptops", limit)
