@@ -7,6 +7,59 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 
+def scrape_product_specs_mobile(driver, product_url, category):
+    """Scrape mobile-specific specs: brand, storage, RAM only"""
+    try:
+        driver.get(product_url)
+        time.sleep(3)  # Wait for page to load
+        
+        specs = {}
+        brand = ""
+        
+        try:
+            # Extract brand from URL
+            url_parts = product_url.split('/')
+            if len(url_parts) >= 3:
+                brand = url_parts[-2].replace('-', ' ').title()
+            
+            # Look for data-vars-location attributes - for mobiles only extract storage/ram
+            spec_elements = driver.find_elements(By.CSS_SELECTOR, "[data-vars-location]")
+            
+            if spec_elements:
+                for elem in spec_elements:
+                    try:
+                        location = elem.get_attribute("data-vars-location")
+                        span = elem.find_element(By.CSS_SELECTOR, "span")
+                        value = span.text.strip() if span else ""
+                        
+                        if location and value:
+                            location_lower = location.lower()
+                            # For phones: only extract storage and RAM
+                            if location_lower == "storage":
+                                specs["storage"] = value
+                                # Parse storage and RAM from combined value like "256GB-8GB" (storage-ram)
+                                if "-" in value:
+                                    parts = value.split("-")
+                                    if len(parts) >= 2:
+                                        specs["storage"] = parts[0].strip()
+                                        specs["ram"] = parts[1].strip()
+                            elif location_lower == "ram":
+                                specs["ram"] = value
+                    except Exception as e:
+                        continue
+            
+            # Add brand to specs
+            if brand:
+                specs["brand"] = brand
+                
+        except Exception as e:
+            print(f"      Error parsing mobile specs: {str(e)}")
+        
+        return specs
+    except Exception as e:
+        print(f"      Error getting mobile specs: {str(e)}")
+
+
 def scrape_product_specs(driver, product_url, category):
     """Scrape detailed specifications from individual product page"""
     try:
@@ -156,7 +209,11 @@ def scrape_products(url, category_name, limit=None):
             print(f"  Fetching specs for {len(page_products)} products...")
             for product in page_products:
                 try:
-                    specs = scrape_product_specs(driver, product["url"], category_name)
+                    # Use mobile-specific scraper for phones, full scraper for laptops
+                    if category_name == "Phones":
+                        specs = scrape_product_specs_mobile(driver, product["url"], category_name)
+                    else:
+                        specs = scrape_product_specs(driver, product["url"], category_name)
                     product["specs"] = specs
                     
                     # Extract important specs for display
