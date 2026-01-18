@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
-  LoginScreen({super.key});
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -11,6 +11,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
@@ -23,13 +24,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _login() {
     if (_formKey.currentState!.validate()) {
-      // Backend login will be added later
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Login successful!')));
+      ).showSnackBar(const SnackBar(content: Text("Login successful!")));
 
-      // Navigate to home later
-      // Navigator.pushReplacementNamed(context, "/home");
+      // 🔥 Navigate to Home after validation
+      Future.delayed(const Duration(milliseconds: 800), () {
+        Navigator.pushReplacementNamed(context, "/home");
+      });
     }
   }
 
@@ -50,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
+                  // Logo
                   Container(
                     width: 80,
                     height: 80,
@@ -63,21 +66,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Color.fromARGB(255, 30, 54, 233),
                     ),
                   ),
+
                   const SizedBox(height: 20),
+
                   const Text(
-                    'Welcome Back',
+                    "Welcome Back",
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
+
                   const SizedBox(height: 8),
+
                   const Text(
-                    'Sign in to your account',
+                    "Sign in to your account",
                     style: TextStyle(fontSize: 14, color: Colors.white70),
                   ),
+
                   const SizedBox(height: 30),
+
+                  // Form Card
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -90,11 +100,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Email Address',
+                            "Email Address",
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -102,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              hintText: 'abc@example.com',
+                              hintText: "abc@example.com",
                               prefixIcon: const Icon(Icons.email_outlined),
                               filled: true,
                               fillColor: Colors.grey[100],
@@ -111,21 +120,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                            validator: (value) =>
-                                value != null && value.contains("@")
-                                ? null
-                                : "Enter valid email",
+                            validator: (value) {
+                              if (value == null || !value.contains("@")) {
+                                return "Enter a valid email";
+                              }
+                              return null;
+                            },
                           ),
+
                           const SizedBox(height: 16),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                'Password',
+                                "Password",
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
                                 ),
                               ),
                               TextButton(
@@ -140,24 +152,26 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
+
                           const SizedBox(height: 8),
+
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
-                              hintText: 'at least 6 characters',
-                              prefixIcon: const Icon(
-                                Icons.lock_outline_rounded,
-                              ),
+                              hintText: "at least 6 characters",
+                              prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
                                 ),
-                                onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword,
-                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
                               ),
                               filled: true,
                               fillColor: Colors.grey[100],
@@ -166,18 +180,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                            validator: (value) => (value?.length ?? 0) < 6
-                                ? "Password must be at least 6 characters"
-                                : null,
+                            validator: (value) {
+                              if (value == null || value.length < 6) {
+                                return "Password must be at least 6 characters";
+                              }
+                              return null;
+                            },
                           ),
+
                           const SizedBox(height: 16),
+
                           Row(
                             children: [
                               Checkbox(
                                 value: _rememberMe,
-                                onChanged: (value) =>
-                                    setState(() => _rememberMe = value!),
                                 activeColor: const Color(0xFFE91E63),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _rememberMe = value!;
+                                  });
+                                },
                               ),
                               const Text(
                                 "Remember me",
@@ -185,7 +207,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
+
                           const SizedBox(height: 24),
+
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -197,7 +221,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
+
                           const SizedBox(height: 20),
+
                           const Center(
                             child: Text(
                               "Or continue with",
@@ -207,7 +233,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
+
                           const SizedBox(height: 20),
+
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -216,13 +244,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: const Text("Google"),
                             ),
                           ),
+
                           const SizedBox(height: 20),
+
                           Center(
                             child: GestureDetector(
-                              onTap: () => Navigator.pushReplacementNamed(
-                                context,
-                                "/signup",
-                              ),
+                              onTap: () {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  "/signup",
+                                );
+                              },
                               child: const Text(
                                 "Don't have an account? Sign up",
                                 style: TextStyle(
