@@ -1,22 +1,6 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: "home",
-      theme: ThemeData(useMaterial3: true),
-      home: const HomeScreen(),
-    );
-  }
-}
+import 'search_screen.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,11 +12,40 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
+  final List<Widget> _screens = [
+    const HomeContentScreen(),
+    const SearchScreen(),
+    const ProfileScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (i) {
+          setState(() => _currentIndex = i);
+        },
+        selectedItemColor: Colors.purple,
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
+      ),
+    );
+  }
+}
+
+class HomeContentScreen extends StatelessWidget {
+  const HomeContentScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
-
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color.fromARGB(255, 30, 34, 241), Color(0xFFDB2777)],
+                  colors: [Color(0xFFFF6B9D), Color(0xFFFF8C42)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -56,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Hello User,",
+                    "Hello, Ahmad",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,
@@ -66,10 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 4),
                   const Text(
                     "What are you looking for?",
-                    style: TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                   const SizedBox(height: 20),
 
@@ -95,8 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         IconButton(
                           icon: const Icon(
-                            Icons.mic,
-                            color: Color.fromARGB(255, 2, 1, 3),
+                            Icons.filter_list,
+                            color: Color(0xFF7C3AED),
                           ),
                           onPressed: () {},
                         ),
@@ -124,16 +134,16 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _categoryCard(
-                  icon: Icons.phone_android,
+                  icon: Icons.phone_iphone,
                   title: "Mobiles",
                   subtitle: "250+ models",
-                  color: Colors.blue,
+                  color: const Color(0xFF3B82F6),
                 ),
                 _categoryCard(
                   icon: Icons.laptop_mac,
                   title: "Laptops",
                   subtitle: "180+ models",
-                  color: Colors.purple,
+                  color: const Color(0xFF8B5CF6),
                 ),
               ],
             ),
@@ -157,12 +167,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 _filterChip(
                   icon: Icons.attach_money,
                   label: "Budget",
-                  color: Colors.green,
+                  color: const Color(0xFF10B981),
                 ),
                 _filterChip(
                   icon: Icons.local_offer,
                   label: "Brand",
-                  color: Colors.orange,
+                  color: const Color(0xFFF97316),
                 ),
               ],
             ),
@@ -184,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Row(
                       children: const [
-                        Icon(Icons.auto_awesome, color: Colors.red),
+                        Icon(Icons.auto_awesome, color: Color(0xFFEF4444)),
                         SizedBox(width: 6),
                         Text(
                           "AI Recommendations",
@@ -206,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 44,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: const Color(0xFF10B981),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -226,19 +236,6 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 80),
           ],
         ),
-      ),
-
-      // ===== Bottom Navigation =====
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) {
-          setState(() => _currentIndex = i);
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
       ),
     );
   }

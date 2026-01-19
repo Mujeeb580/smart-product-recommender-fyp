@@ -8,6 +8,8 @@ import 'screens/tutorial/tutorial3.dart';
 import 'screens/authentication/login_screen.dart';
 import 'screens/authentication/signup_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/home/search_screen.dart';
+import 'screens/profile/profile_screen.dart';
 
 void main() {
   runApp(const MyApp());
