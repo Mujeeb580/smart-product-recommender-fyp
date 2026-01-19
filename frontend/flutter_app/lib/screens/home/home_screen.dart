@@ -104,10 +104,7 @@ class HomeContentScreen extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(
-                            Icons.filter_list,
-                            color: Color(0xFF7C3AED),
-                          ),
+                          icon: const Icon(Icons.mic, color: Color(0xFF7C3AED)),
                           onPressed: () {},
                         ),
                       ],
