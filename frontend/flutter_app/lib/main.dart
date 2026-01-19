@@ -5,9 +5,9 @@ import 'screens/splash/splash_screen.dart';
 import 'screens/tutorial/tutorial1.dart';
 import 'screens/tutorial/tutorial2.dart';
 import 'screens/tutorial/tutorial3.dart';
-import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/authentication/login_screen.dart';
+import 'screens/authentication/signup_screen.dart';
+import 'screens/home/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
