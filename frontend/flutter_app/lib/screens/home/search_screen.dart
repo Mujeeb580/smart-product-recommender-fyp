@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'product_results_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -99,6 +100,17 @@ class _SearchScreenState extends State<SearchScreen> {
                           vertical: 14,
                         ),
                       ),
+                      onSubmitted: (query) {
+                        if (query.isNotEmpty) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ProductResultsScreen(searchQuery: query),
+                            ),
+                          );
+                        }
+                      },
                     ),
                   ),
                 ],
@@ -179,7 +191,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         children: [
                           const Icon(
                             Icons.trending_up,
-                            color: Color(0xFFEF4444),
+                            color: Color.fromARGB(255, 182, 68, 239),
                             size: 20,
                           ),
                           const SizedBox(width: 6),
@@ -211,71 +223,103 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildCommandChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3E8FF),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFF7C3AED),
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductResultsScreen(searchQuery: label),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3E8FF),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF7C3AED),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
       ),
     );
   }
 
   Widget _buildRecentSearchItem(String search) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: Colors.grey, size: 18),
-          const SizedBox(width: 12),
-          Expanded(child: Text(search, style: const TextStyle(fontSize: 14))),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.grey, size: 18),
-            onPressed: () {},
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductResultsScreen(searchQuery: search),
           ),
-        ],
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.search, color: Colors.grey, size: 18),
+            const SizedBox(width: 12),
+            Expanded(child: Text(search, style: const TextStyle(fontSize: 14))),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.grey, size: 18),
+              onPressed: () {},
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTrendingItem(String name, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF7C3AED).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductResultsScreen(searchQuery: name),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7C3AED).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: const Color(0xFF7C3AED), size: 20),
               ),
-              child: Icon(icon, color: const Color(0xFF7C3AED), size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-          ],
+              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+            ],
+          ),
         ),
       ),
     );

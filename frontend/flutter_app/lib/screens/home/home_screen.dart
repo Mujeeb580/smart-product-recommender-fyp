@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'search_screen.dart';
+import 'product_results_screen.dart';
 import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -112,6 +113,18 @@ class HomeContentScreen extends StatelessWidget {
                               hintStyle: TextStyle(color: Colors.grey[500]),
                               border: InputBorder.none,
                             ),
+                            onSubmitted: (query) {
+                              if (query.isNotEmpty) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProductResultsScreen(
+                                      searchQuery: query,
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ),
                         IconButton(
@@ -143,17 +156,23 @@ class HomeContentScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _categoryCard(
-                  icon: Icons.phone_iphone,
-                  title: "Mobiles",
-                  subtitle: "250+ models",
-                  color: const Color(0xFF3B82F6),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/mobiles'),
+                  child: _categoryCard(
+                    icon: Icons.phone_iphone,
+                    title: "Mobiles",
+                    subtitle: "250+ models",
+                    color: const Color(0xFF3B82F6),
+                  ),
                 ),
-                _categoryCard(
-                  icon: Icons.laptop_mac,
-                  title: "Laptops",
-                  subtitle: "180+ models",
-                  color: const Color(0xFF8B5CF6),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/laptops'),
+                  child: _categoryCard(
+                    icon: Icons.laptop_mac,
+                    title: "Laptops",
+                    subtitle: "180+ models",
+                    color: const Color(0xFF8B5CF6),
+                  ),
                 ),
               ],
             ),
@@ -174,15 +193,21 @@ class HomeContentScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _filterChip(
-                  icon: Icons.attach_money,
-                  label: "Budget",
-                  color: const Color(0xFF10B981),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/budget-deals'),
+                  child: _filterChip(
+                    icon: Icons.attach_money,
+                    label: "Budget",
+                    color: const Color(0xFF10B981),
+                  ),
                 ),
-                _filterChip(
-                  icon: Icons.local_offer,
-                  label: "Brand",
-                  color: const Color(0xFFF97316),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/ai-brands'),
+                  child: _filterChip(
+                    icon: Icons.local_offer,
+                    label: "Brand",
+                    color: const Color(0xFFF97316),
+                  ),
                 ),
               ],
             ),
@@ -231,7 +256,9 @@ class HomeContentScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/ai-brands');
+                        },
                         child: const Text(
                           "View Recommendations",
                           style: TextStyle(color: Colors.white),
