@@ -100,7 +100,7 @@ class ProfileScreen extends StatelessWidget {
                       icon: Icons.settings_outlined,
                       title: "Settings",
                       onTap: () {
-                        // Navigate to Settings
+                        Navigator.pushNamed(context, '/settings');
                       },
                     ),
 

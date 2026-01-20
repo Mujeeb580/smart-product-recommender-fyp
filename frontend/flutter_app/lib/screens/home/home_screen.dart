@@ -68,13 +68,24 @@ class HomeContentScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Hello, Ahmad",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Hello, Ahmad",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.settings, color: Colors.white),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/settings');
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   const Text(
@@ -105,7 +116,9 @@ class HomeContentScreen extends StatelessWidget {
                         ),
                         IconButton(
                           icon: const Icon(Icons.mic, color: Color(0xFF7C3AED)),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/voice-command');
+                          },
                         ),
                       ],
                     ),

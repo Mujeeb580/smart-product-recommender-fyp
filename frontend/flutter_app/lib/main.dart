@@ -9,6 +9,8 @@ import 'screens/authentication/login_screen.dart';
 import 'screens/authentication/signup_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/home/search_screen.dart';
+import 'screens/home/voice_command_screen.dart';
+import 'screens/home/settings_screen.dart';
 import 'screens/profile/profile_screen.dart';
 
 void main() {
@@ -53,6 +55,8 @@ class MyApp extends StatelessWidget {
 
         // Home
         "/home": (_) => const HomeScreen(),
+        "/voice-command": (_) => const VoiceCommandScreen(),
+        "/settings": (_) => const SettingsScreen(),
       },
     );
   }
