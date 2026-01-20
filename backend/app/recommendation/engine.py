@@ -1,24 +1,9 @@
-# backend/app/recommendation/engine.py
-
 from sklearn.metrics.pairwise import cosine_similarity
-from .model import get_model
+from model import get_model
+from text_builder import product_to_text
 
 
-def product_to_text(product: dict) -> str:
-    """
-    Convert product dictionary into a semantic-rich text string.
-    """
-    return (
-        f"name: {product.get('name', '')} | "
-        f"brand: {product.get('brand', '')} | "
-        f"ram: {product.get('ram', '')} | "
-        f"storage: {product.get('storage', '')} | "
-        f"category: {product.get('category', '')} | "
-        f"price: {product.get('price', '')}"
-    )
-
-
-def recommend_products(query: str, products: list, top_n: int = 5):
+def recommend_products(query: str, products: list, top_n: int = 10):
     """
     Returns top N products based on semantic similarity.
     """
