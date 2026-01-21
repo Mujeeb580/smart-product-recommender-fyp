@@ -6,26 +6,93 @@ def extract_laptop_specs_from_name(name):
     """Extract processor, GPU, RAM, storage from laptop name"""
     specs = {}
     
-    # Extract Processor (e.g., Ci5-13420H, Ci7-13620H, Ryzen 7, Core i5, M4 Chip)
+    # Extract Processor - Updated patterns for modern naming schemes
     processor_patterns = [
-        r'(Intel Core Ultra [57] \d+\w*)',  # Intel Core Ultra 7 255H (more specific)
-        r'(Ci[357]-\w+)',  # Ci5-13420H, Ci7-13620H
-        r'(Core [iI][357] \w+)',  # Core i5 13th Gen
-        r'(Intel Core Ultra [57])',  # Intel Core Ultra 7 (fallback without model number)
-        r'(Ryzen [357] \w+)',  # Ryzen 7 5800H
-        r'([AM]MD Ryzen [357] \w+)',  # AMD Ryzen 7
-        r'(M[1-9]\d* Chip)',  # M1 Chip, M4 Chip (Apple)
-        r'(M[1-9]\d* Pro)',  # M1 Pro, M2 Pro
-        r'(M[1-9]\d* Max)',  # M1 Max, M2 Max
+        # Intel Core Ultra series (priority) - with "Processor" word and special chars
+        r'(Intel®?\s*Core™?\s*Ultra\s+[579]\s+Processor\s+\d+\w*)',  # Intel® Core™ Ultra 7 Processor 155U
+        r'(Core\s+Ultra\s+[579]-?\s*\d+\w*)',  # Core Ultra 7-256V, Core Ultra 5 125H
+        r'(Intel\s*Core\s+Ultra\s+[579]-?\s*\d+\w*)',  # Intel Core Ultra 9-275HX
+        r'(Ultra\s+[579]-?\s*\d+\w*)',  # Ultra 7 256V, Ultra 9-275HX
+        
+        # Intel Core i-series with short form (Ci with space or dash)
+        r'(Ci[3579][\s-]+\w+)',  # Ci5-13420H, Ci7 14650HX, Ci5 1334U
+        
+        # Intel Core with "CORE" prefix (Dell style)
+        r'(CORE[357]\s+\d+\w*)',  # CORE7 150U
+        
+        # Intel Core i-series with generation numbers like 1065G7, 1035G1
+        r'(Core\s+[iI][3579]\s+\d{4}[A-Z]\d+)',  # Core i7 1065G7, Core i5 1035G1
+        
+        # Standard Intel Core i-series (with or without trademark symbol)
+        r'(Core™?\s*[iI][3579]\s*-?\s*\d+\w+)',  # Core™ i5-1355U, Core i7-13650HX
+        r'(Intel\s*Core™?\s*[iI][3579]\s*-?\s*\d+\w+)',  # Intel Core™ i9-14900HX
+        
+        # Intel N-series
+        r'(N\d{3,4})',  # N305, N5095
+        
+        # AMD Ryzen short form
+        r'(R[3579]-\d+\w+)',  # R5-8645HS, R9-8940HX
+        
+        # AMD Ryzen standard (including RYZEN uppercase, with or without trademark)
+        r'(RYZEN\s*(?:AI\s*)?[3579]\s+\w+)',  # RYZEN AI 9 HX370
+        r'(Ryzen™?\s*(?:AI\s*)?[3579]\s*-?\s*\d+\w*)',  # Ryzen 7-7445H, Ryzen AI 9 HX370
+        r'(AMD\s*Ryzen™?\s*(?:AI\s*)?[3579]\s*-?\s*\d+\w*)',  # AMD Ryzen 5-7533HS
+        
+        # Intel Core 3/5/7 (new numbering without 'i') - with dash
+        r'(Core™?\s+[357]\s*-\s*\d+\w*)',  # Core 7-150U, Core 3-100U
+        r'(Core™?\s+[357]\s+\d+\w*)',  # Core 5 120U, Core 7 150U
+        r'(Intel\s*Core™?\s+[357]\s*-?\s*\d+\w*)',  # Intel Core 7-150U, Intel® Core™ Ultra 7
+        
+        # Short form U7/U5/U9 (Lenovo/HP style)
+        r'(U[579]-\d+\w*)',  # U7-255H
+        
+        # Gen-only patterns with model numbers (must be more specific)
+        r'(\d+th\s*Gen\s+Core™?\s*[iI][3579]\s*-?\s*\d+\w*)',  # 13th Gen Core i7-1355U
+        r'(\d+th\s*Gen\s+\d+\w+)',  # 13th Gen 1355U (without "Core")
+        r'(\d+th\s*Gen\s+Core™?\s*[iI][3579])',  # 13th Gen Core i7, 12thGen Core i3
+        r'(\d+th\s*Gen\s+Core\s+[357])',  # 14th Gen Core 7, 13th Gen Core 5
+        r'(\d+th\s+Generation\s+Core\s+[iI][3579])',  # 13th Generation Core i9
+        
+        # Fallback patterns without model numbers (lower priority)
+        r'(Intel®?\s*Core™?\s*Ultra\s+[579])',  # Intel® Core™ Ultra 5
+        r'(Core\s+Ultra\s+[579])',  # Core Ultra 7
+        r'(Ultra\s+[579])',  # Ultra 7
+        r'(Core™?\s*[iI][3579])',  # Core™ i5, Core i7
+        r'(AMD\s*Ryzen™?\s*[3579])',  # AMD Ryzen 7
+        r'(Ryzen™?\s*[3579])',  # Ryzen 5
+        r'(\d+th\s+Core\s+[357])',  # 14th Core 7
+        
+        # Apple Silicon
+        r'(M[1-9]\d*\s*Chip)',  # M1 Chip, M4 Chip
+        r'(M[1-9]\d*\s*Pro)',  # M1 Pro, M2 Pro
+        r'(M[1-9]\d*\s*Max)',  # M1 Max, M2 Max
     ]
     
     for pattern in processor_patterns:
         match = re.search(pattern, name, re.IGNORECASE)
         if match:
             processor = match.group(1)
+            
             # Normalize processor names
-            if processor.startswith('Ci'):
-                processor = processor.replace('Ci', 'Intel Core i')
+            if processor.upper().startswith('CI'):
+                processor = processor.replace('Ci', 'Intel Core i').replace('CI', 'Intel Core i')
+            elif processor.upper().startswith('CORE') and not processor.lower().startswith('core ultra'):
+                # CORE7 150U -> Intel Core 7 150U
+                processor = 'Intel ' + processor
+            elif processor.startswith('R') and '-' in processor and len(processor.split('-')[0]) <= 2:
+                # R5-8645HS -> AMD Ryzen 5 8645HS
+                processor = processor.replace('R', 'AMD Ryzen ').replace('-', ' ')
+            elif processor.startswith('U') and '-' in processor and len(processor.split('-')[0]) <= 2:
+                # U7-255H -> Intel Core Ultra 7 255H
+                processor = processor.replace('U', 'Intel Core Ultra ').replace('-', ' ')
+            elif processor.upper().startswith('RYZEN'):
+                # RYZEN AI 9 HX370 -> AMD Ryzen AI 9 HX370
+                if not processor.upper().startswith('AMD'):
+                    processor = 'AMD ' + processor
+            
+            # Clean up trademark symbols
+            processor = processor.replace('™', '').replace('®', '').strip()
+            
             specs['processor'] = processor
             break
     

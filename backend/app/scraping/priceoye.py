@@ -51,6 +51,11 @@ def scrape_product_specs_mobile(driver, product_url, category):
             # Add brand to specs
             if brand:
                 specs["brand"] = brand
+            
+            # For Apple phones, RAM is not listed - set to "To Be Added"
+            if brand.lower() in ['apple', 'iphone']:
+                if 'ram' not in specs or not specs.get('ram'):
+                    specs["ram"] = "To Be Added"
                 
         except Exception as e:
             print(f"      Error parsing mobile specs: {str(e)}")
@@ -192,12 +197,29 @@ def scrape_products(url, category_name, limit=None):
                     if not product_url.startswith("http"):
                         product_url = "https://priceoye.pk" + product_url
 
+                    # Extract image URL (from listing item)
+                    image_url = ""
+                    try:
+                        img_elem = item.find_element(By.CSS_SELECTOR, "img")
+                        # Try multiple attributes commonly used for lazy-loaded images
+                        image_url = (
+                            img_elem.get_attribute("src")
+                            or img_elem.get_attribute("data-src")
+                            or img_elem.get_attribute("data-original")
+                            or ""
+                        )
+                        if image_url and not image_url.startswith("http"):
+                            image_url = "https://priceoye.pk" + image_url
+                    except Exception:
+                        image_url = ""
+
                     if name and price:
                         page_products.append({
                             "name": name[:100],
                             "price": price,
                             "url": product_url,
-                            "category": category_name
+                            "category": category_name,
+                            "image_url": image_url
                         })
                         print(f"  [{len(products)+len(page_products):3d}] {name[:50]:50s} - {price:15s}")
                         
