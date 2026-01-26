@@ -482,7 +482,7 @@ class _SettingItemState extends State<_SettingItem> {
               setState(() => _value = value);
               widget.onChanged(value);
             },
-            activeColor: AppTheme.primaryColor,
+            activeThumbColor: AppTheme.primaryColor,
           ),
         ],
       ),

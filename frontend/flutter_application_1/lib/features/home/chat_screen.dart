@@ -34,7 +34,8 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messages = [
         ChatMessageModel(
-          message: 'Hello! 👋 I\'m your AI product assistant. Tell me what you\'re looking for in a smartphone, and I\'ll recommend the best options for you!',
+          message:
+              'Hello! 👋 I\'m your AI product assistant. Tell me what you\'re looking for in a smartphone, and I\'ll recommend the best options for you!',
           isUser: false,
           timestamp: DateTime.now(),
         ),
@@ -214,16 +215,18 @@ class _ChatScreenState extends State<ChatScreen> {
                             width: 140,
                             margin: const EdgeInsets.only(right: 12),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                              border: Border.all(
-                                color: AppTheme.cardColor,
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusMedium,
                               ),
+                              border: Border.all(color: AppTheme.cardColor),
                             ),
                             child: Stack(
                               fit: StackFit.expand,
                               children: [
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                                  borderRadius: BorderRadius.circular(
+                                    AppTheme.radiusMedium,
+                                  ),
                                   child: Image.asset(
                                     product.image,
                                     fit: BoxFit.cover,
@@ -252,7 +255,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ),
                                     padding: const EdgeInsets.all(8),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           product.name,
@@ -334,7 +338,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           _QuickActionButton(
                             label: 'Budget phones',
                             onTap: () {
-                              _messageController.text = 'Show me budget smartphones';
+                              _messageController.text =
+                                  'Show me budget smartphones';
                               _sendMessage();
                             },
                           ),
@@ -348,14 +353,16 @@ class _ChatScreenState extends State<ChatScreen> {
                           _QuickActionButton(
                             label: 'Gaming phones',
                             onTap: () {
-                              _messageController.text = 'Best phones for gaming';
+                              _messageController.text =
+                                  'Best phones for gaming';
                               _sendMessage();
                             },
                           ),
                           _QuickActionButton(
                             label: 'Camera phones',
                             onTap: () {
-                              _messageController.text = 'Phones with great cameras';
+                              _messageController.text =
+                                  'Phones with great cameras';
                               _sendMessage();
                             },
                           ),
@@ -439,10 +446,7 @@ class _QuickActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _QuickActionButton({
-    required this.label,
-    required this.onTap,
-  });
+  const _QuickActionButton({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

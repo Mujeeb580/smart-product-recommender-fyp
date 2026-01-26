@@ -14,30 +14,34 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _HeroHeader(onProfileTap: () {
-                // The profile is now accessible via bottom nav
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                );
-              }),
-              const SizedBox(height: 16),
+              _HeroHeader(
+                onProfileTap: () {
+                  // The profile is now accessible via bottom nav
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _SectionTitle(title: 'Categories'),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     const _CategoryGrid(),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 24),
                     _SectionTitle(title: 'Quick Filters'),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     const _QuickFilters(),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 24),
                     _AiCard(),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 24),
                     _SectionTitle(title: 'Trending deals'),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     const _HorizontalProducts(),
                   ],
                 ),
@@ -52,7 +56,7 @@ class HomeScreen extends StatelessWidget {
 
 class _HeroHeader extends StatelessWidget {
   final VoidCallback? onProfileTap;
-  
+
   const _HeroHeader({this.onProfileTap});
 
   @override
@@ -66,12 +70,12 @@ class _HeroHeader extends StatelessWidget {
           colors: [Color(0xFF7F5AF0), Color(0xFFFB7C38)],
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(26),
-          bottomRight: Radius.circular(26),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -84,17 +88,17 @@ class _HeroHeader extends StatelessWidget {
                     children: [
                       Text(
                         'Hello, Ahmed!',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                            ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         'What are you looking for?',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(color: Colors.white.withOpacity(0.92)),
                       ),
                     ],
@@ -128,37 +132,42 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 52,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1A000000),
-            blurRadius: 16,
-            offset: Offset(0, 10),
+            blurRadius: 12,
+            offset: Offset(0, 6),
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       child: Row(
         children: [
-          const Icon(Icons.search, color: Color(0xFF8E8E93)),
-          const SizedBox(width: 10),
+          const Padding(
+            padding: EdgeInsets.only(left: 16, right: 12),
+            child: Icon(Icons.search, color: Color(0xFF8E8E93), size: 20),
+          ),
           const Expanded(
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search electronics...',
+                hintStyle: TextStyle(color: Color(0xFF8E8E93), fontSize: 16),
                 border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 16),
               ),
             ),
           ),
           Container(
+            margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
               color: const Color(0xFF6B5FEF),
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.all(10),
-            child: const Icon(Icons.mic, color: Colors.white),
+            child: const Icon(Icons.mic, color: Colors.white, size: 18),
           ),
         ],
       ),
@@ -174,10 +183,10 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context)
-          .textTheme
-          .titleMedium
-          ?.copyWith(fontWeight: FontWeight.w700, color: const Color(0xFF172B4D)),
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        color: const Color(0xFF172B4D),
+      ),
     );
   }
 }
@@ -188,10 +197,22 @@ class _CategoryGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categories = [
-      _Category('Mobiles', '250+ models', Icons.smartphone, [0xFF4E6BFF, 0xFF3CA6FF]),
-      _Category('Laptops', '180+ models', Icons.laptop_mac, [0xFFFB4DA7, 0xFFFB7C38]),
-      _Category('Accessories', '300+ items', Icons.headphones, [0xFF22D3EE, 0xFF10B981]),
-      _Category('Appliances', '90+ items', Icons.kitchen, [0xFF8B5CF6, 0xFF6366F1]),
+      _Category('Mobiles', '250+ models', Icons.smartphone, [
+        0xFF4E6BFF,
+        0xFF3CA6FF,
+      ]),
+      _Category('Laptops', '180+ models', Icons.laptop_mac, [
+        0xFFFB4DA7,
+        0xFFFB7C38,
+      ]),
+      _Category('Accessories', '300+ items', Icons.headphones, [
+        0xFF22D3EE,
+        0xFF10B981,
+      ]),
+      _Category('Appliances', '90+ items', Icons.kitchen, [
+        0xFF8B5CF6,
+        0xFF6366F1,
+      ]),
     ];
 
     return GridView.builder(
@@ -201,10 +222,11 @@ class _CategoryGrid extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.15,
+        childAspectRatio: 1.2,
       ),
       itemCount: categories.length,
-      itemBuilder: (context, index) => _CategoryCard(category: categories[index]),
+      itemBuilder: (context, index) =>
+          _CategoryCard(category: categories[index]),
     );
   }
 }
@@ -228,7 +250,11 @@ class _CategoryCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
-          BoxShadow(color: Color(0x11000000), blurRadius: 16, offset: Offset(0, 8)),
+          BoxShadow(
+            color: Color(0x11000000),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
       padding: const EdgeInsets.all(16),
@@ -250,14 +276,16 @@ class _CategoryCard extends StatelessWidget {
           ),
           Text(
             category.title,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF0F172A),
+            ),
           ),
           Text(
             category.subtitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFF6B7280)),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF6B7280)),
           ),
         ],
       ),
@@ -274,7 +302,11 @@ class _QuickFilters extends StatelessWidget {
       _Filter('Budget', Icons.attach_money, const Color(0xFF10B981)),
       _Filter('Brand', Icons.sell_outlined, const Color(0xFFFB923C)),
       _Filter('Rating 4+', Icons.star_rate_rounded, const Color(0xFFFBBF24)),
-      _Filter('Same day', Icons.local_shipping_outlined, const Color(0xFF60A5FA)),
+      _Filter(
+        'Same day',
+        Icons.local_shipping_outlined,
+        const Color(0xFF60A5FA),
+      ),
     ];
 
     return Wrap(
@@ -304,7 +336,11 @@ class _FilterChip extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
-          BoxShadow(color: Color(0x11000000), blurRadius: 12, offset: Offset(0, 6)),
+          BoxShadow(
+            color: Color(0x11000000),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       child: Row(
@@ -321,10 +357,10 @@ class _FilterChip extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             filter.label,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: const Color(0xFF111827), fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF111827),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -354,17 +390,19 @@ class _AiCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'AI Recommendations',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF0F172A),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             'Get personalized suggestions based on your preferences',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFF4B5563)),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF4B5563)),
           ),
           const SizedBox(height: 14),
           SizedBox(
@@ -372,7 +410,9 @@ class _AiCard extends StatelessWidget {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               onPressed: () {
@@ -398,9 +438,20 @@ class _HorizontalProducts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _ProductCardData('Noise-cancelling Headphones', 'PKR 18,499', Icons.headset, [const Color(0xFF6366F1), const Color(0xFF8B5CF6)]),
-      _ProductCardData('Gaming Laptop 15"', 'PKR 189,999', Icons.laptop_mac, [const Color(0xFFFB7185), const Color(0xFFF97316)]),
-      _ProductCardData('Smartwatch', 'PKR 12,999', Icons.watch, [const Color(0xFF22D3EE), const Color(0xFF14B8A6)]),
+      _ProductCardData(
+        'Noise-cancelling Headphones',
+        'PKR 18,499',
+        Icons.headset,
+        [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
+      ),
+      _ProductCardData('Gaming Laptop 15"', 'PKR 189,999', Icons.laptop_mac, [
+        const Color(0xFFFB7185),
+        const Color(0xFFF97316),
+      ]),
+      _ProductCardData('Smartwatch', 'PKR 12,999', Icons.watch, [
+        const Color(0xFF22D3EE),
+        const Color(0xFF14B8A6),
+      ]),
     ];
 
     return SizedBox(
@@ -435,7 +486,11 @@ class _ProductCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
-          BoxShadow(color: Color(0x11000000), blurRadius: 16, offset: Offset(0, 8)),
+          BoxShadow(
+            color: Color(0x11000000),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
       padding: const EdgeInsets.all(14),
@@ -455,18 +510,18 @@ class _ProductCard extends StatelessWidget {
             data.title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context)
-                .textTheme
-                .bodyLarge
-                ?.copyWith(fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF0F172A),
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             data.price,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600, color: const Color(0xFF10B981)),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF10B981),
+            ),
           ),
         ],
       ),

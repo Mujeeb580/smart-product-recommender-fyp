@@ -46,7 +46,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
         future: _productsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const loading_widgets.LoadingWidget(message: 'Loading products...');
+            return const loading_widgets.LoadingWidget(
+              message: 'Loading products...',
+            );
           }
 
           if (snapshot.hasError) {
