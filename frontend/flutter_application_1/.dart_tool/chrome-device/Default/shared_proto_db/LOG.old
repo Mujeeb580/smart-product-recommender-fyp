@@ -1,5 +1,13 @@
-2026/01/27-17:05:44.900 509c Reusing MANIFEST C:\Users\mmefi\AppData\Local\Temp\flutter_tools.3779ddc1\flutter_tools_chrome_device.ea71bdbe\Default\shared_proto_db/MANIFEST-000001
-2026/01/27-17:05:44.900 509c Recovering log #7
-2026/01/27-17:05:44.902 509c Reusing old log C:\Users\mmefi\AppData\Local\Temp\flutter_tools.3779ddc1\flutter_tools_chrome_device.ea71bdbe\Default\shared_proto_db/000007.log 
-2026/01/27-17:05:44.902 509c Delete type=0 #3
-2026/01/27-17:05:44.902 509c Delete type=0 #4
+2026/01/27-23:00:10.695 2c84 Reusing MANIFEST C:\Users\Mujeeb\AppData\Local\Temp\flutter_tools.9bbfef39\flutter_tools_chrome_device.c3f09ad7\Default\shared_proto_db/MANIFEST-000001
+2026/01/27-23:00:10.695 2c84 Recovering log #3
+2026/01/27-23:00:10.696 2c84 Level-0 table #3: started
+2026/01/27-23:00:10.701 2c84 Level-0 table #3: 35717 bytes OK
+2026/01/27-23:00:10.702 2c84 Recovering log #4
+2026/01/27-23:00:10.703 2c84 Level-0 table #4: started
+2026/01/27-23:00:10.709 2c84 Level-0 table #4: 106829 bytes OK
+2026/01/27-23:00:10.709 2c84 Recovering log #7
+2026/01/27-23:00:10.710 2c84 Reusing old log C:\Users\Mujeeb\AppData\Local\Temp\flutter_tools.9bbfef39\flutter_tools_chrome_device.c3f09ad7\Default\shared_proto_db/000007.log 
+2026/01/27-23:00:10.719 2c84 Delete type=0 #3
+2026/01/27-23:00:10.720 2c84 Delete type=0 #4
+2026/01/27-23:00:10.720 2c84 Delete type=2 #5
+2026/01/27-23:00:10.720 2c84 Delete type=2 #8

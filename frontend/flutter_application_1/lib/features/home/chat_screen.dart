@@ -131,6 +131,14 @@ class _ChatScreenState extends State<ChatScreen> {
         ? const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
         : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
 
+    // Responsive sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 900;
+    final isTablet = screenWidth > 600 && screenWidth <= 900;
+    final maxWidth = isDesktop ? 800.0 : double.infinity;
+    final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
+    final titleFontSize = isDesktop ? 28.0 : (isTablet ? 24.0 : 20.0);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -143,285 +151,330 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Stack(
           children: [
             SafeArea(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'AI Product Assistant',
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _initializeChat();
-                              _recommendedProducts = null;
-                            });
-                          },
-                          child: const _GlassIconButton(
-                            icon: Icons.refresh_rounded,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Chat Messages
-                  Expanded(
-                    child: _GlassSection(
-                      margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: _messages.isEmpty
-                          ? const LoadingWidget(message: 'Loading...')
-                          : ListView.builder(
-                              controller: _scrollController,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 8,
-                                horizontal: 12,
-                              ),
-                              itemCount: _messages.length,
-                              itemBuilder: (context, index) {
-                                return ChatBubble(message: _messages[index]);
-                              },
-                            ),
-                    ),
-                  ),
-
-                  // Recommended Products Preview
-                  if (_recommendedProducts != null &&
-                      _recommendedProducts!.isNotEmpty)
-                    _GlassSection(
-                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Recommended Products',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: _navigateToProducts,
-                                child: const Text(
-                                  'See All',
-                                  style: TextStyle(color: Colors.white70),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 160,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _recommendedProducts!.length,
-                              itemBuilder: (context, index) {
-                                final product = _recommendedProducts![index];
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => ProductListScreen(
-                                          initialProducts: _recommendedProducts,
-                                          title: 'Recommended Products',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: _GlassProductCard(product: product),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child: BackdropFilter(
-                                filter:
-                                    ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: TextButton.icon(
-                                    onPressed: _navigateToProducts,
-                                    icon: const Icon(
-                                      Icons.shopping_bag_outlined,
-                                      color: Colors.white,
-                                    ),
-                                    label: const Text(
-                                      'View All Recommendations',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  // Loading Indicator
-                  if (_isLoading)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 8),
-                      child: LoadingWidget(message: 'AI is thinking...'),
-                    ),
-
-                  // Input Area
-                  _GlassSection(
-                    margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        if (_messages.length == 1)
-                          Column(
-                            children: [
-                              Text(
-                                'Try asking about:',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  _GlassQuickActionButton(
-                                    label: 'Budget phones',
-                                    onTap: () {
-                                      _messageController.text =
-                                          'Show me budget smartphones';
-                                      _sendMessage();
-                                    },
-                                  ),
-                                  _GlassQuickActionButton(
-                                    label: 'Flagship phones',
-                                    onTap: () {
-                                      _messageController.text =
-                                          'Best flagship phones';
-                                      _sendMessage();
-                                    },
-                                  ),
-                                  _GlassQuickActionButton(
-                                    label: 'Gaming phones',
-                                    onTap: () {
-                                      _messageController.text =
-                                          'Best phones for gaming';
-                                      _sendMessage();
-                                    },
-                                  ),
-                                  _GlassQuickActionButton(
-                                    label: 'Camera phones',
-                                    onTap: () {
-                                      _messageController.text =
-                                          'Phones with great cameras';
-                                      _sendMessage();
-                                    },
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Divider(color: Colors.white.withOpacity(0.2)),
-                              const SizedBox(height: 12),
-                            ],
-                          ),
-                        Row(
+              child: Center(
+                child: Container(
+                  constraints: BoxConstraints(maxWidth: maxWidth),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                            horizontalPadding, 16, horizontalPadding, 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: TextField(
-                                controller: _messageController,
-                                enabled: !_isLoading,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  hintText:
-                                      'Describe what you\'re looking for...',
-                                  hintStyle: TextStyle(
-                                    color: Colors.white.withOpacity(0.6),
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    borderSide: BorderSide(
-                                      color: Colors.white.withOpacity(0.25),
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    borderSide: BorderSide(
-                                      color: Colors.white.withOpacity(0.25),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    borderSide: const BorderSide(
+                              child: Text(
+                                'AI Product Assistant',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
                                       color: Colors.white,
-                                      width: 2,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: titleFontSize,
                                     ),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 12,
-                                  ),
-                                ),
-                                maxLines: null,
-                                textInputAction: TextInputAction.send,
-                                onSubmitted: (_) => _sendMessage(),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: BackdropFilter(
-                                filter:
-                                    ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.25),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: IconButton(
-                                    onPressed: _isLoading ? null : _sendMessage,
-                                    icon: const Icon(
-                                      Icons.send_rounded,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _initializeChat();
+                                  _recommendedProducts = null;
+                                });
+                              },
+                              child: const _GlassIconButton(
+                                icon: Icons.refresh_rounded,
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+
+                      // Chat Messages
+                      Expanded(
+                        child: _GlassSection(
+                          margin: EdgeInsets.fromLTRB(
+                              horizontalPadding, 8, horizontalPadding, 8),
+                          padding: EdgeInsets.symmetric(
+                            vertical: isDesktop ? 16 : 12,
+                            horizontal: isDesktop ? 20 : 12,
+                          ),
+                          child: _messages.isEmpty
+                              ? const LoadingWidget(message: 'Loading...')
+                              : ListView.builder(
+                                  controller: _scrollController,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  itemCount: _messages.length,
+                                  itemBuilder: (context, index) {
+                                    return ChatBubble(
+                                        message: _messages[index]);
+                                  },
+                                ),
+                        ),
+                      ),
+
+                      // Recommended Products Preview
+                      if (_recommendedProducts != null &&
+                          _recommendedProducts!.isNotEmpty)
+                        _GlassSection(
+                          margin: EdgeInsets.fromLTRB(
+                              horizontalPadding, 0, horizontalPadding, 12),
+                          padding: EdgeInsets.all(isDesktop ? 20 : 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Recommended Products',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isDesktop ? 16 : 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: _navigateToProducts,
+                                    child: Text(
+                                      'See All',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: isDesktop ? 14 : 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: isDesktop ? 12 : 8),
+                              SizedBox(
+                                height:
+                                    isDesktop ? 200 : (isTablet ? 180 : 160),
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _recommendedProducts!.length,
+                                  itemBuilder: (context, index) {
+                                    final product =
+                                        _recommendedProducts![index];
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ProductListScreen(
+                                              initialProducts:
+                                                  _recommendedProducts,
+                                              title: 'Recommended Products',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: _GlassProductCard(
+                                        product: product,
+                                        isDesktop: isDesktop,
+                                        isTablet: isTablet,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: isDesktop ? 16 : 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                        sigmaX: 10, sigmaY: 10),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      child: TextButton.icon(
+                                        onPressed: _navigateToProducts,
+                                        icon: Icon(
+                                          Icons.shopping_bag_outlined,
+                                          color: Colors.white,
+                                          size: isDesktop ? 22 : 20,
+                                        ),
+                                        label: Text(
+                                          'View All Recommendations',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: isDesktop ? 16 : 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // Loading Indicator
+                      if (_isLoading)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 8),
+                          child: LoadingWidget(message: 'AI is thinking...'),
+                        ),
+
+                      // Input Area
+                      _GlassSection(
+                        margin: EdgeInsets.fromLTRB(
+                            horizontalPadding, 0, horizontalPadding, 20),
+                        padding: EdgeInsets.all(isDesktop ? 20 : 16),
+                        child: Column(
+                          children: [
+                            if (_messages.length == 1)
+                              Column(
+                                children: [
+                                  Text(
+                                    'Try asking about:',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: isDesktop ? 14 : 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  SizedBox(height: isDesktop ? 12 : 8),
+                                  Wrap(
+                                    spacing: isDesktop ? 12 : 8,
+                                    runSpacing: isDesktop ? 12 : 8,
+                                    children: [
+                                      _GlassQuickActionButton(
+                                        label: 'Budget phones',
+                                        isDesktop: isDesktop,
+                                        onTap: () {
+                                          _messageController.text =
+                                              'Show me budget smartphones';
+                                          _sendMessage();
+                                        },
+                                      ),
+                                      _GlassQuickActionButton(
+                                        label: 'Flagship phones',
+                                        isDesktop: isDesktop,
+                                        onTap: () {
+                                          _messageController.text =
+                                              'Best flagship phones';
+                                          _sendMessage();
+                                        },
+                                      ),
+                                      _GlassQuickActionButton(
+                                        label: 'Gaming phones',
+                                        isDesktop: isDesktop,
+                                        onTap: () {
+                                          _messageController.text =
+                                              'Best phones for gaming';
+                                          _sendMessage();
+                                        },
+                                      ),
+                                      _GlassQuickActionButton(
+                                        label: 'Camera phones',
+                                        isDesktop: isDesktop,
+                                        onTap: () {
+                                          _messageController.text =
+                                              'Phones with great cameras';
+                                          _sendMessage();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: isDesktop ? 16 : 12),
+                                  Divider(color: Colors.white.withOpacity(0.2)),
+                                  SizedBox(height: isDesktop ? 16 : 12),
+                                ],
+                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _messageController,
+                                    enabled: !_isLoading,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: isDesktop ? 16 : 14,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          'Describe what you\'re looking for...',
+                                      hintStyle: TextStyle(
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontSize: isDesktop ? 16 : 14,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(24),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withOpacity(0.25),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(24),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withOpacity(0.25),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(24),
+                                        borderSide: const BorderSide(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: isDesktop ? 24 : 20,
+                                        vertical: isDesktop ? 16 : 12,
+                                      ),
+                                    ),
+                                    maxLines: null,
+                                    textInputAction: TextInputAction.send,
+                                    onSubmitted: (_) => _sendMessage(),
+                                  ),
+                                ),
+                                SizedBox(width: isDesktop ? 12 : 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                        sigmaX: 10, sigmaY: 10),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.25),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      child: IconButton(
+                                        onPressed:
+                                            _isLoading ? null : _sendMessage,
+                                        icon: Icon(
+                                          Icons.send_rounded,
+                                          color: Colors.white,
+                                          size: isDesktop ? 24 : 20,
+                                        ),
+                                        padding:
+                                            EdgeInsets.all(isDesktop ? 14 : 12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
             const GlassyShine(opacity: 0.1),
@@ -442,8 +495,13 @@ class _ChatScreenState extends State<ChatScreen> {
 class _GlassQuickActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
+  final bool isDesktop;
 
-  const _GlassQuickActionButton({required this.label, required this.onTap});
+  const _GlassQuickActionButton({
+    required this.label,
+    required this.onTap,
+    this.isDesktop = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -455,7 +513,10 @@ class _GlassQuickActionButton extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(20),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 16 : 12,
+              vertical: isDesktop ? 8 : 6,
+            ),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.15),
               borderRadius: BorderRadius.circular(20),
@@ -463,9 +524,9 @@ class _GlassQuickActionButton extends StatelessWidget {
             ),
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: isDesktop ? 14 : 12,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -535,14 +596,22 @@ class _GlassIconButton extends StatelessWidget {
 
 class _GlassProductCard extends StatelessWidget {
   final ProductModel product;
+  final bool isDesktop;
+  final bool isTablet;
 
-  const _GlassProductCard({required this.product});
+  const _GlassProductCard({
+    required this.product,
+    this.isDesktop = false,
+    this.isTablet = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final cardWidth = isDesktop ? 180.0 : (isTablet ? 160.0 : 140.0);
+
     return Container(
-      width: 140,
-      margin: const EdgeInsets.only(right: 12),
+      width: cardWidth,
+      margin: EdgeInsets.only(right: isDesktop ? 16 : 12),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: BackdropFilter(
@@ -558,17 +627,41 @@ class _GlassProductCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    product.image,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.white.withOpacity(0.1),
-                        child:
-                            const Icon(Icons.smartphone, color: Colors.white),
-                      );
-                    },
-                  ),
+                  child: product.image.startsWith('http')
+                      ? Image.network(
+                          product.image,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: Colors.white.withOpacity(0.1),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.white.withOpacity(0.1),
+                              child: const Icon(Icons.smartphone,
+                                  color: Colors.white),
+                            );
+                          },
+                        )
+                      : Image.asset(
+                          product.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.white.withOpacity(0.1),
+                              child: const Icon(Icons.smartphone,
+                                  color: Colors.white),
+                            );
+                          },
+                        ),
                 ),
                 Positioned(
                   bottom: 0,
@@ -585,7 +678,7 @@ class _GlassProductCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(isDesktop ? 10 : 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -593,20 +686,18 @@ class _GlassProductCard extends StatelessWidget {
                           product.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
                             fontWeight: FontWeight.bold,
+                            fontSize: isDesktop ? 13 : 12,
                           ),
                         ),
+                        SizedBox(height: isDesktop ? 3 : 2),
                         Text(
-                          'Rs ${product.price.toStringAsFixed(0)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          'PKR ${product.price.toStringAsFixed(0)}',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                            color: Colors.white70,
+                            fontSize: isDesktop ? 11 : 10,
                           ),
                         ),
                       ],

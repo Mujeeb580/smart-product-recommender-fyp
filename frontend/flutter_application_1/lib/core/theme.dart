@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Primary colors
@@ -44,47 +45,103 @@ class AppTheme {
         brightness: Brightness.light,
       ),
       scaffoldBackgroundColor: backgroundColor,
-      appBarTheme: const AppBarTheme(
+      fontFamily: GoogleFonts.inter().fontFamily,
+      appBarTheme: AppBarTheme(
         backgroundColor: primaryColor,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white),
-        titleTextStyle: TextStyle(
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: GoogleFonts.inter(
           color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
         ),
       ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
+      textTheme: TextTheme(
+        displayLarge: GoogleFonts.inter(
           fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
           color: textPrimaryColor,
+          letterSpacing: -1.0,
         ),
-        displayMedium: TextStyle(
+        displayMedium: GoogleFonts.inter(
           fontSize: 28,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           color: textPrimaryColor,
+          letterSpacing: -0.8,
         ),
-        headlineSmall: TextStyle(
+        displaySmall: GoogleFonts.inter(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: textPrimaryColor,
+          letterSpacing: -0.5,
+        ),
+        headlineLarge: GoogleFonts.inter(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: textPrimaryColor,
+          letterSpacing: -0.5,
+        ),
+        headlineMedium: GoogleFonts.inter(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: textPrimaryColor,
+          letterSpacing: -0.3,
         ),
-        bodyLarge: TextStyle(
+        headlineSmall: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: textPrimaryColor,
+        ),
+        titleLarge: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: textPrimaryColor,
+          letterSpacing: -0.2,
+        ),
+        titleMedium: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: textPrimaryColor,
+        ),
+        titleSmall: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: textPrimaryColor,
+        ),
+        bodyLarge: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: textPrimaryColor,
+          height: 1.5,
         ),
-        bodyMedium: TextStyle(
+        bodyMedium: GoogleFonts.inter(
           fontSize: 14,
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w400,
           color: textSecondaryColor,
+          height: 1.5,
         ),
-        bodySmall: TextStyle(
+        bodySmall: GoogleFonts.inter(
           fontSize: 12,
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w400,
           color: textHintColor,
+          height: 1.5,
+        ),
+        labelLarge: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
+        labelMedium: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
+        ),
+        labelSmall: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -95,9 +152,15 @@ class AppTheme {
             horizontal: paddingLarge,
             vertical: paddingMedium,
           ),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusLarge),
           ),
+          elevation: 2,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -119,7 +182,29 @@ class AppTheme {
           borderRadius: BorderRadius.circular(radiusMedium),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        hintStyle: const TextStyle(color: textHintColor),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: errorColor, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: errorColor, width: 2),
+        ),
+        hintStyle: GoogleFonts.inter(
+          color: textHintColor,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        labelStyle: GoogleFonts.inter(
+          color: textSecondaryColor,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        errorStyle: GoogleFonts.inter(
+          color: errorColor,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       cardTheme: CardThemeData(
         color: surfaceColor,
@@ -140,47 +225,103 @@ class AppTheme {
         brightness: Brightness.dark,
       ),
       scaffoldBackgroundColor: const Color(0xFF1A1A2E),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1A1A2E),
+      fontFamily: GoogleFonts.inter().fontFamily,
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF1A1A2E),
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white),
-        titleTextStyle: TextStyle(
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: GoogleFonts.inter(
           color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
         ),
       ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
+      textTheme: TextTheme(
+        displayLarge: GoogleFonts.inter(
           fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
           color: Colors.white,
+          letterSpacing: -1.0,
         ),
-        displayMedium: TextStyle(
+        displayMedium: GoogleFonts.inter(
           fontSize: 28,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           color: Colors.white,
+          letterSpacing: -0.8,
         ),
-        headlineSmall: TextStyle(
+        displaySmall: GoogleFonts.inter(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          letterSpacing: -0.5,
+        ),
+        headlineLarge: GoogleFonts.inter(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+          letterSpacing: -0.5,
+        ),
+        headlineMedium: GoogleFonts.inter(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
+          letterSpacing: -0.3,
         ),
-        bodyLarge: TextStyle(
+        headlineSmall: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        titleLarge: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+          letterSpacing: -0.2,
+        ),
+        titleMedium: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        titleSmall: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        bodyLarge: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: Colors.white,
+          height: 1.5,
         ),
-        bodyMedium: TextStyle(
+        bodyMedium: GoogleFonts.inter(
           fontSize: 14,
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w400,
           color: Colors.white70,
+          height: 1.5,
         ),
-        bodySmall: TextStyle(
+        bodySmall: GoogleFonts.inter(
           fontSize: 12,
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w400,
           color: Colors.white60,
+          height: 1.5,
+        ),
+        labelLarge: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
+        labelMedium: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
+        ),
+        labelSmall: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -191,9 +332,15 @@ class AppTheme {
             horizontal: paddingLarge,
             vertical: paddingMedium,
           ),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusLarge),
           ),
+          elevation: 2,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -215,7 +362,29 @@ class AppTheme {
           borderRadius: BorderRadius.circular(radiusMedium),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: errorColor, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: errorColor, width: 2),
+        ),
+        hintStyle: GoogleFonts.inter(
+          color: Colors.white.withOpacity(0.5),
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        labelStyle: GoogleFonts.inter(
+          color: Colors.white70,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        errorStyle: GoogleFonts.inter(
+          color: errorColor,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       cardTheme: CardThemeData(
         color: Colors.white.withOpacity(0.1),

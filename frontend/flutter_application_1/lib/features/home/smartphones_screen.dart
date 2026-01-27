@@ -1,8 +1,15 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class SmartphonesScreen extends StatelessWidget {
+class SmartphonesScreen extends StatefulWidget {
   const SmartphonesScreen({super.key});
+
+  @override
+  State<SmartphonesScreen> createState() => _SmartphonesScreenState();
+}
+
+class _SmartphonesScreenState extends State<SmartphonesScreen> {
+  bool _isListView = true;
 
   @override
   Widget build(BuildContext context) {
@@ -50,24 +57,71 @@ class SmartphonesScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                     ),
-                    const _GlassIconButton(icon: Icons.smartphone),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isListView = true;
+                            });
+                          },
+                          child: _GlassIconButton(
+                            icon: Icons.view_list,
+                            isActive: _isListView,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isListView = false;
+                            });
+                          },
+                          child: _GlassIconButton(
+                            icon: Icons.grid_view,
+                            isActive: !_isListView,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return _GlassDeviceCard(
-                      title: item.title,
-                      subtitle: item.subtitle,
-                      price: item.price,
-                      icon: Icons.smartphone,
-                    );
-                  },
-                ),
+                child: _isListView
+                    ? ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return _GlassDeviceCard(
+                            title: item.title,
+                            subtitle: item.subtitle,
+                            price: item.price,
+                            icon: Icons.smartphone,
+                          );
+                        },
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.75,
+                        ),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return _GlassDeviceGridCard(
+                            title: item.title,
+                            subtitle: item.subtitle,
+                            price: item.price,
+                            icon: Icons.smartphone,
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -162,10 +216,88 @@ class _GlassDeviceCard extends StatelessWidget {
   }
 }
 
-class _GlassIconButton extends StatelessWidget {
+class _GlassDeviceGridCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final int price;
   final IconData icon;
 
-  const _GlassIconButton({required this.icon});
+  const _GlassDeviceGridCard({
+    required this.title,
+    required this.subtitle,
+    required this.price,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: Colors.white, size: 36),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 11,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const Spacer(),
+              Text(
+                'Rs ${price.toString()}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassIconButton extends StatelessWidget {
+  final IconData icon;
+  final bool isActive;
+
+  const _GlassIconButton({required this.icon, this.isActive = false});
 
   @override
   Widget build(BuildContext context) {
@@ -176,9 +308,16 @@ class _GlassIconButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: isActive
+                ? const Color(0xFF7C3AED).withOpacity(0.5)
+                : Colors.white.withOpacity(0.2),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.3)),
+            border: Border.all(
+              color: isActive
+                  ? const Color(0xFF7C3AED).withOpacity(0.8)
+                  : Colors.white.withOpacity(0.3),
+              width: isActive ? 2 : 1,
+            ),
           ),
           child: Icon(icon, color: Colors.white, size: 20),
         ),

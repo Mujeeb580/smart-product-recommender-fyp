@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../services/theme_provider.dart';
 import '../../widgets/glassy_shine.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
@@ -9,11 +11,9 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get theme brightness from context
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final gradientColors = isDark
-        ? const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
-        : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
+    // Get theme brightness from ThemeProvider
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final gradientColors = themeProvider.currentGradient;
 
     // Dummy data for demonstration
     const String dummyUserName = 'Ahmad Kamran';

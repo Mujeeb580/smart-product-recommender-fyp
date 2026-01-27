@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../services/theme_provider.dart';
 import '../../widgets/glassy_shine.dart';
 import 'sign_up_screen.dart';
 
@@ -17,7 +19,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isSubmitting = false;
   bool _obscure = true;
-  bool _isDarkMode = false;
 
   @override
   void dispose() {
@@ -66,9 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final gradientColors = _isDarkMode
-        ? [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
-        : [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final gradientColors = themeProvider.currentGradient;
 
     return Scaffold(
       body: Container(
@@ -127,9 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         children: [
                                           GestureDetector(
                                             onTap: () {
-                                              setState(() {
-                                                _isDarkMode = !_isDarkMode;
-                                              });
+                                              themeProvider.toggleTheme();
                                             },
                                             child: Container(
                                               padding: const EdgeInsets.all(8),
@@ -140,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     BorderRadius.circular(8),
                                               ),
                                               child: Icon(
-                                                _isDarkMode
+                                                themeProvider.isDarkMode
                                                     ? Icons.light_mode
                                                     : Icons.dark_mode,
                                                 color: Colors.white,
@@ -340,9 +338,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                         onPressed:
                                             _isSubmitting ? null : _submit,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: _isDarkMode
-                                              ? Colors.grey.shade800
-                                              : const Color(0xFF6366F1),
+                                          backgroundColor:
+                                              themeProvider.isDarkMode
+                                                  ? Colors.grey.shade800
+                                                  : const Color(0xFF6366F1),
                                           foregroundColor: Colors.white,
                                           padding: const EdgeInsets.symmetric(
                                             vertical: 16,
@@ -350,15 +349,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(12),
-                                            side: _isDarkMode
+                                            side: themeProvider.isDarkMode
                                                 ? BorderSide(
                                                     color: Colors.grey.shade600,
                                                     width: 1,
                                                   )
                                                 : BorderSide.none,
                                           ),
-                                          elevation: _isDarkMode ? 2 : 4,
-                                          shadowColor: _isDarkMode
+                                          elevation:
+                                              themeProvider.isDarkMode ? 2 : 4,
+                                          shadowColor: themeProvider.isDarkMode
                                               ? Colors.black.withOpacity(0.5)
                                               : const Color(0xFF6366F1)
                                                   .withOpacity(0.3),

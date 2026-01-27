@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LanguageSettingsScreen extends StatefulWidget {
   const LanguageSettingsScreen({super.key});
@@ -9,16 +10,28 @@ class LanguageSettingsScreen extends StatefulWidget {
 }
 
 class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
-  String _selected = 'English (US)';
+  String _selectedLanguage = 'English (US)';
 
-  final List<String> _languages = const [
-    'English (US)',
-    'English (UK)',
-    'Urdu',
-    'Arabic',
-    'French',
-    'German',
-  ];
+  final Map<String, Locale> _languageMap = const {
+    'English (US)': Locale('en', 'US'),
+    'English (UK)': Locale('en', 'GB'),
+    'Urdu': Locale('ur'),
+    'Arabic': Locale('ar'),
+    'French': Locale('fr'),
+    'German': Locale('de'),
+  };
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Set initial language based on current locale
+    final currentLocale = context.locale;
+    _languageMap.forEach((key, value) {
+      if (value == currentLocale) {
+        _selectedLanguage = key;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +64,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
                       ),
                     ),
                     Text(
-                      'Language',
+                      'language'.tr(),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -64,21 +77,30 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                  itemCount: _languages.length,
+                  itemCount: _languageMap.length,
                   itemBuilder: (context, index) {
-                    final item = _languages[index];
-                    final selected = item == _selected;
+                    final languageName = _languageMap.keys.elementAt(index);
+                    final locale = _languageMap[languageName]!;
+                    final selected = languageName == _selectedLanguage;
+
                     return _GlassSelectableTile(
-                      title: item,
+                      title: languageName,
                       selected: selected,
-                      onTap: () {
-                        setState(() => _selected = item);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Language set to $item'),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
+                      onTap: () async {
+                        setState(() => _selectedLanguage = languageName);
+
+                        // Change app locale
+                        await context.setLocale(locale);
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  '${'language_set_to'.tr()} $languageName'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
                       },
                     );
                   },

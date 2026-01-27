@@ -57,19 +57,11 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: const _GlassIconButton(
                         icon: Icons.arrow_back_ios_new,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {},
-                      child: const _GlassIconButton(
-                        icon: Icons.close,
                       ),
                     ),
                   ],
@@ -110,7 +102,18 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                             size: const Size(double.infinity, 260),
                           ),
                           _PulseRings(value: _pulseController.value),
-                          _MicButton(scale: 1 + _pulseController.value * 0.06),
+                          GestureDetector(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Voice recording started!'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            child: _MicButton(
+                                scale: 1 + _pulseController.value * 0.06),
+                          ),
                         ],
                       );
                     },
@@ -130,9 +133,19 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 40),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    _BottomIcon(icon: Icons.search),
-                    _BottomIcon(icon: Icons.home_outlined),
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: const _BottomIcon(icon: Icons.search),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: const _BottomIcon(icon: Icons.home_outlined),
+                    ),
                   ],
                 ),
               ),

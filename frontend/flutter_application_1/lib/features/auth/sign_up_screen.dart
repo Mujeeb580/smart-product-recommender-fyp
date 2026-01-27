@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../services/theme_provider.dart';
 import '../../widgets/glassy_shine.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -18,7 +20,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _isSubmitting = false;
   bool _obscure = true;
   bool _obscureConfirm = true;
-  bool _isDarkMode = false;
 
   @override
   void dispose() {
@@ -61,17 +62,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final gradientColors = _isDarkMode
-        ? [
-            const Color(0xFF1A1A2E),
-            const Color(0xFF16213E),
-            const Color(0xFF0F0F23)
-          ]
-        : [
-            const Color(0xFF4C1D95),
-            const Color(0xFF5B21B6),
-            const Color(0xFF93C5FD)
-          ];
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final gradientColors = themeProvider.currentGradient;
 
     return Scaffold(
       body: Container(
@@ -130,9 +122,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         children: [
                                           GestureDetector(
                                             onTap: () {
-                                              setState(() {
-                                                _isDarkMode = !_isDarkMode;
-                                              });
+                                              themeProvider.toggleTheme();
                                             },
                                             child: Container(
                                               padding: const EdgeInsets.all(8),
@@ -143,7 +133,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                                     BorderRadius.circular(8),
                                               ),
                                               child: Icon(
-                                                _isDarkMode
+                                                themeProvider.isDarkMode
                                                     ? Icons.light_mode
                                                     : Icons.dark_mode,
                                                 color: Colors.white,
@@ -187,7 +177,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       const SizedBox(height: 16),
                                       _buildConfirmPasswordField(),
                                       const SizedBox(height: 24),
-                                      _buildSubmitButton(),
+                                      _buildSubmitButton(context),
                                       const SizedBox(height: 16),
                                       Row(
                                         mainAxisAlignment:
@@ -355,22 +345,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     return ElevatedButton(
       onPressed: _isSubmitting ? null : _submit,
       style: ElevatedButton.styleFrom(
-        backgroundColor:
-            _isDarkMode ? Colors.grey.shade800 : const Color(0xFF6366F1),
+        backgroundColor: themeProvider.isDarkMode
+            ? Colors.grey.shade800
+            : const Color(0xFF6366F1),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: _isDarkMode
+          side: themeProvider.isDarkMode
               ? BorderSide(color: Colors.grey.shade600, width: 1)
               : BorderSide.none,
         ),
-        elevation: _isDarkMode ? 2 : 4,
-        shadowColor: _isDarkMode
+        elevation: themeProvider.isDarkMode ? 2 : 4,
+        shadowColor: themeProvider.isDarkMode
             ? Colors.black.withOpacity(0.5)
             : const Color(0xFF6366F1).withOpacity(0.3),
       ),

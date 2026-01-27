@@ -6,7 +6,8 @@ final List<ProductModel> dummyProducts = [
     name: 'iPhone 15 Pro',
     brand: 'Apple',
     price: 299999,
-    image: 'assets/images/iphone_15.png',
+    image:
+        'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.95,
     category: 'Smartphones',
     description: 'Latest flagship from Apple with advanced camera system',
@@ -17,7 +18,8 @@ final List<ProductModel> dummyProducts = [
     name: 'Samsung Galaxy S24',
     brand: 'Samsung',
     price: 259999,
-    image: 'assets/images/galaxy_s24.png',
+    image:
+        'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.92,
     category: 'Smartphones',
     description: 'Premium Android experience with AI features',
@@ -28,7 +30,8 @@ final List<ProductModel> dummyProducts = [
     name: 'Xiaomi 14',
     brand: 'Xiaomi',
     price: 149999,
-    image: 'assets/images/xiaomi_14.png',
+    image:
+        'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.88,
     category: 'Smartphones',
     description: 'Affordable flagship with excellent camera quality',
@@ -39,7 +42,8 @@ final List<ProductModel> dummyProducts = [
     name: 'OnePlus 12',
     brand: 'OnePlus',
     price: 169999,
-    image: 'assets/images/oneplus_12.png',
+    image:
+        'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.85,
     category: 'Smartphones',
     description: 'Flagship killer with fast charging and smooth performance',
@@ -50,7 +54,8 @@ final List<ProductModel> dummyProducts = [
     name: 'Realme 12 Pro',
     brand: 'Realme',
     price: 89999,
-    image: 'assets/images/realme_12.png',
+    image:
+        'https://images.unsplash.com/photo-1592286927505-b21084d350fd?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.80,
     category: 'Smartphones',
     description: 'Budget-friendly flagship with great display',
@@ -61,7 +66,8 @@ final List<ProductModel> dummyProducts = [
     name: 'Google Pixel 8',
     brand: 'Google',
     price: 219999,
-    image: 'assets/images/pixel_8.png',
+    image:
+        'https://images.unsplash.com/photo-1598965402089-897ce52e8355?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.90,
     category: 'Smartphones',
     description: 'Google\'s finest with amazing computational photography',
@@ -72,7 +78,8 @@ final List<ProductModel> dummyProducts = [
     name: 'OPPO A57',
     brand: 'OPPO',
     price: 64999,
-    image: 'assets/images/oppo_a57.png',
+    image:
+        'https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.75,
     category: 'Smartphones',
     description: 'Entry-level phone with good battery life',
@@ -83,7 +90,8 @@ final List<ProductModel> dummyProducts = [
     name: 'Vivo X100',
     brand: 'Vivo',
     price: 189999,
-    image: 'assets/images/vivo_x100.png',
+    image:
+        'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.87,
     category: 'Smartphones',
     description: 'Innovation-focused with advanced camera tech',
@@ -94,7 +102,8 @@ final List<ProductModel> dummyProducts = [
     name: 'Infinix Zero 40',
     brand: 'Infinix',
     price: 79999,
-    image: 'assets/images/infinix_zero.png',
+    image:
+        'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.78,
     category: 'Smartphones',
     description: 'Young brand with impressive specifications',
@@ -105,7 +114,8 @@ final List<ProductModel> dummyProducts = [
     name: 'Poco X6 Pro',
     brand: 'Poco',
     price: 119999,
-    image: 'assets/images/poco_x6.png',
+    image:
+        'https://images.unsplash.com/photo-1563203369-26f2e4a5ccf7?w=500&h=600&fit=crop&crop=center&auto=format&q=80',
     similarityScore: 0.82,
     category: 'Smartphones',
     description: 'Performance-focused gaming phone',

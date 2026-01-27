@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../services/theme_service.dart';
+import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
+import '../../services/theme_provider.dart';
 import '../../widgets/glassy_shine.dart';
 import 'help_support_screen.dart';
 import 'privacy_policy_screen.dart';
@@ -15,11 +17,10 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     const appVersion = '1.0.0';
-    final gradientColors = isDark
-        ? const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
-        : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
+    final gradientColors = themeProvider.currentGradient;
 
     return Scaffold(
       body: Container(
@@ -42,23 +43,30 @@ class SettingsScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: const _GlassIconButton(
-                              icon: Icons.arrow_back_ios_new,
-                            ),
-                          ),
-                          Text(
-                            'Settings',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: const _GlassIconButton(
+                                  icon: Icons.arrow_back_ios_new,
                                 ),
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                'settings'.tr(),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
                           ),
-                          const _GlassIconButton(icon: Icons.tune),
+                          const _GlassIconButton(
+                            icon: Icons.settings,
+                          ),
                         ],
                       ),
                     ),
@@ -67,12 +75,12 @@ class SettingsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const _SectionTitle(title: 'Preferences'),
+                          _SectionTitle(title: 'preferences'.tr()),
                           const SizedBox(height: 12),
                           _GlassSettingItem(
                             icon: Icons.notifications_outlined,
-                            title: 'Notifications',
-                            subtitle: 'Enable product recommendations',
+                            title: 'notifications'.tr(),
+                            subtitle: 'enable_product_recommendations'.tr(),
                             showArrow: true,
                             onTap: () {
                               Navigator.of(context).push(
@@ -86,19 +94,20 @@ class SettingsScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           _GlassToggleItem(
                             icon: Icons.dark_mode_outlined,
-                            title: 'Dark Mode',
-                            subtitle: isDark ? 'Enabled' : 'Disabled',
+                            title: 'dark_mode'.tr(),
+                            subtitle: isDark ? 'enabled'.tr() : 'disabled'.tr(),
                             value: isDark,
-                            onChanged: (value) =>
-                                themeProvider.setDarkMode(value),
+                            onChanged: (value) {
+                              themeProvider.setDarkMode(value);
+                            },
                           ),
                           const SizedBox(height: 24),
-                          const _SectionTitle(title: 'Security'),
+                          _SectionTitle(title: 'security'.tr()),
                           const SizedBox(height: 12),
                           _GlassSettingItem(
                             icon: Icons.lock_outline,
-                            title: 'Change Password',
-                            subtitle: 'Update your password',
+                            title: 'change_password'.tr(),
+                            subtitle: 'update_password'.tr(),
                             showArrow: true,
                             onTap: () {
                               Navigator.of(context).push(
@@ -112,8 +121,8 @@ class SettingsScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           _GlassSettingItem(
                             icon: Icons.fingerprint,
-                            title: 'Biometrics',
-                            subtitle: 'Enable Face ID / Fingerprint',
+                            title: 'biometrics'.tr(),
+                            subtitle: 'enable_face_id_fingerprint'.tr(),
                             showArrow: true,
                             onTap: () {
                               Navigator.of(context).push(
@@ -125,12 +134,12 @@ class SettingsScreen extends StatelessWidget {
                             },
                           ),
                           const SizedBox(height: 24),
-                          const _SectionTitle(title: 'General'),
+                          _SectionTitle(title: 'general'.tr()),
                           const SizedBox(height: 12),
                           _GlassSettingItem(
                             icon: Icons.language,
-                            title: 'Language',
-                            subtitle: 'English (US)',
+                            title: 'language'.tr(),
+                            subtitle: 'english_us'.tr(),
                             showArrow: true,
                             onTap: () {
                               Navigator.of(context).push(
@@ -144,8 +153,8 @@ class SettingsScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           _GlassSettingItem(
                             icon: Icons.storage,
-                            title: 'Storage',
-                            subtitle: 'Manage cached data',
+                            title: 'storage'.tr(),
+                            subtitle: 'manage_cached_data'.tr(),
                             showArrow: true,
                             onTap: () {
                               Navigator.of(context).push(

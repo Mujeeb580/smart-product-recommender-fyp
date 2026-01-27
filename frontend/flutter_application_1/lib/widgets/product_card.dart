@@ -55,20 +55,57 @@ class ProductCard extends StatelessWidget {
                         topLeft: Radius.circular(AppTheme.radiusLarge),
                         topRight: Radius.circular(AppTheme.radiusLarge),
                       ),
-                      child: Image.asset(
-                        product.image,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: AppTheme.cardColor,
-                            child: Icon(
-                              Icons.smartphone,
-                              size: 80,
-                              color: AppTheme.primaryColor.withOpacity(0.3),
+                      child: product.image.startsWith('http')
+                          ? Image.network(
+                              product.image,
+                              fit: BoxFit.cover,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: AppTheme.cardColor,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: AppTheme.cardColor,
+                                  child: Icon(
+                                    Icons.smartphone,
+                                    size: 80,
+                                    color:
+                                        AppTheme.primaryColor.withOpacity(0.3),
+                                  ),
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              product.image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: AppTheme.cardColor,
+                                  child: Icon(
+                                    Icons.smartphone,
+                                    size: 80,
+                                    color:
+                                        AppTheme.primaryColor.withOpacity(0.3),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
                     ),
                     // AI Score Badge
                     if (showSimilarity)
