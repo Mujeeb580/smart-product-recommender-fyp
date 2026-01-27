@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../services/theme_service.dart';
+import 'edit_profile_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -14,10 +15,9 @@ class ProfileScreen extends StatelessWidget {
         : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
 
     // Dummy data for demonstration
-    const String dummyUserName = 'Ahmad Khan';
-    const String dummyUserEmail = 'ahmad.khan@example.com';
+    const String dummyUserName = 'Ahmad Kamran';
+    const String dummyUserEmail = 'ahmadkamran@example.com';
     const String dummyUserPhone = '+92 300 1234567';
-    const String appVersion = '1.0.0';
 
     return Scaffold(
       body: Container(
@@ -57,7 +57,18 @@ class ProfileScreen extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
-                          const _GlassIconButton(icon: Icons.settings_outlined),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const SettingsScreen(),
+                                ),
+                              );
+                            },
+                            child: const _GlassIconButton(
+                              icon: Icons.settings_outlined,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 32),
@@ -149,10 +160,10 @@ class ProfileScreen extends StatelessWidget {
                           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: GestureDetector(
                             onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Edit profile coming soon'),
-                                  duration: Duration(seconds: 2),
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const EditProfileScreen(),
                                 ),
                               );
                             },
@@ -240,58 +251,6 @@ class ProfileScreen extends StatelessWidget {
                         subtitle: 'Enable product recommendations',
                         isNotification: true,
                       ),
-                      const SizedBox(height: 12),
-
-                      // Dark Mode Toggle - Connected to ThemeProvider
-                      _GlassDarkModeToggle(
-                        isDark: isDark,
-                        onChanged: (value) => themeProvider.setDarkMode(value),
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      // About Section
-                      const _SectionTitle(title: 'About'),
-                      const SizedBox(height: 14),
-
-                      _GlassInfoCard(
-                        icon: Icons.info_outlined,
-                        label: 'App Version',
-                        value: appVersion,
-                      ),
-                      const SizedBox(height: 12),
-
-                      _GlassInfoCard(
-                        icon: Icons.help_outline,
-                        label: 'Help & Support',
-                        value: 'Contact our team',
-                        showArrow: true,
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Help page coming soon'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      _GlassInfoCard(
-                        icon: Icons.privacy_tip_outlined,
-                        label: 'Privacy Policy',
-                        value: 'Read our policies',
-                        showArrow: true,
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Privacy policy coming soon'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                      ),
-
                       const SizedBox(height: 32),
 
                       // Logout Button - Glassmorphic Style
