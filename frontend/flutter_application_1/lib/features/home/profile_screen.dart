@@ -1,321 +1,421 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../core/theme.dart';
-import '../../core/constants.dart';
+import '../../services/theme_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Get theme brightness from context
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gradientColors = isDark
+        ? const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
+        : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
+
+    // Dummy data for demonstration
+    const String dummyUserName = 'Ahmad Khan';
+    const String dummyUserEmail = 'ahmad.khan@example.com';
+    const String dummyUserPhone = '+92 300 1234567';
+    const String appVersion = '1.0.0';
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: const Text('Profile'),
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Profile Header with Avatar
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Column(
-                children: [
-                  // Avatar
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 60,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // User Name
-                  Text(
-                    dummyUserName,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // Status
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'Premium Member',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Profile Details Section
-            Padding(
-              padding: const EdgeInsets.all(AppTheme.paddingLarge),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Contact Information
-                  Text(
-                    'Contact Information',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppTheme.textPrimaryColor,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Email Card
-                  _ProfileCard(
-                    icon: Icons.email_outlined,
-                    label: 'Email',
-                    value: dummyUserEmail,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Email copied to clipboard'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Phone Card
-                  _ProfileCard(
-                    icon: Icons.phone_outlined,
-                    label: 'Phone',
-                    value: dummyUserPhone,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Phone number copied to clipboard'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Preferences Section
-                  Text(
-                    'Preferences',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppTheme.textPrimaryColor,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Notification Toggle
-                  _SettingItem(
-                    icon: Icons.notifications_outlined,
-                    title: 'Notifications',
-                    subtitle: 'Enable product recommendations',
-                    value: true,
-                    onChanged: (value) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Notifications ${value ? 'enabled' : 'disabled'}',
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              children: [
+                // Profile Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: Column(
+                    children: [
+                      // Back button and title row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: const _GlassIconButton(
+                                icon: Icons.arrow_back_ios_new),
                           ),
-                          duration: const Duration(seconds: 2),
+                          Text(
+                            'Profile',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const _GlassIconButton(icon: Icons.settings_outlined),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      // Profile Image with glass effect
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(60),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.2),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.4),
+                                  width: 3),
+                            ),
+                            child: const CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.transparent,
+                              child: Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Dark Mode Toggle
-                  _SettingItem(
-                    icon: Icons.dark_mode_outlined,
-                    title: 'Dark Mode',
-                    subtitle: 'Coming soon',
-                    value: false,
-                    onChanged: (value) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Dark mode coming in next version'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // About Section
-                  Text(
-                    'About',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppTheme.textPrimaryColor,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // App Version
-                  _ProfileInfoTile(
-                    icon: Icons.info_outlined,
-                    label: 'App Version',
-                    value: appVersion,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Help
-                  _ProfileInfoTile(
-                    icon: Icons.help_outline,
-                    label: 'Help & Support',
-                    value: 'Contact our team',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Help page coming soon'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Privacy Policy
-                  _ProfileInfoTile(
-                    icon: Icons.privacy_tip_outlined,
-                    label: 'Privacy Policy',
-                    value: 'Read our policies',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Privacy policy coming soon'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Logout Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _showLogoutDialog(context);
-                      },
-                      icon: const Icon(Icons.logout, color: Colors.white),
-                      label: const Text(
-                        'Logout',
+                      ),
+                      const SizedBox(height: 20),
+                      // User Name
+                      const Text(
+                        dummyUserName,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 26,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.errorColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Delete Account Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Account deletion not available in demo',
-                            ),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text(
-                        'Delete Account',
+                      const SizedBox(height: 6),
+                      // User Email
+                      Text(
+                        dummyUserEmail,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Colors.white.withOpacity(0.85),
                         ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.errorColor,
-                        side: const BorderSide(
-                          color: AppTheme.errorColor,
-                          width: 2,
+                      const SizedBox(height: 8),
+                      // Premium badge
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star,
+                                    size: 16, color: Colors.amber.shade300),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'Premium Member',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                      // Edit Profile Button - glassmorphic
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: GestureDetector(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Edit profile coming soon'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: Colors.white.withOpacity(0.3)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.edit,
+                                      size: 18, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Edit Profile',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 32),
-                ],
-              ),
+                ),
+
+                // Content Sections
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Contact Information Section
+                      const _SectionTitle(title: 'Contact Information'),
+                      const SizedBox(height: 14),
+
+                      _GlassInfoCard(
+                        icon: Icons.email_outlined,
+                        label: 'Email',
+                        value: dummyUserEmail,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Email copied to clipboard'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      _GlassInfoCard(
+                        icon: Icons.phone_outlined,
+                        label: 'Phone',
+                        value: dummyUserPhone,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Phone number copied to clipboard'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 28),
+
+                      // Preferences Section
+                      const _SectionTitle(title: 'Preferences'),
+                      const SizedBox(height: 14),
+
+                      // Notification Toggle
+                      const _GlassSettingItem(
+                        icon: Icons.notifications_outlined,
+                        title: 'Notifications',
+                        subtitle: 'Enable product recommendations',
+                        isNotification: true,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Dark Mode Toggle - Connected to ThemeProvider
+                      _GlassDarkModeToggle(
+                        isDark: isDark,
+                        onChanged: (value) => themeProvider.setDarkMode(value),
+                      ),
+
+                      const SizedBox(height: 28),
+
+                      // About Section
+                      const _SectionTitle(title: 'About'),
+                      const SizedBox(height: 14),
+
+                      _GlassInfoCard(
+                        icon: Icons.info_outlined,
+                        label: 'App Version',
+                        value: appVersion,
+                      ),
+                      const SizedBox(height: 12),
+
+                      _GlassInfoCard(
+                        icon: Icons.help_outline,
+                        label: 'Help & Support',
+                        value: 'Contact our team',
+                        showArrow: true,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Help page coming soon'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      _GlassInfoCard(
+                        icon: Icons.privacy_tip_outlined,
+                        label: 'Privacy Policy',
+                        value: 'Read our policies',
+                        showArrow: true,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Privacy policy coming soon'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Logout Button - Glassmorphic Style
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: GestureDetector(
+                            onTap: () => _showLogoutDialog(context),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: Colors.red.withOpacity(0.5)),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.logout, color: Colors.white),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'Logout',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Delete Account Button
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: GestureDetector(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Account deletion not available in demo'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: Colors.red.withOpacity(0.5)),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.delete_outline,
+                                      color: Colors.redAccent),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'Delete Account',
+                                    style: TextStyle(
+                                      color: Colors.redAccent,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   void _showLogoutDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Logout',
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        ),
+        content: Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: isDark ? Colors.white70 : Colors.grey),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context); // Close dialog
-              // Navigate to login screen
-              Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil('/login', (route) => false);
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil('/login', (route) => false);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Logged out successfully'),
@@ -325,7 +425,7 @@ class ProfileScreen extends StatelessWidget {
             },
             child: const Text(
               'Logout',
-              style: TextStyle(color: AppTheme.errorColor),
+              style: TextStyle(color: Colors.redAccent),
             ),
           ),
         ],
@@ -334,227 +434,295 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class _ProfileCard extends StatelessWidget {
+// Glassmorphic Icon Button
+class _GlassIconButton extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback? onTap;
 
-  const _ProfileCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.onTap,
-  });
+  const _GlassIconButton({required this.icon});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppTheme.paddingMedium),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: AppTheme.cardColor),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: AppTheme.primaryColor),
-            ),
-            const SizedBox(width: AppTheme.paddingMedium),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: AppTheme.textSecondaryColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimaryColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: AppTheme.textHintColor,
-            ),
-          ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.3)),
+          ),
+          child: Icon(icon, color: Colors.white, size: 22),
         ),
       ),
     );
   }
 }
 
-class _SettingItem extends StatefulWidget {
+// Section Title Widget
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            fontSize: 20,
+            letterSpacing: 0.3,
+          ),
+    );
+  }
+}
+
+// Glassmorphic Info Card
+class _GlassInfoCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool showArrow;
+  final VoidCallback? onTap;
+
+  const _GlassInfoCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.showArrow = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.25)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        value,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (showArrow || onTap != null)
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Glassmorphic Setting Item with Toggle
+class _GlassSettingItem extends StatefulWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
+  final bool isNotification;
 
-  const _SettingItem({
+  const _GlassSettingItem({
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.value,
+    this.isNotification = false,
+  });
+
+  @override
+  State<_GlassSettingItem> createState() => _GlassSettingItemState();
+}
+
+class _GlassSettingItemState extends State<_GlassSettingItem> {
+  bool _value = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.25)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(widget.icon, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _value,
+                onChanged: (value) {
+                  setState(() => _value = value);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          '${widget.title} ${value ? 'enabled' : 'disabled'}'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+                activeColor: Colors.white,
+                activeTrackColor: const Color(0xFF4C1D95),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Dark Mode Toggle connected to ThemeProvider
+class _GlassDarkModeToggle extends StatelessWidget {
+  final bool isDark;
+  final ValueChanged<bool> onChanged;
+
+  const _GlassDarkModeToggle({
+    required this.isDark,
     required this.onChanged,
   });
 
   @override
-  State<_SettingItem> createState() => _SettingItemState();
-}
-
-class _SettingItemState extends State<_SettingItem> {
-  late bool _value;
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.value;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppTheme.paddingMedium),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        border: Border.all(color: AppTheme.cardColor),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(widget.icon, color: AppTheme.primaryColor),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.25)),
           ),
-          const SizedBox(width: AppTheme.paddingMedium),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.title,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimaryColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.subtitle,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondaryColor,
-                    fontSize: 12,
-                  ),
+                child: Icon(
+                  isDark ? Icons.dark_mode : Icons.light_mode,
+                  color: Colors.white,
+                  size: 22,
                 ),
-              ],
-            ),
-          ),
-          Switch(
-            value: _value,
-            onChanged: (value) {
-              setState(() => _value = value);
-              widget.onChanged(value);
-            },
-            activeThumbColor: AppTheme.primaryColor,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProfileInfoTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback? onTap;
-
-  const _ProfileInfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppTheme.paddingMedium),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: AppTheme.cardColor),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: AppTheme.primaryColor),
-            ),
-            const SizedBox(width: AppTheme.paddingMedium),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimaryColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dark Mode',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      color: AppTheme.textSecondaryColor,
-                      fontSize: 12,
+                    const SizedBox(height: 4),
+                    Text(
+                      isDark ? 'Currently enabled' : 'Currently disabled',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (onTap != null)
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: AppTheme.textHintColor,
+              Switch(
+                value: isDark,
+                onChanged: (value) {
+                  onChanged(value);
+                },
+                activeColor: Colors.white,
+                activeTrackColor: const Color(0xFF4C1D95),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

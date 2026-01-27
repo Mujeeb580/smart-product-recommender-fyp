@@ -130,4 +130,100 @@ class AppTheme {
       ),
     );
   }
+
+  // Dark Theme
+  static ThemeData darkTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.dark,
+      ),
+      scaffoldBackgroundColor: const Color(0xFF1A1A2E),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF1A1A2E),
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: Colors.white),
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        displayMedium: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        headlineSmall: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: Colors.white,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
+          color: Colors.white70,
+        ),
+        bodySmall: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.normal,
+          color: Colors.white60,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(
+            horizontal: paddingLarge,
+            vertical: paddingMedium,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusLarge),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.1),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: paddingMedium,
+          vertical: paddingMedium,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: primaryColor, width: 2),
+        ),
+        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+      ),
+      cardTheme: CardThemeData(
+        color: Colors.white.withOpacity(0.1),
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusLarge),
+        ),
+      ),
+    );
+  }
 }
