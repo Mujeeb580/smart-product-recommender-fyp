@@ -6,7 +6,7 @@ import 'features/auth/onboarding_screen.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/sign_up_screen.dart';
 import 'features/home/home_screen.dart';
-import 'features/home/enhanced_chat_screen.dart';
+import 'features/home/chat_screen.dart';
 import 'features/home/profile_screen.dart';
 import 'features/products/product_list_screen.dart';
 
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
         AppRoutes.login: (context) => const LoginScreen(),
         AppRoutes.signUp: (context) => const SignUpScreen(),
         AppRoutes.home: (context) => const _MainScreen(),
-        AppRoutes.chat: (context) => const EnhancedChatScreen(),
+        AppRoutes.chat: (context) => const ChatScreen(),
         AppRoutes.productList: (context) => const ProductListScreen(),
         AppRoutes.profile: (context) => const ProfileScreen(),
       },
@@ -51,7 +51,7 @@ class _MainScreenState extends State<_MainScreen> {
 
   final List<Widget> _screens = const [
     HomeScreen(),
-    EnhancedChatScreen(),
+    ChatScreen(),
     ProfileScreen(),
   ];
 
