@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../services/theme_service.dart';
+import '../../widgets/glassy_shine.dart';
 import 'help_support_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'language_settings_screen.dart';
@@ -29,177 +30,189 @@ class SettingsScreen extends StatelessWidget {
             colors: gradientColors,
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const _GlassIconButton(
-                          icon: Icons.arrow_back_ios_new,
-                        ),
-                      ),
-                      Text(
-                        'Settings',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+        child: Stack(
+          children: [
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: const _GlassIconButton(
+                              icon: Icons.arrow_back_ios_new,
                             ),
+                          ),
+                          Text(
+                            'Settings',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const _GlassIconButton(icon: Icons.tune),
+                        ],
                       ),
-                      const _GlassIconButton(icon: Icons.tune),
-                    ],
-                  ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _SectionTitle(title: 'Preferences'),
+                          const SizedBox(height: 12),
+                          _GlassSettingItem(
+                            icon: Icons.notifications_outlined,
+                            title: 'Notifications',
+                            subtitle: 'Enable product recommendations',
+                            showArrow: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NotificationSettingsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _GlassToggleItem(
+                            icon: Icons.dark_mode_outlined,
+                            title: 'Dark Mode',
+                            subtitle: isDark ? 'Enabled' : 'Disabled',
+                            value: isDark,
+                            onChanged: (value) =>
+                                themeProvider.setDarkMode(value),
+                          ),
+                          const SizedBox(height: 24),
+                          const _SectionTitle(title: 'Security'),
+                          const SizedBox(height: 12),
+                          _GlassSettingItem(
+                            icon: Icons.lock_outline,
+                            title: 'Change Password',
+                            subtitle: 'Update your password',
+                            showArrow: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ChangePasswordScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _GlassSettingItem(
+                            icon: Icons.fingerprint,
+                            title: 'Biometrics',
+                            subtitle: 'Enable Face ID / Fingerprint',
+                            showArrow: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const BiometricsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                          const _SectionTitle(title: 'General'),
+                          const SizedBox(height: 12),
+                          _GlassSettingItem(
+                            icon: Icons.language,
+                            title: 'Language',
+                            subtitle: 'English (US)',
+                            showArrow: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const LanguageSettingsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _GlassSettingItem(
+                            icon: Icons.storage,
+                            title: 'Storage',
+                            subtitle: 'Manage cached data',
+                            showArrow: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const StorageSettingsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                          const _SectionTitle(title: 'About'),
+                          const SizedBox(height: 12),
+                          _GlassSettingItem(
+                            icon: Icons.info_outlined,
+                            title: 'App Version',
+                            subtitle: appVersion,
+                            showArrow: true,
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Version $appVersion'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _GlassSettingItem(
+                            icon: Icons.help_outline,
+                            title: 'Help & Support',
+                            subtitle: 'Contact our team',
+                            showArrow: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const HelpSupportScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _GlassSettingItem(
+                            icon: Icons.privacy_tip_outlined,
+                            title: 'Privacy Policy',
+                            subtitle: 'Read our policies',
+                            showArrow: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const PrivacyPolicyScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const _SectionTitle(title: 'Preferences'),
-                      const SizedBox(height: 12),
-                      _GlassSettingItem(
-                        icon: Icons.notifications_outlined,
-                        title: 'Notifications',
-                        subtitle: 'Enable product recommendations',
-                        showArrow: true,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const NotificationSettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _GlassToggleItem(
-                        icon: Icons.dark_mode_outlined,
-                        title: 'Dark Mode',
-                        subtitle: isDark ? 'Enabled' : 'Disabled',
-                        value: isDark,
-                        onChanged: (value) => themeProvider.setDarkMode(value),
-                      ),
-                      const SizedBox(height: 24),
-                      const _SectionTitle(title: 'Security'),
-                      const SizedBox(height: 12),
-                      _GlassSettingItem(
-                        icon: Icons.lock_outline,
-                        title: 'Change Password',
-                        subtitle: 'Update your password',
-                        showArrow: true,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ChangePasswordScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _GlassSettingItem(
-                        icon: Icons.fingerprint,
-                        title: 'Biometrics',
-                        subtitle: 'Enable Face ID / Fingerprint',
-                        showArrow: true,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const BiometricsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      const _SectionTitle(title: 'General'),
-                      const SizedBox(height: 12),
-                      _GlassSettingItem(
-                        icon: Icons.language,
-                        title: 'Language',
-                        subtitle: 'English (US)',
-                        showArrow: true,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const LanguageSettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _GlassSettingItem(
-                        icon: Icons.storage,
-                        title: 'Storage',
-                        subtitle: 'Manage cached data',
-                        showArrow: true,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const StorageSettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      const _SectionTitle(title: 'About'),
-                      const SizedBox(height: 12),
-                      _GlassSettingItem(
-                        icon: Icons.info_outlined,
-                        title: 'App Version',
-                        subtitle: appVersion,
-                        showArrow: true,
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Version $appVersion'),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _GlassSettingItem(
-                        icon: Icons.help_outline,
-                        title: 'Help & Support',
-                        subtitle: 'Contact our team',
-                        showArrow: true,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const HelpSupportScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _GlassSettingItem(
-                        icon: Icons.privacy_tip_outlined,
-                        title: 'Privacy Policy',
-                        subtitle: 'Read our policies',
-                        showArrow: true,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const PrivacyPolicyScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            const GlassyShine(opacity: 0.1),
+          ],
         ),
       ),
     );

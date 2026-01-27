@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'profile_screen.dart';
+import '../../widgets/glassy_shine.dart';
 import 'smartphones_screen.dart';
 import 'laptops_screen.dart';
 import 'voice_assistant_screen.dart';
@@ -25,47 +26,52 @@ class HomeScreen extends StatelessWidget {
             colors: gradientColors,
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _HeroHeader(
-                  onProfileTap: () {
-                    // The profile is now accessible via bottom nav
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const ProfileScreen(),
+        child: Stack(
+          children: [
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HeroHeader(
+                      onProfileTap: () {
+                        // The profile is now accessible via bottom nav
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const ProfileScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SectionTitle(title: 'Categories'),
+                          const SizedBox(height: 14),
+                          const _CategoryGrid(),
+                          const SizedBox(height: 24),
+                          _SectionTitle(title: 'Quick Filters'),
+                          const SizedBox(height: 14),
+                          const _QuickFilters(),
+                          const SizedBox(height: 24),
+                          _AiCard(),
+                          const SizedBox(height: 24),
+                          _SectionTitle(title: 'Trending deals'),
+                          const SizedBox(height: 14),
+                          const _HorizontalProducts(),
+                        ],
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SectionTitle(title: 'Categories'),
-                      const SizedBox(height: 14),
-                      const _CategoryGrid(),
-                      const SizedBox(height: 24),
-                      _SectionTitle(title: 'Quick Filters'),
-                      const SizedBox(height: 14),
-                      const _QuickFilters(),
-                      const SizedBox(height: 24),
-                      _AiCard(),
-                      const SizedBox(height: 24),
-                      _SectionTitle(title: 'Trending deals'),
-                      const SizedBox(height: 14),
-                      const _HorizontalProducts(),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            const GlassyShine(opacity: 0.12),
+          ],
         ),
       ),
     );

@@ -5,6 +5,7 @@ import '../../models/product_model.dart';
 import '../../services/chat_service.dart';
 import '../../widgets/chat_bubble.dart';
 import '../../widgets/loading_widget.dart';
+import '../../widgets/glassy_shine.dart';
 import '../products/product_list_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -139,283 +140,292 @@ class _ChatScreenState extends State<ChatScreen> {
             colors: gradientColors,
           ),
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'AI Product Assistant',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _initializeChat();
-                          _recommendedProducts = null;
-                        });
-                      },
-                      child: const _GlassIconButton(
-                        icon: Icons.refresh_rounded,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Chat Messages
-              Expanded(
-                child: _GlassSection(
-                  margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: _messages.isEmpty
-                      ? const LoadingWidget(message: 'Loading...')
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 12,
-                          ),
-                          itemCount: _messages.length,
-                          itemBuilder: (context, index) {
-                            return ChatBubble(message: _messages[index]);
-                          },
-                        ),
-                ),
-              ),
-
-              // Recommended Products Preview
-              if (_recommendedProducts != null &&
-                  _recommendedProducts!.isNotEmpty)
-                _GlassSection(
-                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Recommended Products',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: _navigateToProducts,
-                            child: const Text(
-                              'See All',
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 160,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _recommendedProducts!.length,
-                          itemBuilder: (context, index) {
-                            final product = _recommendedProducts![index];
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => ProductListScreen(
-                                      initialProducts: _recommendedProducts,
-                                      title: 'Recommended Products',
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: _GlassProductCard(product: product),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                ),
-                              ),
-                              child: TextButton.icon(
-                                onPressed: _navigateToProducts,
-                                icon: const Icon(
-                                  Icons.shopping_bag_outlined,
-                                  color: Colors.white,
-                                ),
-                                label: const Text(
-                                  'View All Recommendations',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Loading Indicator
-              if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: LoadingWidget(message: 'AI is thinking...'),
-                ),
-
-              // Input Area
-              _GlassSection(
-                margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    if (_messages.length == 1)
-                      Column(
-                        children: [
-                          Text(
-                            'Try asking about:',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _GlassQuickActionButton(
-                                label: 'Budget phones',
-                                onTap: () {
-                                  _messageController.text =
-                                      'Show me budget smartphones';
-                                  _sendMessage();
-                                },
-                              ),
-                              _GlassQuickActionButton(
-                                label: 'Flagship phones',
-                                onTap: () {
-                                  _messageController.text =
-                                      'Best flagship phones';
-                                  _sendMessage();
-                                },
-                              ),
-                              _GlassQuickActionButton(
-                                label: 'Gaming phones',
-                                onTap: () {
-                                  _messageController.text =
-                                      'Best phones for gaming';
-                                  _sendMessage();
-                                },
-                              ),
-                              _GlassQuickActionButton(
-                                label: 'Camera phones',
-                                onTap: () {
-                                  _messageController.text =
-                                      'Phones with great cameras';
-                                  _sendMessage();
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Divider(color: Colors.white.withOpacity(0.2)),
-                          const SizedBox(height: 12),
-                        ],
-                      ),
-                    Row(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _messageController,
-                            enabled: !_isLoading,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              hintText: 'Describe what you\'re looking for...',
-                              hintStyle: TextStyle(
-                                color: Colors.white.withOpacity(0.6),
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withOpacity(0.25),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withOpacity(0.25),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: const BorderSide(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                            ),
-                            maxLines: null,
-                            textInputAction: TextInputAction.send,
-                            onSubmitted: (_) => _sendMessage(),
-                          ),
+                        Text(
+                          'AI Product Assistant',
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
-                        const SizedBox(width: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.25),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                ),
-                              ),
-                              child: IconButton(
-                                onPressed: _isLoading ? null : _sendMessage,
-                                icon: const Icon(
-                                  Icons.send_rounded,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _initializeChat();
+                              _recommendedProducts = null;
+                            });
+                          },
+                          child: const _GlassIconButton(
+                            icon: Icons.refresh_rounded,
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+
+                  // Chat Messages
+                  Expanded(
+                    child: _GlassSection(
+                      margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: _messages.isEmpty
+                          ? const LoadingWidget(message: 'Loading...')
+                          : ListView.builder(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                                horizontal: 12,
+                              ),
+                              itemCount: _messages.length,
+                              itemBuilder: (context, index) {
+                                return ChatBubble(message: _messages[index]);
+                              },
+                            ),
+                    ),
+                  ),
+
+                  // Recommended Products Preview
+                  if (_recommendedProducts != null &&
+                      _recommendedProducts!.isNotEmpty)
+                    _GlassSection(
+                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Recommended Products',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: _navigateToProducts,
+                                child: const Text(
+                                  'See All',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 160,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _recommendedProducts!.length,
+                              itemBuilder: (context, index) {
+                                final product = _recommendedProducts![index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => ProductListScreen(
+                                          initialProducts: _recommendedProducts,
+                                          title: 'Recommended Products',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: _GlassProductCard(product: product),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: BackdropFilter(
+                                filter:
+                                    ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: TextButton.icon(
+                                    onPressed: _navigateToProducts,
+                                    icon: const Icon(
+                                      Icons.shopping_bag_outlined,
+                                      color: Colors.white,
+                                    ),
+                                    label: const Text(
+                                      'View All Recommendations',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Loading Indicator
+                  if (_isLoading)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8),
+                      child: LoadingWidget(message: 'AI is thinking...'),
+                    ),
+
+                  // Input Area
+                  _GlassSection(
+                    margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        if (_messages.length == 1)
+                          Column(
+                            children: [
+                              Text(
+                                'Try asking about:',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  _GlassQuickActionButton(
+                                    label: 'Budget phones',
+                                    onTap: () {
+                                      _messageController.text =
+                                          'Show me budget smartphones';
+                                      _sendMessage();
+                                    },
+                                  ),
+                                  _GlassQuickActionButton(
+                                    label: 'Flagship phones',
+                                    onTap: () {
+                                      _messageController.text =
+                                          'Best flagship phones';
+                                      _sendMessage();
+                                    },
+                                  ),
+                                  _GlassQuickActionButton(
+                                    label: 'Gaming phones',
+                                    onTap: () {
+                                      _messageController.text =
+                                          'Best phones for gaming';
+                                      _sendMessage();
+                                    },
+                                  ),
+                                  _GlassQuickActionButton(
+                                    label: 'Camera phones',
+                                    onTap: () {
+                                      _messageController.text =
+                                          'Phones with great cameras';
+                                      _sendMessage();
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Divider(color: Colors.white.withOpacity(0.2)),
+                              const SizedBox(height: 12),
+                            ],
+                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _messageController,
+                                enabled: !_isLoading,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Describe what you\'re looking for...',
+                                  hintStyle: TextStyle(
+                                    color: Colors.white.withOpacity(0.6),
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    borderSide: BorderSide(
+                                      color: Colors.white.withOpacity(0.25),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    borderSide: BorderSide(
+                                      color: Colors.white.withOpacity(0.25),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    borderSide: const BorderSide(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                maxLines: null,
+                                textInputAction: TextInputAction.send,
+                                onSubmitted: (_) => _sendMessage(),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: BackdropFilter(
+                                filter:
+                                    ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.25),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: IconButton(
+                                    onPressed: _isLoading ? null : _sendMessage,
+                                    icon: const Icon(
+                                      Icons.send_rounded,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            const GlassyShine(opacity: 0.1),
+          ],
         ),
       ),
     );
