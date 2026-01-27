@@ -141,20 +141,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(context).pop(),
-                                            style: TextButton.styleFrom(
-                                              foregroundColor: Colors.white,
-                                            ),
-                                            child: const Text('Login'),
-                                          ),
                                         ],
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Create account',
+                                        'Sign up',
                                         style: theme.textTheme.headlineSmall
                                             ?.copyWith(
                                           fontWeight: FontWeight.bold,

@@ -9,7 +9,8 @@ import '../../widgets/glassy_shine.dart';
 import '../products/product_list_screen.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final VoidCallback? onBackPressed;
+  const ChatScreen({super.key, this.onBackPressed});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -162,17 +163,33 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            GestureDetector(
+                              onTap: () {
+                                if (widget.onBackPressed != null) {
+                                  widget.onBackPressed!();
+                                } else {
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                              child: const _GlassIconButton(
+                                icon: Icons.arrow_back_rounded,
+                              ),
+                            ),
                             Expanded(
-                              child: Text(
-                                'AI Product Assistant',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: titleFontSize,
-                                    ),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  'AI Product Assistant',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: titleFontSize,
+                                      ),
+                                ),
                               ),
                             ),
                             GestureDetector(
@@ -190,7 +207,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
 
-                      // Chat Messages
+                      // Chat Messages and Products in SingleChildScrollView
                       Expanded(
                         child: _GlassSection(
                           margin: EdgeInsets.fromLTRB(
@@ -201,124 +218,156 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           child: _messages.isEmpty
                               ? const LoadingWidget(message: 'Loading...')
-                              : ListView.builder(
+                              : SingleChildScrollView(
                                   controller: _scrollController,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 8,
                                   ),
-                                  itemCount: _messages.length,
-                                  itemBuilder: (context, index) {
-                                    return ChatBubble(
-                                        message: _messages[index]);
-                                  },
+                                  child: Column(
+                                    children: [
+                                      // Chat Messages
+                                      ...List.generate(
+                                        _messages.length,
+                                        (index) => ChatBubble(
+                                          message: _messages[index],
+                                        ),
+                                      ),
+
+                                      // Recommended Products Preview
+                                      if (_recommendedProducts != null &&
+                                          _recommendedProducts!.isNotEmpty)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 16),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    'Recommended Products',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize:
+                                                          isDesktop ? 16 : 14,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed:
+                                                        _navigateToProducts,
+                                                    child: Text(
+                                                      'See All',
+                                                      style: TextStyle(
+                                                        color: Colors.white70,
+                                                        fontSize:
+                                                            isDesktop ? 14 : 12,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              SizedBox(
+                                                  height: isDesktop ? 12 : 8),
+                                              SizedBox(
+                                                height: isDesktop
+                                                    ? 200
+                                                    : (isTablet ? 180 : 160),
+                                                child: ListView.builder(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  itemCount:
+                                                      _recommendedProducts!
+                                                          .length,
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final product =
+                                                        _recommendedProducts![
+                                                            index];
+                                                    return GestureDetector(
+                                                      onTap: () {
+                                                        Navigator.of(context)
+                                                            .push(
+                                                          MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                ProductListScreen(
+                                                              initialProducts:
+                                                                  _recommendedProducts,
+                                                              title:
+                                                                  'Recommended Products',
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
+                                                      child: _GlassProductCard(
+                                                        product: product,
+                                                        isDesktop: isDesktop,
+                                                        isTablet: isTablet,
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                  height: isDesktop ? 16 : 12),
+                                              SizedBox(
+                                                width: double.infinity,
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                  child: BackdropFilter(
+                                                    filter: ImageFilter.blur(
+                                                        sigmaX: 10, sigmaY: 10),
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white
+                                                            .withOpacity(0.2),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(14),
+                                                        border: Border.all(
+                                                          color: Colors.white
+                                                              .withOpacity(0.3),
+                                                        ),
+                                                      ),
+                                                      child: TextButton.icon(
+                                                        onPressed:
+                                                            _navigateToProducts,
+                                                        icon: Icon(
+                                                          Icons
+                                                              .shopping_bag_outlined,
+                                                          color: Colors.white,
+                                                          size: isDesktop
+                                                              ? 22
+                                                              : 20,
+                                                        ),
+                                                        label: Text(
+                                                          'View All Recommendations',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: isDesktop
+                                                                ? 16
+                                                                : 14,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
                         ),
                       ),
-
-                      // Recommended Products Preview
-                      if (_recommendedProducts != null &&
-                          _recommendedProducts!.isNotEmpty)
-                        _GlassSection(
-                          margin: EdgeInsets.fromLTRB(
-                              horizontalPadding, 0, horizontalPadding, 12),
-                          padding: EdgeInsets.all(isDesktop ? 20 : 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Recommended Products',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: isDesktop ? 16 : 14,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: _navigateToProducts,
-                                    child: Text(
-                                      'See All',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: isDesktop ? 14 : 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: isDesktop ? 12 : 8),
-                              SizedBox(
-                                height:
-                                    isDesktop ? 200 : (isTablet ? 180 : 160),
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: _recommendedProducts!.length,
-                                  itemBuilder: (context, index) {
-                                    final product =
-                                        _recommendedProducts![index];
-                                    return GestureDetector(
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                ProductListScreen(
-                                              initialProducts:
-                                                  _recommendedProducts,
-                                              title: 'Recommended Products',
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: _GlassProductCard(
-                                        product: product,
-                                        isDesktop: isDesktop,
-                                        isTablet: isTablet,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              SizedBox(height: isDesktop ? 16 : 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(
-                                        sigmaX: 10, sigmaY: 10),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.3),
-                                        ),
-                                      ),
-                                      child: TextButton.icon(
-                                        onPressed: _navigateToProducts,
-                                        icon: Icon(
-                                          Icons.shopping_bag_outlined,
-                                          color: Colors.white,
-                                          size: isDesktop ? 22 : 20,
-                                        ),
-                                        label: Text(
-                                          'View All Recommendations',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: isDesktop ? 16 : 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
 
                       // Loading Indicator
                       if (_isLoading)
@@ -400,14 +449,17 @@ class _ChatScreenState extends State<ChatScreen> {
                                     controller: _messageController,
                                     enabled: !_isLoading,
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color:
+                                          isDark ? Colors.white : Colors.black,
                                       fontSize: isDesktop ? 16 : 14,
                                     ),
                                     decoration: InputDecoration(
                                       hintText:
                                           'Describe what you\'re looking for...',
                                       hintStyle: TextStyle(
-                                        color: Colors.white.withOpacity(0.6),
+                                        color: isDark
+                                            ? Colors.white.withOpacity(0.6)
+                                            : Colors.black.withOpacity(0.5),
                                         fontSize: isDesktop ? 16 : 14,
                                       ),
                                       border: OutlineInputBorder(

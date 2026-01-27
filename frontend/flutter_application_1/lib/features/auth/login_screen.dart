@@ -146,15 +146,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          TextButton(
-                                            onPressed: _goToSignUp,
-                                            style: TextButton.styleFrom(
-                                              foregroundColor: Colors.white,
-                                            ),
-                                            child: const Text('Sign up'),
-                                          ),
                                         ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Login',
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                        textAlign: TextAlign.left,
                                       ),
                                       const SizedBox(height: 6),
                                       Text(

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -82,11 +83,15 @@ class _MainScreen extends StatefulWidget {
 class _MainScreenState extends State<_MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    ChatScreen(),
-    ProfileScreen(),
-  ];
+  List<Widget> get _screens => [
+        const HomeScreen(),
+        ChatScreen(onBackPressed: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        }),
+        const ProfileScreen(),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -94,28 +99,64 @@ class _MainScreenState extends State<_MainScreen> {
     final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
+      extendBody: true,
       body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
-        selectedItemColor:
-            isDark ? const Color(0xFF7F5AF0) : const Color(0xFF7F5AF0),
-        unselectedItemColor: isDark ? Colors.white54 : Colors.grey,
-        elevation: 8,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: 'Chat',
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        const Color(0xFF1A1A2E).withOpacity(0.9),
+                        const Color(0xFF16213E).withOpacity(0.9),
+                      ]
+                    : [
+                        const Color(0xFF7C3AED).withOpacity(0.85),
+                        const Color(0xFF6D28D9).withOpacity(0.85),
+                      ],
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.white.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.transparent,
+              selectedItemColor: Colors.white,
+              unselectedItemColor:
+                  isDark ? Colors.white54 : Colors.white.withOpacity(0.6),
+              elevation: 0,
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.chat_bubble_outline),
+                  label: 'Chat',
+                ),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.person), label: 'Profile'),
+              ],
+            ),
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+        ),
       ),
     );
   }
