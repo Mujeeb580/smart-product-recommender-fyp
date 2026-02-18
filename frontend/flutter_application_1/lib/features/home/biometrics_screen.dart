@@ -204,7 +204,7 @@ class _BiometricSwitch extends StatelessWidget {
               Switch(
                 value: value,
                 onChanged: onChanged,
-                activeColor: Colors.white,
+                activeThumbColor: Colors.white,
                 activeTrackColor: const Color(0xFF4C1D95),
               ),
             ],

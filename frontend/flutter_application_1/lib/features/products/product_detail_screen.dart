@@ -121,8 +121,9 @@ class ProductDetailScreen extends StatelessWidget {
                                             fit: BoxFit.contain,
                                             loadingBuilder: (context, child,
                                                 loadingProgress) {
-                                              if (loadingProgress == null)
+                                              if (loadingProgress == null) {
                                                 return child;
+                                              }
                                               return Center(
                                                 child:
                                                     CircularProgressIndicator(

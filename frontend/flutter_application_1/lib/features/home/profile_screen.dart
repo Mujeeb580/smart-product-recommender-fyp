@@ -608,7 +608,7 @@ class _GlassSettingItemState extends State<_GlassSettingItem> {
                     ),
                   );
                 },
-                activeColor: Colors.white,
+                activeThumbColor: Colors.white,
                 activeTrackColor: const Color(0xFF4C1D95),
               ),
             ],
