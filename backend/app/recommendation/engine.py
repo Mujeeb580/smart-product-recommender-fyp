@@ -1,6 +1,6 @@
 from sklearn.metrics.pairwise import cosine_similarity
-from model import get_model
-from text_builder import product_to_text
+from .model import get_model
+from .text_builder import product_to_text
 
 
 def recommend_products(query: str, products: list, top_n: int = 10):

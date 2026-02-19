@@ -1,5 +1,5 @@
-from firestore import fetch_products
-from engine import recommend_products
+from .firestore import fetch_products
+from .engine import recommend_products
 
 def main():
     """
