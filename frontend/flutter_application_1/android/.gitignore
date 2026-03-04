@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Firebase configuration files - Never commit these!
+google-services.json
+app/google-services.json
