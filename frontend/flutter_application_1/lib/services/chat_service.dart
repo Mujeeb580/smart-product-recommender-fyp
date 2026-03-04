@@ -2,27 +2,71 @@ import '../models/product_model.dart';
 import '../models/chat_message_model.dart';
 import '../dummy/dummy_chat.dart';
 import '../dummy/dummy_products.dart';
+import 'api_service.dart';
+import 'auth_service.dart';
+import '../core/api_config.dart';
 
 class ChatService {
-  // Simulates sending a message to AI backend and getting recommendations
+  final ApiService _apiService = ApiService();
+  final AuthService _authService = AuthService();
+  
+  // Flag to use dummy data as fallback
+  final bool _useDummyFallback = true;
+
+  /// Sends a message to AI backend and gets recommendations
   Future<Map<String, dynamic>> sendMessage(String userMessage) async {
-    // Simulate network delay (0.5-2 seconds)
-    await Future.delayed(
-      Duration(milliseconds: 500 + (userMessage.length * 50)),
-    );
+    try {
+      final token = await _authService.getIdToken();
+      final headers = token != null 
+          ? ApiConfig.authHeaders(token) 
+          : ApiConfig.headers;
 
-    // Get AI response based on message
-    String botReply = getAiResponse(userMessage);
+      final response = await _apiService.post(
+        ApiConfig.chatSendMessage,
+        headers: headers,
+        body: {
+          'message': userMessage,
+        },
+      );
 
-    // Get recommended products (in real backend, this would be personalized)
-    List<ProductModel> recommendedProducts = _getRecommendedProductsForMessage(
-      userMessage,
-    );
+      String botReply = response['reply'] ?? 'I understand your request.';
+      List<ProductModel> products = [];
 
-    return {'reply': botReply, 'products': recommendedProducts};
+      if (response['products'] != null) {
+        final List<dynamic> productsList = response['products'];
+        products = productsList
+            .map((json) => ProductModel.fromJson(json))
+            .toList();
+      }
+
+      return {
+        'reply': botReply,
+        'products': products,
+      };
+    } catch (e) {
+      print('Error sending message: $e');
+      
+      // Fallback to dummy data
+      if (_useDummyFallback) {
+        await Future.delayed(
+          Duration(milliseconds: 500 + (userMessage.length * 50)),
+        );
+
+        String botReply = getAiResponse(userMessage);
+        List<ProductModel> recommendedProducts = 
+            _getRecommendedProductsForMessage(userMessage);
+
+        return {
+          'reply': botReply,
+          'products': recommendedProducts,
+        };
+      }
+      
+      rethrow;
+    }
   }
 
-  // Helper to select products based on user message intent
+  /// Helper to select products based on user message intent (fallback)
   List<ProductModel> _getRecommendedProductsForMessage(String userMessage) {
     final message = userMessage.toLowerCase();
 
@@ -59,16 +103,66 @@ class ChatService {
     return products.take(5).toList();
   }
 
-  // Get chat history (for future implementation)
+  /// Get chat history
   Future<List<ChatMessageModel>> getChatHistory() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return dummyChatHistory;
+    try {
+      final token = await _authService.getIdToken();
+      final headers = token != null 
+          ? ApiConfig.authHeaders(token) 
+          : ApiConfig.headers;
+
+      final response = await _apiService.get(
+        '${ApiConfig.baseUrl}/chat/history',
+        headers: headers,
+      );
+
+      if (response['messages'] != null) {
+        final List<dynamic> messagesList = response['messages'];
+        return messagesList
+            .map((json) => ChatMessageModel.fromJson(json))
+            .toList();
+      }
+      
+      return [];
+    } catch (e) {
+      print('Error fetching chat history: $e');
+      
+      // Fallback to dummy data
+      if (_useDummyFallback) {
+        await Future.delayed(const Duration(milliseconds: 300));
+        return dummyChatHistory;
+      }
+      
+      return [];
+    }
   }
 
-  // Save chat message (for future implementation)
+  /// Save chat message
   Future<bool> saveChatMessage(ChatMessageModel message) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    dummyChatHistory.add(message);
-    return true;
+    try {
+      final token = await _authService.getIdToken();
+      final headers = token != null 
+          ? ApiConfig.authHeaders(token) 
+          : ApiConfig.headers;
+
+      await _apiService.post(
+        '${ApiConfig.baseUrl}/chat/save',
+        headers: headers,
+        body: message.toJson(),
+      );
+
+      return true;
+    } catch (e) {
+      print('Error saving message: $e');
+      
+      // Fallback behavior
+      if (_useDummyFallback) {
+        await Future.delayed(const Duration(milliseconds: 200));
+        dummyChatHistory.add(message);
+        return true;
+      }
+      
+      return false;
+    }
   }
 }
