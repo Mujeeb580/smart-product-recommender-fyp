@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/theme_provider.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/glassy_shine.dart';
 import 'sign_up_screen.dart';
 
@@ -44,12 +45,45 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
+    
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-    // Navigate to home on successful login
-    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+    
+    try {
+      // Call Firebase Authentication
+      final authService = AuthService();
+      final user = await authService.signInWithEmailPassword(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+      
+      if (!mounted) return;
+      
+      if (user != null) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome back, ${user.email}!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Navigate to home
+        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() => _isSubmitting = false);
+      
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   void _goToSignUp() {
