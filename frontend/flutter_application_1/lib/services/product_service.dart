@@ -7,7 +7,7 @@ import '../core/api_config.dart';
 class ProductService {
   final ApiService _apiService = ApiService();
   final AuthService _authService = AuthService();
-  
+
   // Flag to use dummy data as fallback
   final bool _useDummyFallback = true;
 
@@ -15,9 +15,8 @@ class ProductService {
   Future<List<ProductModel>> fetchRecommendedProducts({String? query}) async {
     try {
       final token = await _authService.getIdToken();
-      final headers = token != null 
-          ? ApiConfig.authHeaders(token) 
-          : ApiConfig.headers;
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
       final response = await _apiService.get(
         ApiConfig.productsRecommend,
@@ -27,15 +26,13 @@ class ProductService {
 
       if (response['products'] != null) {
         final List<dynamic> productsList = response['products'];
-        return productsList
-            .map((json) => ProductModel.fromJson(json))
-            .toList();
+        return productsList.map((json) => ProductModel.fromJson(json)).toList();
       }
-      
+
       throw Exception('No products in response');
     } catch (e) {
       print('Error fetching products: $e');
-      
+
       // Fallback to dummy data if API fails
       if (_useDummyFallback) {
         await Future.delayed(const Duration(milliseconds: 800));
@@ -43,7 +40,7 @@ class ProductService {
         products.sort((a, b) => b.similarityScore.compareTo(a.similarityScore));
         return products;
       }
-      
+
       rethrow;
     }
   }
@@ -52,9 +49,8 @@ class ProductService {
   Future<ProductModel?> fetchProductDetails(String id) async {
     try {
       final token = await _authService.getIdToken();
-      final headers = token != null 
-          ? ApiConfig.authHeaders(token) 
-          : ApiConfig.headers;
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
       final response = await _apiService.get(
         '${ApiConfig.baseUrl}/products/$id',
@@ -64,17 +60,17 @@ class ProductService {
       if (response['product'] != null) {
         return ProductModel.fromJson(response['product']);
       }
-      
+
       throw Exception('Product not found');
     } catch (e) {
       print('Error fetching product details: $e');
-      
+
       // Fallback to dummy data
       if (_useDummyFallback) {
         await Future.delayed(const Duration(milliseconds: 500));
         return getProductById(id);
       }
-      
+
       rethrow;
     }
   }
@@ -83,9 +79,8 @@ class ProductService {
   Future<List<ProductModel>> searchProducts(String query) async {
     try {
       final token = await _authService.getIdToken();
-      final headers = token != null 
-          ? ApiConfig.authHeaders(token) 
-          : ApiConfig.headers;
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
       final response = await _apiService.get(
         ApiConfig.productsSearch,
@@ -95,15 +90,13 @@ class ProductService {
 
       if (response['products'] != null) {
         final List<dynamic> productsList = response['products'];
-        return productsList
-            .map((json) => ProductModel.fromJson(json))
-            .toList();
+        return productsList.map((json) => ProductModel.fromJson(json)).toList();
       }
-      
+
       throw Exception('No products in response');
     } catch (e) {
       print('Error searching products: $e');
-      
+
       // Fallback to dummy data
       if (_useDummyFallback) {
         await Future.delayed(const Duration(milliseconds: 600));
@@ -117,7 +110,7 @@ class ProductService {
             )
             .toList();
       }
-      
+
       rethrow;
     }
   }
@@ -126,9 +119,8 @@ class ProductService {
   Future<List<ProductModel>> filterByCategory(String category) async {
     try {
       final token = await _authService.getIdToken();
-      final headers = token != null 
-          ? ApiConfig.authHeaders(token) 
-          : ApiConfig.headers;
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
       final response = await _apiService.get(
         ApiConfig.productsFilter,
@@ -138,15 +130,13 @@ class ProductService {
 
       if (response['products'] != null) {
         final List<dynamic> productsList = response['products'];
-        return productsList
-            .map((json) => ProductModel.fromJson(json))
-            .toList();
+        return productsList.map((json) => ProductModel.fromJson(json)).toList();
       }
-      
+
       throw Exception('No products in response');
     } catch (e) {
       print('Error filtering by category: $e');
-      
+
       // Fallback to dummy data
       if (_useDummyFallback) {
         await Future.delayed(const Duration(milliseconds: 500));
@@ -154,7 +144,7 @@ class ProductService {
             .where((p) => p.category.toLowerCase() == category.toLowerCase())
             .toList();
       }
-      
+
       rethrow;
     }
   }
@@ -166,9 +156,8 @@ class ProductService {
   ) async {
     try {
       final token = await _authService.getIdToken();
-      final headers = token != null 
-          ? ApiConfig.authHeaders(token) 
-          : ApiConfig.headers;
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
       final response = await _apiService.get(
         ApiConfig.productsFilter,
@@ -181,15 +170,13 @@ class ProductService {
 
       if (response['products'] != null) {
         final List<dynamic> productsList = response['products'];
-        return productsList
-            .map((json) => ProductModel.fromJson(json))
-            .toList();
+        return productsList.map((json) => ProductModel.fromJson(json)).toList();
       }
-      
+
       throw Exception('No products in response');
     } catch (e) {
       print('Error filtering by price: $e');
-      
+
       // Fallback to dummy data
       if (_useDummyFallback) {
         await Future.delayed(const Duration(milliseconds: 500));
@@ -197,7 +184,7 @@ class ProductService {
             .where((p) => p.price >= minPrice && p.price <= maxPrice)
             .toList();
       }
-      
+
       rethrow;
     }
   }
@@ -206,9 +193,8 @@ class ProductService {
   Future<List<ProductModel>> getTrendingProducts() async {
     try {
       final token = await _authService.getIdToken();
-      final headers = token != null 
-          ? ApiConfig.authHeaders(token) 
-          : ApiConfig.headers;
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
       final response = await _apiService.get(
         '${ApiConfig.baseUrl}/products/trending',
@@ -217,15 +203,13 @@ class ProductService {
 
       if (response['products'] != null) {
         final List<dynamic> productsList = response['products'];
-        return productsList
-            .map((json) => ProductModel.fromJson(json))
-            .toList();
+        return productsList.map((json) => ProductModel.fromJson(json)).toList();
       }
-      
+
       throw Exception('No products in response');
     } catch (e) {
       print('Error fetching trending products: $e');
-      
+
       // Fallback to dummy data
       if (_useDummyFallback) {
         await Future.delayed(const Duration(milliseconds: 600));
@@ -233,7 +217,7 @@ class ProductService {
         products.shuffle();
         return products.take(5).toList();
       }
-      
+
       rethrow;
     }
   }

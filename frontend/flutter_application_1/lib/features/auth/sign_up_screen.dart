@@ -53,9 +53,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
-    
+
     setState(() => _isSubmitting = true);
-    
+
     try {
       // Call Firebase Authentication
       final authService = AuthService();
@@ -63,26 +63,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _emailController.text.trim(),
         _passwordController.text,
       );
-      
+
       if (!mounted) return;
-      
+
       if (user != null) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Account created successfully! Welcome ${user.email}'),
+            content:
+                Text('Account created successfully! Welcome ${user.email}'),
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Navigate to home
-        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/home', (route) => false);
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       setState(() => _isSubmitting = false);
-      
+
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

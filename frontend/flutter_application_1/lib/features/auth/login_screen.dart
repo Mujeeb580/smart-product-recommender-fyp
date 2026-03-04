@@ -45,9 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
-    
+
     setState(() => _isSubmitting = true);
-    
+
     try {
       // Call Firebase Authentication
       final authService = AuthService();
@@ -55,9 +55,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _emailController.text.trim(),
         _passwordController.text,
       );
-      
+
       if (!mounted) return;
-      
+
       if (user != null) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -66,15 +66,16 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Navigate to home
-        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/home', (route) => false);
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       setState(() => _isSubmitting = false);
-      
+
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

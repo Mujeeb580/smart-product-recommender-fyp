@@ -9,7 +9,7 @@ import '../core/api_config.dart';
 class ChatService {
   final ApiService _apiService = ApiService();
   final AuthService _authService = AuthService();
-  
+
   // Flag to use dummy data as fallback
   final bool _useDummyFallback = true;
 
@@ -17,9 +17,8 @@ class ChatService {
   Future<Map<String, dynamic>> sendMessage(String userMessage) async {
     try {
       final token = await _authService.getIdToken();
-      final headers = token != null 
-          ? ApiConfig.authHeaders(token) 
-          : ApiConfig.headers;
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
       final response = await _apiService.post(
         ApiConfig.chatSendMessage,
@@ -34,9 +33,8 @@ class ChatService {
 
       if (response['products'] != null) {
         final List<dynamic> productsList = response['products'];
-        products = productsList
-            .map((json) => ProductModel.fromJson(json))
-            .toList();
+        products =
+            productsList.map((json) => ProductModel.fromJson(json)).toList();
       }
 
       return {
@@ -45,7 +43,7 @@ class ChatService {
       };
     } catch (e) {
       print('Error sending message: $e');
-      
+
       // Fallback to dummy data
       if (_useDummyFallback) {
         await Future.delayed(
@@ -53,7 +51,7 @@ class ChatService {
         );
 
         String botReply = getAiResponse(userMessage);
-        List<ProductModel> recommendedProducts = 
+        List<ProductModel> recommendedProducts =
             _getRecommendedProductsForMessage(userMessage);
 
         return {
@@ -61,7 +59,7 @@ class ChatService {
           'products': recommendedProducts,
         };
       }
-      
+
       rethrow;
     }
   }
@@ -86,13 +84,11 @@ class ChatService {
           .where((p) => p.category.contains('Smartphone'))
           .toList();
     } else if (message.contains('camera') || message.contains('photo')) {
-      products = dummyProducts
-          .where((p) => p.specs!.contains('camera'))
-          .toList();
+      products =
+          dummyProducts.where((p) => p.specs!.contains('camera')).toList();
       if (products.isEmpty) {
-        products = dummyProducts
-            .where((p) => p.similarityScore >= 0.87)
-            .toList();
+        products =
+            dummyProducts.where((p) => p.similarityScore >= 0.87).toList();
       }
     } else {
       // Default: return top-rated products
@@ -107,9 +103,8 @@ class ChatService {
   Future<List<ChatMessageModel>> getChatHistory() async {
     try {
       final token = await _authService.getIdToken();
-      final headers = token != null 
-          ? ApiConfig.authHeaders(token) 
-          : ApiConfig.headers;
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
       final response = await _apiService.get(
         '${ApiConfig.baseUrl}/chat/history',
@@ -122,17 +117,17 @@ class ChatService {
             .map((json) => ChatMessageModel.fromJson(json))
             .toList();
       }
-      
+
       return [];
     } catch (e) {
       print('Error fetching chat history: $e');
-      
+
       // Fallback to dummy data
       if (_useDummyFallback) {
         await Future.delayed(const Duration(milliseconds: 300));
         return dummyChatHistory;
       }
-      
+
       return [];
     }
   }
@@ -141,9 +136,8 @@ class ChatService {
   Future<bool> saveChatMessage(ChatMessageModel message) async {
     try {
       final token = await _authService.getIdToken();
-      final headers = token != null 
-          ? ApiConfig.authHeaders(token) 
-          : ApiConfig.headers;
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
       await _apiService.post(
         '${ApiConfig.baseUrl}/chat/save',
@@ -154,14 +148,14 @@ class ChatService {
       return true;
     } catch (e) {
       print('Error saving message: $e');
-      
+
       // Fallback behavior
       if (_useDummyFallback) {
         await Future.delayed(const Duration(milliseconds: 200));
         dummyChatHistory.add(message);
         return true;
       }
-      
+
       return false;
     }
   }
