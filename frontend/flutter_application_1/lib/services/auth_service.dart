@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import '../core/api_config.dart';
 
-/// Firebase Authentication Service
+/// Firebase Authentication Service with Backend Integration
 class AuthService {
   // Singleton pattern
   static final AuthService _instance = AuthService._internal();
@@ -29,7 +29,7 @@ class AuthService {
         password: password,
       );
 
-      // Register user in backend
+      // Register user in backend (optional - for additional data storage)
       try {
         await _apiService.post(
           ApiConfig.authRegister,
@@ -41,6 +41,12 @@ class AuthService {
       } catch (e) {
         // Log backend registration error but don't fail
         print('Backend registration error: $e');
+      }
+
+      // Save token
+      final token = await userCredential.user?.getIdToken();
+      if (token != null) {
+        await _saveToken(token);
       }
 
       return userCredential.user;
@@ -154,6 +160,11 @@ class AuthService {
     }
   }
 
+  /// Check if user is logged in
+  Future<bool> isLoggedIn() async {
+    return _auth.currentUser != null;
+  }
+
   /// Save token to local storage
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -193,6 +204,8 @@ class AuthService {
         return 'Too many attempts. Please try again later.';
       case 'requires-recent-login':
         return 'Please sign in again to complete this action.';
+      case 'invalid-credential':
+        return 'Invalid credentials. Please check your email and password.';
       default:
         return e.message ?? 'Authentication error occurred.';
     }
