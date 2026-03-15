@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../services/theme_provider.dart';
 import '../../services/auth_service.dart';
@@ -79,6 +80,46 @@ class _SignUpScreenState extends State<SignUpScreen> {
         // Navigate to home
         Navigator.of(context)
             .pushNamedAndRemoveUntil('/home', (route) => false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() => _isSubmitting = false);
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isSubmitting = true);
+
+    try {
+      final authService = AuthService();
+      final user = await authService.signInWithGoogle();
+
+      if (!mounted) return;
+
+      if (user != null) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome, ${user.displayName ?? user.email}!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate to home
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/home', (route) => false);
+      } else {
+        setState(() => _isSubmitting = false);
       }
     } catch (e) {
       if (!mounted) return;
@@ -206,6 +247,69 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       _buildConfirmPasswordField(),
                                       const SizedBox(height: 24),
                                       _buildSubmitButton(context),
+                                      const SizedBox(height: 20),
+                                      // Divider with "OR"
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Container(
+                                              height: 1,
+                                              color: Colors.white.withOpacity(0.3),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                            ),
+                                            child: Text(
+                                              'OR',
+                                              style: TextStyle(
+                                                color: Colors.white.withOpacity(0.7),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Container(
+                                              height: 1,
+                                              color: Colors.white.withOpacity(0.3),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 20),
+                                      // Google Sign-In Button
+                                      OutlinedButton.icon(
+                                        onPressed: _isSubmitting ? null : _signInWithGoogle,
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          foregroundColor: Colors.black87,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 16,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          side: BorderSide(
+                                            color: Colors.grey.shade300,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        icon: const FaIcon(
+                                          FontAwesomeIcons.google,
+                                          size: 20,
+                                          color: Color(0xFFDB4437),
+                                        ),
+                                        label: const Text(
+                                          'Continue with Google',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ),
                                       const SizedBox(height: 16),
                                       Row(
                                         mainAxisAlignment:

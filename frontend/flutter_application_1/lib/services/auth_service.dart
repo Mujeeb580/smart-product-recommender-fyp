@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'api_service.dart';
 import '../core/api_config.dart';
 
@@ -11,6 +13,16 @@ class AuthService {
   AuthService._internal();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  // GoogleSignIn with web support
+  // For web: client ID is read from meta tag in index.html
+  // For mobile: uses default configuration from google-services.json/GoogleService-Info.plist
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    // serverClientId is optional - used for backend authentication
+    // For web, the clientId is automatically read from the meta tag
+    scopes: ['email', 'profile'],
+  );
+  
   final ApiService _apiService = ApiService();
 
   // Current user stream
@@ -80,10 +92,68 @@ class AuthService {
     }
   }
 
+  /// Sign in with Google
+  Future<User?> signInWithGoogle() async {
+    try {
+      // Trigger Google Sign-In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        // User cancelled the sign-in
+        return null;
+      }
+
+      // Obtain auth details from request
+      final GoogleSignInAuthentication googleAuth = 
+          await googleUser.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the Google credential
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      // Save user token for API calls
+      final token = await userCredential.user?.getIdToken();
+      if (token != null) {
+        await _saveToken(token);
+      }
+
+      // Optionally register user in backend
+      try {
+        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+          await _apiService.post(
+            ApiConfig.authRegister,
+            body: {
+              'email': userCredential.user?.email ?? '',
+              'displayName': userCredential.user?.displayName ?? '',
+              'photoURL': userCredential.user?.photoURL ?? '',
+            },
+          );
+        }
+      } catch (e) {
+        print('Backend registration error: $e');
+      }
+
+      return userCredential.user;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw Exception('Google sign-in failed: ${e.toString()}');
+    }
+  }
+
   /// Sign out
   Future<void> signOut() async {
     try {
-      await _auth.signOut();
+      await Future.wait([
+        _auth.signOut(),
+        _googleSignIn.signOut(),
+      ]);
       await _clearToken();
     } catch (e) {
       throw Exception('Sign out failed: ${e.toString()}');
