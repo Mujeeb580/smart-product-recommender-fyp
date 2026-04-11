@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/product_model.dart';
 import '../../core/theme.dart';
 
@@ -21,6 +23,7 @@ class ProductDetailScreen extends StatelessWidget {
     final maxWidth = isDesktop ? 1200.0 : double.infinity;
     final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 24.0 : 20.0);
     final imageHeight = isDesktop ? 500.0 : (isTablet ? 400.0 : 300.0);
+    final hasImage = product.image.isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -90,138 +93,71 @@ class ProductDetailScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // Product Image Section
-                    Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: horizontalPadding),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            width: double.infinity,
-                            height: imageHeight,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.2),
+                    if (hasImage) ...[
+                      // Product Image Section
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              width: double.infinity,
+                              height: imageHeight,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                ),
                               ),
-                            ),
-                            child: Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: SizedBox(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    child: _isNetworkImage(product.image)
-                                        ? Image.network(
-                                            product.image,
-                                            fit: BoxFit.contain,
-                                            loadingBuilder: (context, child,
-                                                loadingProgress) {
-                                              if (loadingProgress == null) {
-                                                return child;
-                                              }
-                                              return Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  value: loadingProgress
-                                                              .expectedTotalBytes !=
-                                                          null
-                                                      ? loadingProgress
-                                                              .cumulativeBytesLoaded /
-                                                          loadingProgress
-                                                              .expectedTotalBytes!
-                                                      : null,
-                                                  color: Colors.white,
-                                                ),
-                                              );
-                                            },
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return const Center(
-                                                child: Icon(
-                                                  Icons.smartphone,
-                                                  size: 80,
-                                                  color: Colors.white54,
-                                                ),
-                                              );
-                                            },
-                                          )
-                                        : Image.asset(
-                                            product.image,
-                                            fit: BoxFit.contain,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return const Center(
-                                                child: Icon(
-                                                  Icons.smartphone,
-                                                  size: 80,
-                                                  color: Colors.white54,
-                                                ),
-                                              );
-                                            },
+                              child: _isNetworkImage(product.image)
+                                  ? Image.network(
+                                      product.image,
+                                      fit: BoxFit.contain,
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) {
+                                          return child;
+                                        }
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                    loadingProgress.expectedTotalBytes!
+                                                : null,
+                                            color: Colors.white,
                                           ),
-                                  ),
-                                ),
-                                // AI Match Badge
-                                Positioned(
-                                  top: 20,
-                                  right: 20,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: BackdropFilter(
-                                      filter: ImageFilter.blur(
-                                          sigmaX: 10, sigmaY: 10),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 12,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF7C3AED)
-                                              .withOpacity(0.9),
-                                          borderRadius:
-                                              BorderRadius.circular(16),
-                                          border: Border.all(
-                                            color:
-                                                Colors.white.withOpacity(0.3),
+                                        );
+                                      },
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Center(
+                                          child: Icon(
+                                            Icons.smartphone,
+                                            size: 80,
+                                            color: Colors.white54,
                                           ),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            const Text(
-                                              'AI Match',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            Text(
-                                              '${(product.similarityScore * 100).toStringAsFixed(0)}%',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 22,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                        );
+                                      },
+                                    )
+                                  : Image.asset(
+                                      product.image,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Center(
+                                          child: Icon(
+                                            Icons.smartphone,
+                                            size: 80,
+                                            color: Colors.white54,
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
+                    ],
 
                     // Product Info
                     Padding(
@@ -299,6 +235,65 @@ class ProductDetailScreen extends StatelessWidget {
                                   ],
                                 ),
                                 const SizedBox(height: 24),
+
+                                if (product.similarityScore > 0) ...[
+                                  _detailTile(
+                                    context,
+                                    'Similarity Score',
+                                    '${(product.similarityScore * 100).toStringAsFixed(1)}%',
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+
+                                if (product.ram != null && product.ram!.isNotEmpty) ...[
+                                  _detailTile(context, 'RAM', product.ram!),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (product.storage != null && product.storage!.isNotEmpty) ...[
+                                  _detailTile(context, 'Storage', product.storage!),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (product.processor != null && product.processor!.isNotEmpty) ...[
+                                  _detailTile(context, 'Processor', product.processor!),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (product.gpu != null && product.gpu!.isNotEmpty) ...[
+                                  _detailTile(context, 'GPU', product.gpu!),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (product.battery != null && product.battery!.isNotEmpty) ...[
+                                  _detailTile(context, 'Battery', product.battery!),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (product.camera != null && product.camera!.isNotEmpty) ...[
+                                  _detailTile(context, 'Camera', product.camera!),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (product.specs != null && product.specs!.isNotEmpty) ...[
+                                  _detailTile(context, 'Specs', product.specs!),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (product.source != null && product.source!.isNotEmpty) ...[
+                                  _detailTile(context, 'Source', product.source!),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (product.collection != null && product.collection!.isNotEmpty) ...[
+                                  _detailTile(context, 'Collection', product.collection!),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (product.productId != null && product.productId!.isNotEmpty) ...[
+                                  _detailTile(context, 'Product ID', product.productId!),
+                                  const SizedBox(height: 12),
+                                ],
+                                _detailTile(context, 'Document ID', product.id),
+                                if (product.scrapedAt != null && product.scrapedAt!.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  _detailTile(context, 'Scraped At', product.scrapedAt!),
+                                ],
+                                if (product.url != null && product.url!.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  _detailTile(context, 'Product Link', product.url!),
+                                ],
 
                                 // Price
                                 Container(
@@ -381,7 +376,7 @@ class ProductDetailScreen extends StatelessWidget {
                                       Expanded(
                                         child: _buildButton(
                                           context,
-                                          'Check Availability',
+                                          'Purchase Now',
                                           true,
                                           isDesktop,
                                         ),
@@ -400,12 +395,7 @@ class ProductDetailScreen extends StatelessWidget {
                                 else
                                   Column(
                                     children: [
-                                      _buildButton(
-                                        context,
-                                        'Check Availability',
-                                        true,
-                                        isDesktop,
-                                      ),
+                                      _buildButton(context, 'Purchase Now', true, isDesktop),
                                       const SizedBox(height: 12),
                                       _buildButton(
                                         context,
@@ -441,13 +431,18 @@ class ProductDetailScreen extends StatelessWidget {
       child: isPrimary
           ? ElevatedButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Coming soon! Backend integration needed.'),
-                    duration: Duration(seconds: 2),
-                    backgroundColor: Color(0xFF7C3AED),
-                  ),
-                );
+                if (product.url == null || product.url!.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No product link available for this item.'),
+                      duration: Duration(seconds: 2),
+                      backgroundColor: Color(0xFF7C3AED),
+                    ),
+                  );
+                  return;
+                }
+
+                _openOrCopyProductLink(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF7C3AED),
@@ -486,5 +481,71 @@ class ProductDetailScreen extends StatelessWidget {
               ),
             ),
     );
+  }
+
+  Widget _detailTile(BuildContext context, String label, String value) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.75),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openOrCopyProductLink(BuildContext context) async {
+    final link = product.url;
+    if (link == null || link.isEmpty) {
+      return;
+    }
+
+    final uri = Uri.tryParse(link);
+    if (uri == null) {
+      Clipboard.setData(ClipboardData(text: link));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid URL format. Link copied to clipboard.'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Color(0xFF7C3AED),
+        ),
+      );
+      return;
+    }
+
+    final opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
+    if (!opened) {
+      Clipboard.setData(ClipboardData(text: link));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open browser. Link copied to clipboard.'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Color(0xFF7C3AED),
+        ),
+      );
+    }
   }
 }

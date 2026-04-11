@@ -3,11 +3,22 @@ class ProductModel {
   final String name;
   final String brand;
   final double price;
-  final String image; // local asset path
+  final String image;
   final double similarityScore; // 0.0 to 1.0
   final String category;
   final String? description;
   final String? specs;
+  final String? url;
+  final String? source;
+  final String? collection;
+  final String? productId;
+  final String? scrapedAt;
+  final String? ram;
+  final String? storage;
+  final String? processor;
+  final String? gpu;
+  final String? battery;
+  final String? camera;
 
   ProductModel({
     required this.id,
@@ -19,6 +30,17 @@ class ProductModel {
     required this.category,
     this.description,
     this.specs,
+    this.url,
+    this.source,
+    this.collection,
+    this.productId,
+    this.scrapedAt,
+    this.ram,
+    this.storage,
+    this.processor,
+    this.gpu,
+    this.battery,
+    this.camera,
   });
 
   // Convert to JSON (for future backend)
@@ -33,21 +55,59 @@ class ProductModel {
       'category': category,
       'description': description,
       'specs': specs,
+      'url': url,
+      'source': source,
+      'collection': collection,
+      'product_id': productId,
+      'scraped_at': scrapedAt,
+      'ram': ram,
+      'storage': storage,
+      'processor': processor,
+      'gpu': gpu,
+      'battery': battery,
+      'camera': camera,
     };
   }
 
-  // Convert from JSON (for future backend)
+  static double _toDouble(dynamic value, {double fallback = 0.0}) {
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      final cleaned = value.replaceAll('Rs', '').replaceAll(',', '').trim();
+      return double.tryParse(cleaned) ?? fallback;
+    }
+    return fallback;
+  }
+
+  // Convert from JSON for backend data.
   factory ProductModel.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'] ?? json['product_id'] ?? '';
+    final rawName = json['name'] ?? 'Unknown Product';
+    final rawBrand = json['brand'] ?? 'Unknown';
+    final rawCategory = json['category'] ?? json['collection'] ?? 'Product';
+    final rawImage = (json['image'] ?? json['image_url'] ?? '').toString();
+    final rawScore = json['similarityScore'] ?? json['similarity_score'] ?? 0.0;
+
     return ProductModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      brand: json['brand'] as String,
-      price: (json['price'] as num).toDouble(),
-      image: json['image'] as String,
-      similarityScore: (json['similarityScore'] as num).toDouble(),
-      category: json['category'] as String,
-      description: json['description'] as String?,
-      specs: json['specs'] as String?,
+      id: rawId.toString(),
+      name: rawName.toString(),
+      brand: rawBrand.toString(),
+      price: _toDouble(json['price']),
+      image: rawImage,
+      similarityScore: _toDouble(rawScore),
+      category: rawCategory.toString(),
+      description: json['description']?.toString(),
+      specs: json['specs']?.toString(),
+      url: json['url']?.toString(),
+      source: json['source']?.toString(),
+      collection: json['collection']?.toString(),
+      productId: json['product_id']?.toString(),
+      scrapedAt: json['scraped_at']?.toString(),
+      ram: json['ram']?.toString(),
+      storage: json['storage']?.toString(),
+      processor: json['processor']?.toString(),
+      gpu: json['gpu']?.toString(),
+      battery: json['battery']?.toString(),
+      camera: json['camera']?.toString(),
     );
   }
 
@@ -62,6 +122,17 @@ class ProductModel {
     String? category,
     String? description,
     String? specs,
+    String? url,
+    String? source,
+    String? collection,
+    String? productId,
+    String? scrapedAt,
+    String? ram,
+    String? storage,
+    String? processor,
+    String? gpu,
+    String? battery,
+    String? camera,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -73,6 +144,17 @@ class ProductModel {
       category: category ?? this.category,
       description: description ?? this.description,
       specs: specs ?? this.specs,
+      url: url ?? this.url,
+      source: source ?? this.source,
+      collection: collection ?? this.collection,
+      productId: productId ?? this.productId,
+      scrapedAt: scrapedAt ?? this.scrapedAt,
+      ram: ram ?? this.ram,
+      storage: storage ?? this.storage,
+      processor: processor ?? this.processor,
+      gpu: gpu ?? this.gpu,
+      battery: battery ?? this.battery,
+      camera: camera ?? this.camera,
     );
   }
 

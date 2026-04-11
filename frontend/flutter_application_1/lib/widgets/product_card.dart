@@ -14,6 +14,10 @@ class ProductCard extends StatelessWidget {
     this.showSimilarity = true,
   });
 
+  bool _isNetworkImage(String path) {
+    return path.startsWith('http://') || path.startsWith('https://');
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -55,7 +59,16 @@ class ProductCard extends StatelessWidget {
                         topLeft: Radius.circular(AppTheme.radiusLarge),
                         topRight: Radius.circular(AppTheme.radiusLarge),
                       ),
-                      child: product.image.startsWith('http')
+                      child: product.image.isEmpty
+                          ? Container(
+                              color: AppTheme.cardColor,
+                              child: Icon(
+                                Icons.smartphone,
+                                size: 80,
+                                color: AppTheme.primaryColor.withOpacity(0.3),
+                              ),
+                            )
+                          : _isNetworkImage(product.image)
                           ? Image.network(
                               product.image,
                               fit: BoxFit.cover,

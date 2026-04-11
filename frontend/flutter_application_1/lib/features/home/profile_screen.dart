@@ -2,9 +2,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/theme_provider.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/glassy_shine.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
+import '../../core/routes.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -249,6 +251,16 @@ class ProfileScreen extends StatelessWidget {
                           const _SectionTitle(title: 'Preferences'),
                           const SizedBox(height: 14),
 
+                          _GlassInfoCard(
+                            icon: Icons.admin_panel_settings_outlined,
+                            label: 'Administration',
+                            value: 'Open Firestore Admin Portal',
+                            onTap: () {
+                              Navigator.of(context).pushNamed(AppRoutes.admin);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+
                           // Notification Toggle
                           const _GlassSettingItem(
                             icon: Icons.notifications_outlined,
@@ -381,16 +393,28 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context); // Close dialog
-              Navigator.of(context)
-                  .pushNamedAndRemoveUntil('/login', (route) => false);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Logged out successfully'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              try {
+                await AuthService().signOut();
+                if (!context.mounted) return;
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/login', (route) => false);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Logged out successfully'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Logout failed: $e'),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
             },
             child: const Text(
               'Logout',

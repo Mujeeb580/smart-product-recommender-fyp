@@ -10,6 +10,7 @@ class AppRoutes {
   static const String productList = '/products';
   static const String productDetail = '/product/:id';
   static const String profile = '/profile';
+  static const String admin = '/admin';
 
   // Navigator for easy navigation
   static void navigateTo(BuildContext context, String route) {

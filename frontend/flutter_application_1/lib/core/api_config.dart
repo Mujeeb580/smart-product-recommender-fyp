@@ -21,6 +21,10 @@ class ApiConfig {
   static const String productsFilter = '$baseUrl/products/filter';
   
   static const String chatSendMessage = '$baseUrl/chat/send';
+
+  static const String adminOverview = '$baseUrl/admin/overview';
+  static const String adminProducts = '$baseUrl/admin/products';
+  static const String adminCollections = '$baseUrl/admin/collections';
   
   // Timeout durations
   static const Duration connectionTimeout = Duration(seconds: 30);

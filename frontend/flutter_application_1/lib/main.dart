@@ -15,6 +15,7 @@ import 'features/home/home_screen.dart';
 import 'features/home/chat_screen.dart';
 import 'features/home/profile_screen.dart';
 import 'features/products/product_list_screen.dart';
+import 'features/admin/admin_portal_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,6 +73,7 @@ class MyApp extends StatelessWidget {
             AppRoutes.chat: (context) => const ChatScreen(),
             AppRoutes.productList: (context) => const ProductListScreen(),
             AppRoutes.profile: (context) => const ProfileScreen(),
+            AppRoutes.admin: (context) => const AdminPortalScreen(),
           },
         );
       },
