@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 from app.recommendation.firestore import fetch_products
 from app.recommendation.engine import recommend_products
+from app.services.llm_service import generate_explanation
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -16,14 +16,18 @@ class ChatResponse(BaseModel):
     products: list
 
 
-@router.post("/send")
+@router.post("/send-message")
 async def send_chat_message(chat_message: ChatMessage):
     """
     Process chat message and return AI response with product recommendations.
+    
+    This endpoint:
+    1. Takes user query about products
+    2. Uses recommendation engine to find matching products
+    3. Generates contextual AI response
+    4. Returns both response and recommended products
     """
     try:
-        user_message = chat_message.message.lower()
-        
         # Fetch products from Firestore
         products = fetch_products(collection_name="products")
         
@@ -33,14 +37,17 @@ async def send_chat_message(chat_message: ChatMessage):
                 "products": []
             }
         
-        # Generate AI response based on intent
-        ai_response = generate_ai_response(user_message)
-        
-        # Get product recommendations based on the message
+        # Get product recommendations from BERT similarity ranking.
         recommended_products = recommend_products(
             chat_message.message,
             products,
             top_n=5
+        )
+
+        # Ask LLM to explain why these products match the user intent.
+        ai_response = generate_explanation(
+            user_query=chat_message.message,
+            products=recommended_products,
         )
         
         return {
@@ -49,10 +56,19 @@ async def send_chat_message(chat_message: ChatMessage):
         }
     
     except Exception as e:
+        print(f"Chat error: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Error processing message: {str(e)}"
         )
+
+
+@router.post("/send")
+async def send_chat_message_legacy(chat_message: ChatMessage):
+    """
+    Backward-compatible endpoint alias.
+    """
+    return await send_chat_message(chat_message)
 
 
 @router.get("/history")
@@ -77,42 +93,3 @@ async def save_chat_message(message: dict):
         "success": True,
         "message": "Message saved successfully"
     }
-
-
-def generate_ai_response(user_message: str) -> str:
-    """
-    Generate contextual AI responses based on user intent.
-    """
-    message = user_message.lower()
-    
-    # Budget/Affordable intent
-    if any(word in message for word in ['budget', 'cheap', 'affordable', 'inexpensive']):
-        return "I found some great budget-friendly options for you! These products offer excellent value for money."
-    
-    # Premium/Flagship intent
-    elif any(word in message for word in ['flagship', 'premium', 'best', 'high-end', 'expensive']):
-        return "Here are our top premium products! These flagship devices offer cutting-edge features and performance."
-    
-    # Gaming intent
-    elif any(word in message for word in ['game', 'gaming', 'gamer']):
-        return "Perfect for gaming! I've found products with excellent performance for your gaming needs."
-    
-    # Camera/Photography intent
-    elif any(word in message for word in ['camera', 'photo', 'photography', 'picture']):
-        return "Great choice for photography! Here are products with excellent camera capabilities."
-    
-    # Battery intent
-    elif any(word in message for word in ['battery', 'long-lasting', 'charge']):
-        return "Battery life is important! These products offer excellent battery performance."
-    
-    # Performance intent
-    elif any(word in message for word in ['fast', 'powerful', 'performance', 'speed']):
-        return "Speed matters! Here are high-performance products that won't slow you down."
-    
-    # Brand specific
-    elif any(word in message for word in ['samsung', 'apple', 'iphone', 'xiaomi', 'oppo', 'vivo']):
-        return "I found products from your preferred brand! Here are the best matches."
-    
-    # General recommendation
-    else:
-        return "Based on your query, I've found these recommended products for you. Let me know if you need more specific suggestions!"

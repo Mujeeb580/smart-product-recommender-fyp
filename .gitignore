@@ -13,3 +13,11 @@ htmlcov/
 dist/
 build/
 *.egg
+
+# Flutter/local generated files
+frontend/flutter_application_1/.dart_tool/
+frontend/flutter_application_1/build/
+
+# Firebase secrets / generated options
+frontend/flutter_application_1/android/app/google-services.json
+frontend/flutter_application_1/lib/firebase_options.dart

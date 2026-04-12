@@ -1,4 +1,5 @@
-from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
 from .model import get_model
 from .text_builder import product_to_text
 
@@ -17,7 +18,7 @@ def recommend_products(query: str, products: list, top_n: int = 10):
     query_embedding = model.encode([query])
     product_embeddings = model.encode(product_texts)
 
-    similarities = cosine_similarity(query_embedding, product_embeddings)[0]
+    similarities = np.matmul(query_embedding, product_embeddings.T)[0]
 
     ranked = sorted(
         zip(products, similarities),
