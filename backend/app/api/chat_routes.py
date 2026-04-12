@@ -28,7 +28,7 @@ def generate_ai_response(user_message: str) -> str:
     return "Here are product recommendations based on your request."
 
 
-@router.post("/send")
+@router.post("/send-message")
 async def send_chat_message(chat_message: ChatMessage):
     try:
         products = fetch_products(limit=600)
