@@ -20,7 +20,7 @@ class ApiConfig {
   static const String productsSearch = '$baseUrl/products/search';
   static const String productsFilter = '$baseUrl/products/filter';
   
-  static const String chatSendMessage = '$baseUrl/chat/send';
+  static const String chatSendMessage = '$baseUrl/chat/send-message';
 
   static const String adminOverview = '$baseUrl/admin/overview';
   static const String adminProducts = '$baseUrl/admin/products';

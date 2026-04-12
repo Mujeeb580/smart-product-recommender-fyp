@@ -89,3 +89,14 @@ def get_chat_history(limit: int = 50) -> List[Dict]:
 
     rows.reverse()
     return rows
+
+
+def update_product_fields(collection_name: str, doc_id: str, fields: Dict) -> None:
+    if not collection_name or not doc_id or not fields:
+        return
+
+    cleaned = {k: v for k, v in fields.items() if v not in (None, "", "unknown")}
+    if not cleaned:
+        return
+
+    firestore_db.collection(collection_name).document(doc_id).set(cleaned, merge=True)

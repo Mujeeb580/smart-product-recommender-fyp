@@ -7,6 +7,13 @@ import '../core/api_config.dart';
 class ChatService {
   final ApiService _apiService = ApiService();
   final AuthService _authService = AuthService();
+  static String? _sessionId;
+
+  String _getSessionId() {
+    _sessionId ??=
+        'session_${DateTime.now().millisecondsSinceEpoch}_${identityHashCode(this)}';
+    return _sessionId!;
+  }
 
   /// Sends a message to AI backend and gets recommendations
   Future<Map<String, dynamic>> sendMessage(String userMessage) async {
@@ -20,6 +27,7 @@ class ChatService {
         headers: headers,
         body: {
           'message': userMessage,
+          'session_id': _getSessionId(),
         },
       );
 

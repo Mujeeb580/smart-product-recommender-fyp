@@ -62,11 +62,6 @@ class ProductCard extends StatelessWidget {
                       child: product.image.isEmpty
                           ? Container(
                               color: AppTheme.cardColor,
-                              child: Icon(
-                                Icons.smartphone,
-                                size: 80,
-                                color: AppTheme.primaryColor.withOpacity(0.3),
-                              ),
                             )
                           : _isNetworkImage(product.image)
                           ? Image.network(
@@ -95,12 +90,6 @@ class ProductCard extends StatelessWidget {
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: AppTheme.cardColor,
-                                  child: Icon(
-                                    Icons.smartphone,
-                                    size: 80,
-                                    color:
-                                        AppTheme.primaryColor.withOpacity(0.3),
-                                  ),
                                 );
                               },
                             )
@@ -110,12 +99,6 @@ class ProductCard extends StatelessWidget {
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: AppTheme.cardColor,
-                                  child: Icon(
-                                    Icons.smartphone,
-                                    size: 80,
-                                    color:
-                                        AppTheme.primaryColor.withOpacity(0.3),
-                                  ),
                                 );
                               },
                             ),

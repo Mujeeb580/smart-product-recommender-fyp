@@ -679,41 +679,39 @@ class _GlassProductCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: product.image.startsWith('http')
-                      ? Image.network(
-                          product.image,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              color: Colors.white.withOpacity(0.1),
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.white.withOpacity(0.1),
-                              child: const Icon(Icons.smartphone,
-                                  color: Colors.white),
-                            );
-                          },
-                        )
-                      : Image.asset(
-                          product.image,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.white.withOpacity(0.1),
-                              child: const Icon(Icons.smartphone,
-                                  color: Colors.white),
-                            );
-                          },
-                        ),
+                  child: product.image.isEmpty
+                      ? Container(color: Colors.white.withOpacity(0.1))
+                      : product.image.startsWith('http')
+                          ? Image.network(
+                              product.image,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: Colors.white.withOpacity(0.1),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.white.withOpacity(0.1),
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              product.image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.white.withOpacity(0.1),
+                                );
+                              },
+                            ),
                 ),
                 Positioned(
                   bottom: 0,

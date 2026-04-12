@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../services/theme_provider.dart';
+import '../../services/product_service.dart';
 import 'profile_screen.dart';
 import '../../widgets/glassy_shine.dart';
 import 'smartphones_screen.dart';
@@ -12,6 +13,7 @@ import 'chat_screen.dart';
 import '../products/product_detail_screen.dart';
 import '../../models/product_model.dart';
 import 'search_results_screen.dart';
+import '../products/product_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -212,10 +214,11 @@ class _SearchBarState extends State<_SearchBar> {
   }
 
   void _navigateToSearch() {
+    final query = _searchController.text.trim();
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => SearchResultsScreen(
-          initialQuery: _searchController.text,
+          initialQuery: query,
         ),
       ),
     );
@@ -776,12 +779,6 @@ class _QuickFilters extends StatelessWidget {
     final filters = [
       _Filter('budget'.tr(), Icons.attach_money, const Color(0xFF10B981)),
       _Filter('brand'.tr(), Icons.sell_outlined, const Color(0xFFFB923C)),
-      _Filter('rating'.tr(), Icons.star_rate_rounded, const Color(0xFFFBBF24)),
-      _Filter(
-        'Same day',
-        Icons.local_shipping_outlined,
-        const Color(0xFF60A5FA),
-      ),
     ];
 
     return Wrap(
@@ -803,34 +800,74 @@ class _FilterChip extends StatelessWidget {
   final _Filter filter;
   const _FilterChip({required this.filter});
 
+  Future<void> _openFilteredProducts(
+    BuildContext context, {
+    required String title,
+    required Future<List<ProductModel>> future,
+  }) async {
+    try {
+      final products = await future;
+      if (!context.mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ProductListScreen(
+            initialProducts: products,
+            title: title,
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not load filtered products. Please try again.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final productService = ProductService();
+
     return GestureDetector(
       onTap: () {
-        String message = '';
-        if (filter.label.toLowerCase().contains('budget')) {
-          message = 'Budget filter: Set your price range';
-        } else if (filter.label.toLowerCase().contains('brand')) {
-          message = 'Brand filter: Choose preferred brands';
-        } else if (filter.label.toLowerCase().contains('rating')) {
-          message = 'Rating filter: Filter by customer ratings';
-        } else if (filter.label.toLowerCase().contains('same day')) {
-          message = 'Same day delivery filter activated';
-        } else {
-          message = '${filter.label} filter activated';
+        final label = filter.label.toLowerCase();
+        if (label.contains('budget')) {
+          _openFilteredProducts(
+            context,
+            title: 'Budget Picks',
+            future: productService.filterByPriceRange(0, 50000),
+          );
+          return;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            duration: const Duration(seconds: 2),
-            backgroundColor: filter.color,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
+        if (label.contains('brand')) {
+          _openFilteredProducts(
+            context,
+            title: 'Samsung Phones',
+            future: productService.searchProducts('Samsung'),
+          );
+          return;
+        }
+
+        if (label.contains('rating')) {
+          _openFilteredProducts(
+            context,
+            title: 'Top Rated Picks',
+            future: productService.fetchRecommendedProducts(query: 'best rated phone'),
+          );
+          return;
+        }
+
+        if (label.contains('same day')) {
+          _openFilteredProducts(
+            context,
+            title: 'Fast Delivery Picks',
+            future: productService.fetchCollectionProducts(collection: 'phones', limit: 40),
+          );
+          return;
+        }
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -952,74 +989,59 @@ class _HorizontalProducts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      _ProductCardData(
-        'iPhone 15 Pro Max',
-        'PKR 449,999',
-        'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400',
-        'Apple',
-        'Latest iPhone with titanium design and A17 Pro chip',
-        'Smartphones',
-      ),
-      _ProductCardData(
-        'MacBook Pro 16"',
-        'PKR 599,999',
-        'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400',
-        'Apple',
-        'Powerful laptop with M3 Max chip for professionals',
-        'Laptops',
-      ),
-      _ProductCardData(
-        'Samsung Galaxy S24 Ultra',
-        'PKR 379,999',
-        'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400',
-        'Samsung',
-        'Premium Android phone with S Pen and AI features',
-        'Smartphones',
-      ),
-      _ProductCardData(
-        'Dell XPS 15',
-        'PKR 389,999',
-        'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400',
-        'Dell',
-        'Sleek ultrabook with stunning OLED display',
-        'Laptops',
-      ),
-    ];
+    final productService = ProductService();
 
-    return SizedBox(
-      height: 180,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
-        itemBuilder: (context, index) => _ProductCard(data: items[index]),
-      ),
+    return FutureBuilder<List<ProductModel>>(
+      future: productService.fetchCollectionProducts(collection: 'phones', limit: 10),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SizedBox(
+            height: 180,
+            child: Center(
+              child: CircularProgressIndicator(
+                color: Colors.white.withOpacity(0.75),
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError || (snapshot.data ?? []).isEmpty) {
+          return SizedBox(
+            height: 180,
+            child: Center(
+              child: Text(
+                'No trending products available',
+                style: TextStyle(color: Colors.white.withOpacity(0.7)),
+              ),
+            ),
+          );
+        }
+
+        final items = List<ProductModel>.from(snapshot.data!)
+          ..sort((a, b) => b.price.compareTo(a.price));
+        final displayItems = items.take(5).toList();
+
+        return SizedBox(
+          height: 180,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: displayItems.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final product = displayItems[index];
+              return _ProductCard(product: product);
+            },
+          ),
+        );
+      },
     );
   }
 }
 
-class _ProductCardData {
-  final String title;
-  final String price;
-  final String imageUrl;
-  final String brand;
-  final String description;
-  final String category;
-  _ProductCardData(
-    this.title,
-    this.price,
-    this.imageUrl,
-    this.brand,
-    this.description,
-    this.category,
-  );
-}
-
 class _ProductCard extends StatelessWidget {
-  final _ProductCardData data;
-  const _ProductCard({required this.data});
+  final ProductModel product;
+  const _ProductCard({required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -1028,19 +1050,7 @@ class _ProductCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(
-              product: ProductModel(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                name: data.title,
-                brand: data.brand,
-                price: double.parse(
-                    data.price.replaceAll('PKR ', '').replaceAll(',', '')),
-                image: data.imageUrl,
-                similarityScore: 0.95,
-                category: data.category,
-                description: data.description,
-              ),
-            ),
+            builder: (context) => ProductDetailScreen(product: product),
           ),
         );
       },
@@ -1067,30 +1077,44 @@ class _ProductCard extends StatelessWidget {
                     height: 100,
                     width: double.infinity,
                     color: Colors.white.withOpacity(0.1),
-                    child: Image.network(
-                      data.imageUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.image_not_supported,
-                          color: Colors.white,
-                          size: 40,
-                        );
-                      },
-                    ),
+                    child: product.image.isEmpty
+                        ? Container(color: Colors.white.withOpacity(0.1))
+                        : product.image.startsWith('http')
+                            ? Image.network(
+                                product.image,
+                                fit: BoxFit.cover,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes !=
+                                              null
+                                          ? loadingProgress
+                                                  .cumulativeBytesLoaded /
+                                              loadingProgress
+                                                  .expectedTotalBytes!
+                                          : null,
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.white.withOpacity(0.1),
+                                  );
+                                },
+                              )
+                            : Image.asset(
+                                product.image,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.white.withOpacity(0.1),
+                                  );
+                                },
+                              ),
                   ),
                 ),
                 Padding(
@@ -1100,7 +1124,7 @@ class _ProductCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        data.title,
+                        product.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -1110,7 +1134,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        data.price,
+                        'Rs ${product.price.toStringAsFixed(0)}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: Colors.white,

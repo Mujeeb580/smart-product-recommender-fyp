@@ -1,5 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../models/product_model.dart';
+import '../../services/product_service.dart';
+import '../products/product_detail_screen.dart';
 
 class SearchResultsScreen extends StatefulWidget {
   final String initialQuery;
@@ -12,50 +15,17 @@ class SearchResultsScreen extends StatefulWidget {
 
 class _SearchResultsScreenState extends State<SearchResultsScreen> {
   late TextEditingController _searchController;
-  List<_SearchItem> _filteredResults = [];
-
-  final List<_SearchItem> _allProducts = [
-    // Smartphones
-    _SearchItem('Samsung Galaxy S24', 'Flagship • 256GB', 329999, 'Smartphone',
-        Icons.smartphone),
-    _SearchItem(
-        'iPhone 15 Pro', 'Pro • 256GB', 399999, 'Smartphone', Icons.smartphone),
-    _SearchItem('iPhone 15 Pro Max', 'Latest iPhone with titanium design',
-        449999, 'Smartphone', Icons.smartphone),
-    _SearchItem('Samsung Galaxy S24 Ultra', 'Premium Android phone with S Pen',
-        379999, 'Smartphone', Icons.smartphone),
-    _SearchItem('Google Pixel 8', 'AI Camera • 128GB', 259999, 'Smartphone',
-        Icons.smartphone),
-    _SearchItem('Xiaomi 14', 'Value Flagship • 256GB', 219999, 'Smartphone',
-        Icons.smartphone),
-    _SearchItem('OnePlus 12', 'Fast & Smooth • 256GB', 239999, 'Smartphone',
-        Icons.smartphone),
-    _SearchItem('Infinix Zero 30', 'Budget • 256GB', 74999, 'Smartphone',
-        Icons.smartphone),
-
-    // Laptops
-    _SearchItem('Dell XPS 15', 'Creator • i7 • 16GB', 459999, 'Laptop',
-        Icons.laptop_mac),
-    _SearchItem(
-        'MacBook Pro 14', 'M3 • 16GB', 599999, 'Laptop', Icons.laptop_mac),
-    _SearchItem('MacBook Pro 16"', 'Powerful laptop with M3 Max chip', 599999,
-        'Laptop', Icons.laptop_mac),
-    _SearchItem('HP Spectre x360', 'OLED • i7 • 16GB', 379999, 'Laptop',
-        Icons.laptop_mac),
-    _SearchItem('Lenovo ThinkPad X1', 'Business • i7 • 16GB', 419999, 'Laptop',
-        Icons.laptop_mac),
-    _SearchItem('Asus ROG Zephyrus', 'Gaming • RTX • 16GB', 489999, 'Laptop',
-        Icons.laptop_mac),
-    _SearchItem('Acer Swift 3', 'Budget • i5 • 8GB', 179999, 'Laptop',
-        Icons.laptop_mac),
-  ];
+  final ProductService _productService = ProductService();
+  Future<List<ProductModel>>? _resultsFuture;
+  String _activeQuery = '';
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController(text: widget.initialQuery);
     if (widget.initialQuery.isNotEmpty) {
-      _performSearch(widget.initialQuery);
+      _activeQuery = widget.initialQuery;
+      _resultsFuture = _search(widget.initialQuery);
     }
   }
 
@@ -65,18 +35,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     super.dispose();
   }
 
+  Future<List<ProductModel>> _search(String query) async {
+    if (query.trim().isEmpty) {
+      return [];
+    }
+
+    return _productService.searchProducts(query.trim());
+  }
+
   void _performSearch(String query) {
     setState(() {
-      if (query.isEmpty) {
-        _filteredResults = [];
-      } else {
-        _filteredResults = _allProducts.where((product) {
-          final searchLower = query.toLowerCase();
-          return product.title.toLowerCase().contains(searchLower) ||
-              product.subtitle.toLowerCase().contains(searchLower) ||
-              product.category.toLowerCase().contains(searchLower);
-        }).toList();
-      }
+      _activeQuery = query;
+      _resultsFuture = _search(query);
     });
   }
 
@@ -156,7 +126,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                     autofocus: widget.initialQuery.isEmpty,
                                     style: const TextStyle(color: Colors.white),
                                     cursorColor: Colors.white,
-                                    onChanged: _performSearch,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _activeQuery = value;
+                                      });
+                                    },
+                                    onSubmitted: _performSearch,
                                     decoration: InputDecoration(
                                       hintText: 'Search phones, laptops...',
                                       hintStyle: TextStyle(
@@ -181,7 +156,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                         color: Colors.white, size: 20),
                                     onPressed: () {
                                       _searchController.clear();
-                                      _performSearch('');
+                                      setState(() {
+                                        _activeQuery = '';
+                                        _resultsFuture = Future.value([]);
+                                      });
                                     },
                                   ),
                               ],
@@ -196,7 +174,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
               // Results
               Expanded(
-                child: _searchController.text.isEmpty
+                child: _activeQuery.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -217,36 +195,61 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                           ],
                         ),
                       )
-                    : _filteredResults.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.search_off,
-                                  size: 80,
-                                  color: Colors.white.withOpacity(0.3),
+                    : FutureBuilder<List<ProductModel>>(
+                        future: _resultsFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(color: Colors.white),
+                            );
+                          }
+
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Text(
+                                'Search failed. Please try again.',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.7),
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No results found for "${_searchController.text}"',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.6),
-                                    fontSize: 16,
+                              ),
+                            );
+                          }
+
+                          final products = snapshot.data ?? [];
+                          if (products.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.search_off,
+                                    size: 80,
+                                    color: Colors.white.withOpacity(0.3),
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No results found for "$_activeQuery"',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.6),
+                                      fontSize: 16,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
                             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                            itemCount: _filteredResults.length,
+                            itemCount: products.length,
                             itemBuilder: (context, index) {
-                              final item = _filteredResults[index];
-                              return _SearchResultCard(item: item);
+                              final product = products[index];
+                              return _SearchResultCard(product: product);
                             },
-                          ),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -256,20 +259,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   }
 }
 
-class _SearchItem {
-  final String title;
-  final String subtitle;
-  final int price;
-  final String category;
-  final IconData icon;
-
-  _SearchItem(this.title, this.subtitle, this.price, this.category, this.icon);
-}
-
 class _SearchResultCard extends StatelessWidget {
-  final _SearchItem item;
+  final ProductModel product;
 
-  const _SearchResultCard({required this.item});
+  const _SearchResultCard({required this.product});
+
+  bool _isNetworkImage(String path) {
+    return path.startsWith('http://') || path.startsWith('https://');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -286,71 +283,65 @@ class _SearchResultCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.white.withOpacity(0.2)),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(item.icon, color: Colors.white, size: 26),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.subtitle,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          item.category,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(14),
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  color: Colors.white.withOpacity(0.16),
+                  child: _isNetworkImage(product.image)
+                      ? Image.network(
+                          product.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.smartphone,
+                            color: Colors.white,
                           ),
-                        ),
-                      ),
-                    ],
+                        )
+                      : const Icon(Icons.smartphone, color: Colors.white),
+                ),
+              ),
+              title: Text(
+                product.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  [
+                    product.brand,
+                    product.category,
+                    product.specs ?? '',
+                  ].where((part) => part.isNotEmpty).join(' • '),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 12,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'PKR ${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+              ),
+              trailing: Text(
+                'Rs ${product.price.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-              ],
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ProductDetailScreen(product: product),
+                  ),
+                );
+              },
             ),
           ),
         ),
