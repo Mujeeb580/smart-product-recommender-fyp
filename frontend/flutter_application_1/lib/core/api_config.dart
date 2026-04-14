@@ -25,6 +25,8 @@ class ApiConfig {
   static const String adminOverview = '$baseUrl/admin/overview';
   static const String adminProducts = '$baseUrl/admin/products';
   static const String adminCollections = '$baseUrl/admin/collections';
+  static const String adminScrapeRun = '$baseUrl/admin/scrape/run';
+  static const String adminScrapeVerifyFirestore = '$baseUrl/admin/scrape/verify-firestore';
   
   // Timeout durations
   static const Duration connectionTimeout = Duration(seconds: 30);

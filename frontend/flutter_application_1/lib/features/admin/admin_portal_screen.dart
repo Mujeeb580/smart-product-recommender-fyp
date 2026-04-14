@@ -19,7 +19,10 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
 
   String _selectedCollection = 'products';
   bool _isLoading = true;
+  bool _isScrapeRunning = false;
   String? _error;
+  String _scrapeStatus = 'Scraper idle';
+  final List<Map<String, dynamic>> _scrapeHistory = [];
 
   Map<String, dynamic> _overview = {};
   List<Map<String, dynamic>> _collections = [];
@@ -68,6 +71,74 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     }
   }
 
+  Future<void> _runScrape({required String mode, required String label}) async {
+    if (_isScrapeRunning) return;
+
+    setState(() {
+      _isScrapeRunning = true;
+      _scrapeStatus = 'Verifying Firestore...';
+    });
+
+    try {
+      await _adminService.verifyFirestoreConnection();
+      setState(() {
+        _scrapeStatus = 'Running $label...';
+      });
+
+      final response = await _adminService.runScraper(mode: mode);
+      final saved = response['saved'] ?? 0;
+      final updated = response['updated'] ?? 0;
+      setState(() {
+        _scrapeStatus = '$label done. Saved: $saved, Updated: $updated';
+        _scrapeHistory.insert(0, {
+          'label': label,
+          'mode': mode,
+          'saved': saved,
+          'updated': updated,
+          'status': 'success',
+          'time': DateTime.now(),
+        });
+        if (_scrapeHistory.length > 8) {
+          _scrapeHistory.removeLast();
+        }
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_scrapeStatus)),
+        );
+      }
+
+      await _loadData(query: _searchController.text);
+    } catch (e) {
+      setState(() {
+        _scrapeStatus = 'Scrape failed: $e';
+        _scrapeHistory.insert(0, {
+          'label': label,
+          'mode': mode,
+          'saved': 0,
+          'updated': 0,
+          'status': 'failed',
+          'time': DateTime.now(),
+        });
+        if (_scrapeHistory.length > 8) {
+          _scrapeHistory.removeLast();
+        }
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_scrapeStatus)),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isScrapeRunning = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,6 +175,16 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                   child: Column(
                     children: [
                       _OverviewCards(overview: _overview),
+                      _ScrapePanel(
+                        isRunning: _isScrapeRunning,
+                        status: _scrapeStatus,
+                        onPhones: () => _runScrape(mode: 'phones', label: 'Scrape Phones'),
+                        onLaptops: () => _runScrape(mode: 'laptops', label: 'Scrape Laptops'),
+                        onAll: () => _runScrape(mode: 'all', label: 'Scrape All'),
+                        onNewPhones: () => _runScrape(mode: 'new_phones', label: 'Scrape New Phones'),
+                        onNewLaptops: () => _runScrape(mode: 'new_laptops', label: 'Scrape New Laptops'),
+                      ),
+                      _ScrapeHistoryCard(history: _scrapeHistory),
                       _FilterRow(
                         selectedCollection: _selectedCollection,
                         collections: _collections,
@@ -123,6 +204,202 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ScrapePanel extends StatelessWidget {
+  final bool isRunning;
+  final String status;
+  final VoidCallback onPhones;
+  final VoidCallback onLaptops;
+  final VoidCallback onAll;
+  final VoidCallback onNewPhones;
+  final VoidCallback onNewLaptops;
+
+  const _ScrapePanel({
+    required this.isRunning,
+    required this.status,
+    required this.onPhones,
+    required this.onLaptops,
+    required this.onAll,
+    required this.onNewPhones,
+    required this.onNewLaptops,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.25)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Developer Scraper Controls',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _ScrapeButton(label: 'Scrape Phones', onTap: onPhones, enabled: !isRunning),
+                    _ScrapeButton(label: 'Scrape Laptops', onTap: onLaptops, enabled: !isRunning),
+                    _ScrapeButton(label: 'Scrape All', onTap: onAll, enabled: !isRunning),
+                    _ScrapeButton(label: 'Scrape New Phones', onTap: onNewPhones, enabled: !isRunning),
+                    _ScrapeButton(label: 'Scrape New Laptops', onTap: onNewLaptops, enabled: !isRunning),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    if (isRunning)
+                      const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                    if (isRunning) const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        status,
+                        style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScrapeHistoryCard extends StatelessWidget {
+  final List<Map<String, dynamic>> history;
+
+  const _ScrapeHistoryCard({required this.history});
+
+  String _formatTime(DateTime dt) {
+    final local = dt.toLocal();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    final second = local.second.toString().padLeft(2, '0');
+    return '$hour:$minute:$second';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.24)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Recent Scrape Runs',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (history.isEmpty)
+                  Text(
+                    'No runs yet. Use any scrape button to start.',
+                    style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+                  )
+                else
+                  ...history.map((item) {
+                    final status = (item['status'] ?? '').toString();
+                    final statusColor = status == 'success' ? const Color(0xFF91F2B3) : const Color(0xFFFFB3B3);
+                    final dt = item['time'] is DateTime ? item['time'] as DateTime : DateTime.now();
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${item['label']}  •  Saved ${item['saved']}  •  Updated ${item['updated']}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatTime(dt),
+                            style: TextStyle(color: Colors.white.withOpacity(0.78), fontSize: 11),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            status.toUpperCase(),
+                            style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScrapeButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  const _ScrapeButton({required this.label, required this.onTap, required this.enabled});
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.6,
+      child: ElevatedButton(
+        onPressed: enabled ? onTap : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF0D3A58),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          side: BorderSide(color: Colors.white.withOpacity(0.3)),
+        ),
+        child: Text(label),
       ),
     );
   }
