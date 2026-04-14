@@ -144,6 +144,7 @@ def clean_products(products):
                 "category": category,
                 "price": product.get("price", "").strip(),
                 "url": product.get("url", "").strip(),
+                "image_url": product.get("image_url", "").strip(),
                 "specs": product.get("specs", {}),
             }
             

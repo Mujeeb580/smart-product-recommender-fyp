@@ -5,16 +5,29 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import re
+
+
+def _extract_escaped_spec(page_source, pattern):
+    """Extract spec values from PriceOye escaped JSON present in page source."""
+    match = re.search(pattern, page_source, re.IGNORECASE)
+    if not match:
+        return ""
+
+    value = match.group(1).strip()
+    value = value.replace("\\u0026", "&").replace("\\u0027", "'").replace("\\u002F", "/")
+    return value
 
 
 def scrape_product_specs_mobile(driver, product_url, category):
-    """Scrape mobile-specific specs: brand, storage, RAM only"""
+    """Scrape mobile-specific specs from detail page including image URL."""
     try:
         driver.get(product_url)
         time.sleep(3)  # Wait for page to load
         
         specs = {}
         brand = ""
+        detail_image_url = ""
         
         try:
             # Extract brand from URL
@@ -22,7 +35,7 @@ def scrape_product_specs_mobile(driver, product_url, category):
             if len(url_parts) >= 3:
                 brand = url_parts[-2].replace('-', ' ').title()
             
-            # Look for data-vars-location attributes - for mobiles only extract storage/ram
+            # Primary source: data-vars-location attributes.
             spec_elements = driver.find_elements(By.CSS_SELECTOR, "[data-vars-location]")
             
             if spec_elements:
@@ -34,7 +47,7 @@ def scrape_product_specs_mobile(driver, product_url, category):
                         
                         if location and value:
                             location_lower = location.lower()
-                            # For phones: only extract storage and RAM
+                            # Capture common phone fields from semantic keys.
                             if location_lower == "storage":
                                 specs["storage"] = value
                                 # Parse storage and RAM from combined value like "256GB-8GB" (storage-ram)
@@ -45,8 +58,61 @@ def scrape_product_specs_mobile(driver, product_url, category):
                                         specs["ram"] = parts[1].strip()
                             elif location_lower == "ram":
                                 specs["ram"] = value
+                            elif "processor" in location_lower or "chipset" in location_lower or "cpu" in location_lower:
+                                specs["processor"] = value
+                            elif "gpu" in location_lower or "graphics" in location_lower:
+                                specs["gpu"] = value
+                            elif "battery" in location_lower:
+                                specs["battery"] = value
                     except Exception as e:
                         continue
+
+            # Fallback source: specification dt/dd pairs used by PriceOye details.
+            dd_specs = driver.find_elements(By.CSS_SELECTOR, "dd.spec-detail.bold")
+            for dd in dd_specs:
+                try:
+                    spec_name = dd.find_element(By.XPATH, "./preceding-sibling::dt[1]").text.strip().lower()
+                    spec_value = dd.text.strip()
+                    if not spec_name or not spec_value:
+                        continue
+
+                    if "ram" in spec_name:
+                        specs["ram"] = spec_value
+                    elif "storage" in spec_name or "rom" in spec_name:
+                        specs["storage"] = spec_value
+                    elif "processor" in spec_name or "chipset" in spec_name or "cpu" in spec_name:
+                        specs["processor"] = spec_value
+                    elif "gpu" in spec_name or "graphics" in spec_name:
+                        specs["gpu"] = spec_value
+                    elif "battery" in spec_name:
+                        specs["battery"] = spec_value
+                except Exception:
+                    continue
+
+            # Product detail hero image.
+            try:
+                main_img = driver.find_element(By.CSS_SELECTOR, "img.main-product-img")
+                detail_image_url = (main_img.get_attribute("src") or "").strip()
+            except Exception:
+                detail_image_url = ""
+
+            # Final fallback: parse escaped specification JSON in page source.
+            page_source = driver.page_source
+            if not specs.get("processor"):
+                specs["processor"] = _extract_escaped_spec(page_source, r"\\u0022Processor\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("gpu"):
+                specs["gpu"] = _extract_escaped_spec(page_source, r"\\u0022GPU\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("battery"):
+                specs["battery"] = _extract_escaped_spec(page_source, r"\\u0022Battery\\u0022:\[\{\\u0022Type\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("ram"):
+                specs["ram"] = _extract_escaped_spec(page_source, r"\\u0022RAM\\u0022:\\u0022(.*?)\\u0022")
+
+            if specs.get("ram") and "-" in specs.get("storage", "") and not specs.get("storage").endswith("GB"):
+                parts = specs["storage"].split("-")
+                if len(parts) >= 2:
+                    specs["storage"] = parts[0].strip()
+                    if not specs.get("ram"):
+                        specs["ram"] = parts[1].strip()
             
             # Add brand to specs
             if brand:
@@ -60,9 +126,16 @@ def scrape_product_specs_mobile(driver, product_url, category):
         except Exception as e:
             print(f"      Error parsing mobile specs: {str(e)}")
         
-        return specs
+        return {
+            "specs": specs,
+            "image_url": detail_image_url,
+        }
     except Exception as e:
         print(f"      Error getting mobile specs: {str(e)}")
+        return {
+            "specs": {},
+            "image_url": "",
+        }
 
 
 def scrape_product_specs(driver, product_url, category):
@@ -145,6 +218,8 @@ def scrape_products(url, category_name, limit=None):
     # Add options for better compatibility
     options = webdriver.ChromeOptions()
     options.add_argument('--start-maximized')
+    options.add_argument('--headless=new')
+    options.add_argument('--disable-gpu')
     options.add_argument('--disable-blink-features=AutomationControlled')
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
@@ -233,7 +308,11 @@ def scrape_products(url, category_name, limit=None):
                 try:
                     # Use mobile-specific scraper for phones, full scraper for laptops
                     if category_name == "Phones":
-                        specs = scrape_product_specs_mobile(driver, product["url"], category_name)
+                        mobile_details = scrape_product_specs_mobile(driver, product["url"], category_name)
+                        specs = mobile_details.get("specs", {}) if isinstance(mobile_details, dict) else {}
+                        detail_image_url = mobile_details.get("image_url", "") if isinstance(mobile_details, dict) else ""
+                        if detail_image_url:
+                            product["image_url"] = detail_image_url
                     else:
                         specs = scrape_product_specs(driver, product["url"], category_name)
                     product["specs"] = specs
@@ -242,9 +321,12 @@ def scrape_products(url, category_name, limit=None):
                     ram = specs.get('ram', 'N/A')
                     storage = specs.get('storage', 'N/A')
                     brand = specs.get('brand', 'N/A')
+                    processor = specs.get('processor', 'N/A')
+                    gpu = specs.get('gpu', 'N/A')
+                    battery = specs.get('battery', 'N/A')
                     
                     if specs:
-                        print(f"    ✓ {brand} | RAM: {ram} | Storage: {storage}")
+                        print(f"    ✓ {brand} | CPU: {processor} | GPU: {gpu} | RAM: {ram} | Battery: {battery} | Storage: {storage}")
                     else:
                         print(f"    ✗ NO specs found for {product['name'][:40]}")
                 except Exception as e:

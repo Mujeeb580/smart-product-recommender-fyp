@@ -13,10 +13,10 @@ def generate_product_id(product):
 
 
 def save_products_to_firestore(products, source):
-    """Save cleaned products to Firestore 'phones' collection (prevents duplicates)"""
+    """Save cleaned products to Firestore 'phones' collection with upsert updates."""
     try:
         saved_count = 0
-        skipped_count = 0
+        updated_count = 0
         
         for product in products:
             try:
@@ -26,11 +26,6 @@ def save_products_to_firestore(products, source):
                 # Check if product already exists in phones collection
                 doc_ref = firestore_db.collection('phones').document(doc_id)
                 existing_doc = doc_ref.get()
-                
-                if existing_doc.exists:
-                    print(f"[SKIP] Duplicate: {product['name'][:50]}")
-                    skipped_count += 1
-                    continue
                 
                 # Add metadata
                 product['scraped_at'] = datetime.now().isoformat()
@@ -48,24 +43,36 @@ def save_products_to_firestore(products, source):
                 product['brand'] = specs.get('brand', 'Unknown')
                 product['ram'] = specs.get('ram', 'Unknown').replace(' RAM', '').replace('RAM', '').strip()
                 product['storage'] = specs.get('storage', 'Unknown').replace(' SSD', '').replace(' HDD', '').strip()
+                product['processor'] = specs.get('processor', 'Unknown').strip()
+                product['gpu'] = specs.get('gpu', 'Unknown').strip()
+                product['battery'] = specs.get('battery', 'Unknown').strip()
+                product['image_url'] = product.get('image_url', '').strip()
                 
                 # Remove specs field to avoid duplication
                 if 'specs' in product:
                     del product['specs']
                 
-                # Save to phones collection (separate from products)
-                doc_ref.set(product)
-                saved_count += 1
+                # Upsert to phones collection: create new docs and update existing docs.
+                if existing_doc.exists:
+                    doc_ref.set(product, merge=True)
+                    updated_count += 1
+                else:
+                    doc_ref.set(product)
+                    saved_count += 1
                 
                 brand = product.get('brand', 'Unknown')
                 ram = product.get('ram', 'N/A')
                 storage = product.get('storage', 'N/A')
-                print(f"[SAVED] {brand} | {ram} | {storage}")
+                processor = product.get('processor', 'N/A')
+                gpu = product.get('gpu', 'N/A')
+                battery = product.get('battery', 'N/A')
+                state = 'UPDATED' if existing_doc.exists else 'SAVED'
+                print(f"[{state}] {brand} | CPU: {processor} | GPU: {gpu} | RAM: {ram} | Battery: {battery} | Storage: {storage}")
                 
             except Exception as e:
                 print(f"[ERROR] Failed to save {product.get('name', 'Unknown')}: {str(e)}")
         
-        print(f"\n✓ Saved: {saved_count} | Skipped duplicates: {skipped_count} | Total: {len(products)}")
+        print(f"\n✓ Saved: {saved_count} | Updated: {updated_count} | Total: {len(products)}")
         return saved_count
     except Exception as e:
         print(f"[ERROR] Critical error saving to Firestore: {str(e)}")
