@@ -25,6 +25,9 @@ class ApiConfig {
   static const String adminOverview = '$baseUrl/admin/overview';
   static const String adminProducts = '$baseUrl/admin/products';
   static const String adminCollections = '$baseUrl/admin/collections';
+  static const String adminProductCreate = '$baseUrl/admin/products';
+  static const String adminProductUpdate = '$baseUrl/admin/products';
+  static const String adminProductDelete = '$baseUrl/admin/products';
   static const String adminScrapeRun = '$baseUrl/admin/scrape/run';
   static const String adminScrapeVerifyFirestore = '$baseUrl/admin/scrape/verify-firestore';
   

@@ -19,7 +19,8 @@ class AdminService {
 
   Future<List<Map<String, dynamic>>> getCollections() async {
     final headers = await _headers();
-    final response = await _apiService.get(ApiConfig.adminCollections, headers: headers);
+    final response =
+        await _apiService.get(ApiConfig.adminCollections, headers: headers);
 
     final rows = response['collections'];
     if (rows is List) {
@@ -48,7 +49,8 @@ class AdminService {
     final rows = response['products'];
     if (rows is List) {
       return rows
-          .map((e) => ProductModel.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+              (e) => ProductModel.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     }
 
@@ -57,7 +59,8 @@ class AdminService {
 
   Future<Map<String, dynamic>> verifyFirestoreConnection() async {
     final headers = await _headers();
-    return _apiService.get(ApiConfig.adminScrapeVerifyFirestore, headers: headers);
+    return _apiService.get(ApiConfig.adminScrapeVerifyFirestore,
+        headers: headers);
   }
 
   Future<Map<String, dynamic>> runScraper({required String mode}) async {
@@ -66,6 +69,40 @@ class AdminService {
       ApiConfig.adminScrapeRun,
       headers: headers,
       body: {'mode': mode},
+    );
+  }
+
+  Future<ProductModel> createProduct(Map<String, dynamic> data) async {
+    final headers = await _headers();
+    final response = await _apiService.post(
+      ApiConfig.adminProductCreate,
+      headers: headers,
+      body: data,
+    );
+    final product = response['product'];
+    return ProductModel.fromJson(Map<String, dynamic>.from(product as Map));
+  }
+
+  Future<ProductModel> updateProduct(
+      String collection, String productId, Map<String, dynamic> data) async {
+    final headers = await _headers();
+    final url = '${ApiConfig.adminProductUpdate}/$collection/$productId';
+    final response = await _apiService.put(
+      url,
+      headers: headers,
+      body: data,
+    );
+    final product = response['product'];
+    return ProductModel.fromJson(Map<String, dynamic>.from(product as Map));
+  }
+
+  Future<void> deleteProduct(String? collection, String productId) async {
+    final headers = await _headers();
+    final col = collection ?? 'products';
+    final url = '${ApiConfig.adminProductDelete}/$col/$productId';
+    await _apiService.delete(
+      url,
+      headers: headers,
     );
   }
 }
