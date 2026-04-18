@@ -2,10 +2,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import time
 import re
+import os
 
 
 def _extract_escaped_spec(page_source, pattern):
@@ -212,13 +211,16 @@ def scrape_product_specs(driver, product_url, category):
         return {}
 
 
-def scrape_products(url, category_name, limit=None):
+def scrape_products(url, category_name, limit=None, max_pages=None):
     """Generic scraper for products with specs"""
     
     # Add options for better compatibility
     options = webdriver.ChromeOptions()
     options.add_argument('--start-maximized')
-    options.add_argument('--headless=new')
+    # Show browser in real time by default; set SCRAPER_HEADLESS=1 to hide it.
+    headless = os.getenv("SCRAPER_HEADLESS", "0").lower() in ("1", "true", "yes")
+    if headless:
+        options.add_argument('--headless=new')
     options.add_argument('--disable-gpu')
     options.add_argument('--disable-blink-features=AutomationControlled')
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -233,6 +235,10 @@ def scrape_products(url, category_name, limit=None):
         while True:
             # If limit is None, keep going until no more products. Otherwise check limit
             if limit and len(products) >= limit:
+                break
+
+            if max_pages is not None and page > max_pages:
+                print(f"Reached max page limit ({max_pages}) for {category_name}. Stopping scrape.")
                 break
             
             page_url = f"{url}?page={page}"
@@ -351,8 +357,8 @@ def scrape_products(url, category_name, limit=None):
 
 
 def scrape_priceoye_phones(limit=None):
-    """Scrape phones from Priceoye"""
-    return scrape_products("https://priceoye.pk/mobiles", "Phones", limit)
+    """Scrape phones from Priceoye (first 11 pages only)."""
+    return scrape_products("https://priceoye.pk/mobiles", "Phones", limit, max_pages=11)
 
 
 def scrape_priceoye_laptops(limit=None):
