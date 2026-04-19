@@ -7,6 +7,19 @@ import re
 import os
 
 
+def _decode_escaped_unicode(text):
+    """Convert escaped unicode sequences like \u00ae into readable characters."""
+    if not text:
+        return ""
+
+    decoded = re.sub(
+        r"\\u([0-9a-fA-F]{4})",
+        lambda m: chr(int(m.group(1), 16)),
+        text,
+    )
+    return decoded.replace("\\/", "/")
+
+
 def _extract_escaped_spec(page_source, pattern):
     """Extract spec values from PriceOye escaped JSON present in page source."""
     match = re.search(pattern, page_source, re.IGNORECASE)
@@ -14,6 +27,7 @@ def _extract_escaped_spec(page_source, pattern):
         return ""
 
     value = match.group(1).strip()
+    value = _decode_escaped_unicode(value)
     value = value.replace("\\u0026", "&").replace("\\u0027", "'").replace("\\u002F", "/")
     return value
 
@@ -99,8 +113,26 @@ def scrape_product_specs_mobile(driver, product_url, category):
             page_source = driver.page_source
             if not specs.get("processor"):
                 specs["processor"] = _extract_escaped_spec(page_source, r"\\u0022Processor\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("processor"):
+                specs["processor"] = _extract_escaped_spec(page_source, r"\\u0022Processor Type\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("processor"):
+                specs["processor"] = _extract_escaped_spec(page_source, r"\\u0022Processor Model\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("processor"):
+                specs["processor"] = _extract_escaped_spec(page_source, r"\\u0022CPU\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("processor"):
+                specs["processor"] = _extract_escaped_spec(page_source, r"\\u0022Chipset\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("processor"):
+                specs["processor"] = _extract_escaped_spec(page_source, r"\\u0022Processor Speed\\u0022:\\u0022(.*?)\\u0022")
             if not specs.get("gpu"):
                 specs["gpu"] = _extract_escaped_spec(page_source, r"\\u0022GPU\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("gpu"):
+                specs["gpu"] = _extract_escaped_spec(page_source, r"\\u0022Graphics\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("gpu"):
+                specs["gpu"] = _extract_escaped_spec(page_source, r"\\u0022Graphics Memory\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("gpu"):
+                specs["gpu"] = _extract_escaped_spec(page_source, r"\\u0022Graphic Card\\u0022:\\u0022(.*?)\\u0022")
+            if not specs.get("gpu"):
+                specs["gpu"] = _extract_escaped_spec(page_source, r"\\u0022Video Card\\u0022:\\u0022(.*?)\\u0022")
             if not specs.get("battery"):
                 specs["battery"] = _extract_escaped_spec(page_source, r"\\u0022Battery\\u0022:\[\{\\u0022Type\\u0022:\\u0022(.*?)\\u0022")
             if not specs.get("ram"):
@@ -138,73 +170,18 @@ def scrape_product_specs_mobile(driver, product_url, category):
 
 
 def scrape_product_specs(driver, product_url, category):
-    """Scrape detailed specifications from individual product page"""
+    """Scrape laptop specs using the same extraction flow as mobile scraper."""
     try:
-        driver.get(product_url)
-        time.sleep(3)  # Wait for page to load
-        
-        specs = {}
-        brand = ""
-        model = ""
-        
-        try:
-            # Extract brand and model from URL
-            url_parts = product_url.split('/')
-            if len(url_parts) >= 3:
-                brand = url_parts[-2].replace('-', ' ').title()
-                model = url_parts[-1].replace('-', ' ').title()
-            
-            # Look for data-vars-location attributes which contain spec categories
-            spec_elements = driver.find_elements(By.CSS_SELECTOR, "[data-vars-location]")
-            
-            if spec_elements:
-                print(f"      Found {len(spec_elements)} spec elements")
-                
-                for elem in spec_elements:
-                    try:
-                        # Get the location/category name
-                        location = elem.get_attribute("data-vars-location")
-                        
-                        # Get the text value from span inside
-                        span = elem.find_element(By.CSS_SELECTOR, "span")
-                        value = span.text.strip() if span else ""
-                        
-                        if location and value:
-                            # Normalize location names
-                            location_lower = location.lower()
-                            if location_lower == "storage":
-                                specs["storage"] = value
-                                # Parse storage and RAM from combined value
-                                if "-" in value:
-                                    parts = value.split("-")
-                                    if len(parts) >= 2:
-                                        specs["storage"] = parts[0].strip()
-                                        specs["ram"] = parts[1].strip()
-                            elif location_lower == "ram":
-                                specs["ram"] = value
-                            elif "processor" in location_lower or "cpu" in location_lower:
-                                specs["processor"] = value
-                            elif "display" in location_lower or "screen" in location_lower:
-                                specs["display"] = value
-                            elif "battery" in location_lower:
-                                specs["battery"] = value
-                            elif "camera" in location_lower:
-                                if "front" in location_lower or "selfie" in location_lower:
-                                    specs["front_camera"] = value
-                                else:
-                                    specs["back_camera"] = value
-                    except Exception as e:
-                        continue
-            
-            # Add brand and model to specs
-            if brand:
-                specs["brand"] = brand
-            if model:
-                specs["model"] = model
-                
-        except Exception as e:
-            print(f"      Error parsing specs: {str(e)}")
-        
+        # Reuse the mobile extractor so laptops and mobiles share the same robust selector flow.
+        details = scrape_product_specs_mobile(driver, product_url, category)
+        specs = details.get("specs", {}) if isinstance(details, dict) else {}
+        if not isinstance(specs, dict):
+            return {}
+
+        # Laptop flow does not need battery/camera fields.
+        specs.pop("battery", None)
+        specs.pop("front_camera", None)
+        specs.pop("back_camera", None)
         return specs
     except Exception as e:
         print(f"      Error getting specs: {str(e)}")
@@ -329,10 +306,13 @@ def scrape_products(url, category_name, limit=None, max_pages=None):
                     brand = specs.get('brand', 'N/A')
                     processor = specs.get('processor', 'N/A')
                     gpu = specs.get('gpu', 'N/A')
-                    battery = specs.get('battery', 'N/A')
                     
                     if specs:
-                        print(f"    ✓ {brand} | CPU: {processor} | GPU: {gpu} | RAM: {ram} | Battery: {battery} | Storage: {storage}")
+                        if category_name == "Laptops":
+                            print(f"    ✓ {brand} | CPU: {processor} | GPU: {gpu} | RAM: {ram} | Storage: {storage}")
+                        else:
+                            battery = specs.get('battery', 'N/A')
+                            print(f"    ✓ {brand} | CPU: {processor} | GPU: {gpu} | RAM: {ram} | Battery: {battery} | Storage: {storage}")
                     else:
                         print(f"    ✗ NO specs found for {product['name'][:40]}")
                 except Exception as e:
@@ -362,5 +342,5 @@ def scrape_priceoye_phones(limit=None):
 
 
 def scrape_priceoye_laptops(limit=None):
-    """Scrape laptops from Priceoye"""
-    return scrape_products("https://priceoye.pk/laptops", "Laptops", limit)
+    """Scrape laptops from Priceoye (first 6 pages only)."""
+    return scrape_products("https://priceoye.pk/laptops", "Laptops", limit, max_pages=6)
