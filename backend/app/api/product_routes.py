@@ -6,17 +6,58 @@ from app.recommendation.engine import recommend_products
 router = APIRouter(prefix="/products", tags=["Products"])
 
 
+def _normalize_product(product: dict, default_category: str = "") -> dict:
+    item = product.copy()
+    item["image_url"] = (
+        item.get("image_url")
+        or item.get("image")
+        or item.get("imageLink")
+        or item.get("image_link")
+        or ""
+    )
+    if default_category and not item.get("category"):
+        item["category"] = default_category
+    return item
+
+
+def _merge_dedup_products(products: List[dict]) -> List[dict]:
+    merged = []
+    seen = set()
+    for product in products:
+        key = product.get("product_id") or product.get("id") or product.get("url") or product.get("name")
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        merged.append(product)
+    return merged
+
+
+def _get_all_products(collection: Optional[str] = None) -> List[dict]:
+    if collection:
+        c = collection.lower().strip()
+        if c in ("phone", "phones"):
+            return [_normalize_product(p, "Phones") for p in fetch_products("phones")]
+        if c in ("laptop", "laptops"):
+            return [_normalize_product(p, "Laptops") for p in fetch_products("laptops")]
+        return [_normalize_product(p) for p in fetch_products(c)]
+
+    phones = [_normalize_product(p, "Phones") for p in fetch_products("phones")]
+    laptops = [_normalize_product(p, "Laptops") for p in fetch_products("laptops")]
+    legacy = [_normalize_product(p) for p in fetch_products("products")]
+    return _merge_dedup_products(phones + laptops + legacy)
+
+
 @router.get("/recommend")
 async def get_recommendations(
     query: Optional[str] = Query(None, description="Search query for recommendations"),
-    top_n: int = Query(10, description="Number of products to return")
+    top_n: int = Query(10, description="Number of products to return"),
+    collection: Optional[str] = Query(None, description="Optional collection: phones or laptops"),
 ):
     """
     Get product recommendations based on query or return all products sorted by score.
     """
     try:
-        # Fetch products from Firestore
-        products = fetch_products(collection_name="products")
+        products = _get_all_products(collection=collection)
         
         if not products:
             return {"products": [], "message": "No products available"}
@@ -45,12 +86,13 @@ async def get_recommendations(
 @router.get("/search")
 async def search_products(
     q: str = Query(..., description="Search query"),
+    collection: Optional[str] = Query(None, description="Optional collection: phones or laptops"),
 ):
     """
     Search products by name, brand, or category.
     """
     try:
-        products = fetch_products(collection_name="products")
+        products = _get_all_products(collection=collection)
         
         if not products:
             return {"products": [], "message": "No products available"}
@@ -74,12 +116,14 @@ async def filter_products(
     min_price: Optional[float] = Query(None, description="Minimum price"),
     max_price: Optional[float] = Query(None, description="Maximum price"),
     brand: Optional[str] = Query(None, description="Filter by brand"),
+    collection: Optional[str] = Query(None, description="Optional collection: phones or laptops"),
+    limit: int = Query(100, description="Max items to return"),
 ):
     """
     Filter products by various criteria.
     """
     try:
-        products = fetch_products(collection_name="products")
+        products = _get_all_products(collection=collection)
         
         if not products:
             return {"products": [], "message": "No products available"}
@@ -90,7 +134,7 @@ async def filter_products(
         if category:
             filtered_products = [
                 p for p in filtered_products
-                if p.get("category", "").lower() == category.lower()
+                if category.lower() in p.get("category", "").lower()
             ]
         
         if brand:
@@ -102,15 +146,17 @@ async def filter_products(
         if min_price is not None:
             filtered_products = [
                 p for p in filtered_products
-                if p.get("price", 0) >= min_price
+                if _to_price(p.get("price")) >= min_price
             ]
         
         if max_price is not None:
             filtered_products = [
                 p for p in filtered_products
-                if p.get("price", float('inf')) <= max_price
+                if _to_price(p.get("price")) <= max_price
             ]
         
+        filtered_products = filtered_products[:max(1, limit)]
+
         return {
             "products": filtered_products,
             "count": len(filtered_products),
@@ -118,7 +164,9 @@ async def filter_products(
                 "category": category,
                 "brand": brand,
                 "min_price": min_price,
-                "max_price": max_price
+                "max_price": max_price,
+                "collection": collection,
+                "limit": limit,
             }
         }
     
@@ -134,7 +182,7 @@ async def get_trending_products(
     Get trending/popular products.
     """
     try:
-        products = fetch_products(collection_name="products")
+        products = _get_all_products()
         
         if not products:
             return {"products": [], "message": "No products available"}
@@ -161,7 +209,7 @@ async def get_product_by_id(product_id: str):
     Get a specific product by ID.
     """
     try:
-        products = fetch_products(collection_name="products")
+        products = _get_all_products()
         
         for product in products:
             if product.get("id") == product_id:
@@ -173,3 +221,13 @@ async def get_product_by_id(product_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching product: {str(e)}")
+
+
+def _to_price(value) -> float:
+    if isinstance(value, (int, float)):
+        return float(value)
+    raw = str(value or "").replace("Rs", "").replace("PKR", "").replace(",", "").strip()
+    try:
+        return float(raw)
+    except Exception:
+        return float("inf")

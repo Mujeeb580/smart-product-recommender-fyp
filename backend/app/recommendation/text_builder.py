@@ -13,8 +13,11 @@ def product_to_text(product: dict) -> str:
     brand = product.get('brand', '')
     ram = product.get('ram', '')
     storage = product.get('storage', '')
+    processor = product.get('processor', '')
+    gpu = product.get('gpu', '')
+    battery = product.get('battery', '')
     category = product.get('category', 'product')
-    price = product.get('price', 0)
+    price = _to_numeric_price(product.get('price', 0))
     
     # Build base description
     parts = [f"{name}", f"{brand} brand"]
@@ -50,9 +53,23 @@ def product_to_text(product: dict) -> str:
                 parts.append(f"{storage} storage for basic needs")
         else:
             parts.append(f"{storage} storage")
+
+    if processor:
+        parts.append(f"processor {processor}")
+
+    if gpu and str(gpu).strip().lower() not in ('unknown', 'n/a', 'na', 'none'):
+        parts.append(f"gpu {gpu}")
+
+    battery_value = _extract_number(str(battery))
+    if battery_value:
+        parts.append(f"{battery_value} mAh battery")
+        if battery_value >= 6000:
+            parts.append("very strong battery backup")
+        elif battery_value >= 5000:
+            parts.append("strong battery backup")
     
     # Add price range context
-    if isinstance(price, (int, float)):
+    if isinstance(price, (int, float)) and price > 0:
         if price <= 20000:
             parts.append(f"budget-friendly phone at Rs {price}")
         elif price <= 35000:
@@ -70,7 +87,12 @@ def product_to_text(product: dict) -> str:
         parts.append(f"trusted {brand} brand")
     
     # Add category
-    parts.append(f"{category.lower()}")
+    category_lower = str(category).lower()
+    parts.append(category_lower)
+    if 'phone' in category_lower or 'mobile' in category_lower:
+        parts.append('smartphone mobile device')
+    if 'laptop' in category_lower or 'notebook' in category_lower:
+        parts.append('laptop notebook computer')
     
     return " | ".join(parts)
 
@@ -82,3 +104,13 @@ def _extract_number(text: str) -> int:
         return 0
     match = re.search(r'(\d+)', str(text))
     return int(match.group(1)) if match else 0
+
+
+def _to_numeric_price(price) -> float:
+    if isinstance(price, (int, float)):
+        return float(price)
+    text = str(price or '').replace('Rs', '').replace('PKR', '').replace(',', '').strip()
+    try:
+        return float(text)
+    except Exception:
+        return 0.0
