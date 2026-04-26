@@ -2,8 +2,32 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Optional, List
 from app.recommendation.firestore import fetch_products
 from app.recommendation.engine import recommend_products
+from app.recommendation.processor_engine import calculate_phone_score
 
 router = APIRouter(prefix="/products", tags=["Products"])
+
+
+def _add_processor_score(product: dict) -> dict:
+    """Add processor performance score to phone products."""
+    item = product.copy()
+    
+    # Only calculate processor scores for phones
+    category = item.get("category", "").lower()
+    if "phone" in category or "mobile" in category:
+        try:
+            score_result = calculate_phone_score(item)
+            item["processor_score"] = score_result.get("score", 0)
+            item["processor_tier"] = score_result.get("tier", "Unknown")
+            item["normalized_processor"] = score_result.get("normalized_processor", item.get("processor", "Unknown"))
+            item["performance_breakdown"] = score_result.get("breakdown", {})
+        except Exception as e:
+            # Fallback if scoring fails
+            item["processor_score"] = 0.5
+            item["processor_tier"] = "Unknown"
+            item["normalized_processor"] = item.get("processor", "Unknown")
+            item["performance_breakdown"] = {}
+    
+    return item
 
 
 def _normalize_product(product: dict, default_category: str = "") -> dict:
@@ -17,6 +41,9 @@ def _normalize_product(product: dict, default_category: str = "") -> dict:
     )
     if default_category and not item.get("category"):
         item["category"] = default_category
+    
+    # Add processor scores for phones
+    item = _add_processor_score(item)
     return item
 
 
@@ -201,6 +228,126 @@ async def get_trending_products(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching trending products: {str(e)}")
+
+
+@router.get("/phones/performance")
+async def get_phones_by_performance(
+    limit: int = Query(20, description="Max items to return"),
+    min_score: Optional[float] = Query(None, description="Minimum processor score (0-1)"),
+    tier: Optional[str] = Query(None, description="Filter by processor tier: Flagship, Upper Mid, Mid, Low"),
+):
+    """
+    Get phones sorted by processor performance score.
+    
+    Params:
+    - limit: Number of phones to return (default: 20)
+    - min_score: Filter phones with score >= min_score (0.0-1.0)
+    - tier: Filter by tier (Flagship, Upper Mid, Mid, Low)
+    """
+    try:
+        phones = [_add_processor_score(p) for p in fetch_products("phones")]
+        
+        if not phones:
+            return {"products": [], "message": "No phones available", "count": 0}
+        
+        # Filter by minimum score
+        if min_score is not None:
+            phones = [p for p in phones if p.get("processor_score", 0) >= min_score]
+        
+        # Filter by tier
+        if tier:
+            tier_lower = tier.lower()
+            phones = [p for p in phones if p.get("processor_tier", "").lower() == tier_lower]
+        
+        # Sort by processor score descending
+        phones = sorted(phones, key=lambda x: x.get("processor_score", 0), reverse=True)[:limit]
+        
+        return {
+            "products": phones,
+            "count": len(phones),
+            "filters": {
+                "min_score": min_score,
+                "tier": tier,
+                "limit": limit,
+            }
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching phones by performance: {str(e)}")
+
+
+@router.get("/phones/by-tier")
+async def get_phones_by_tier(
+    tier: str = Query(..., description="Processor tier: Flagship, Upper Mid, Mid, Low"),
+    limit: int = Query(20, description="Max items to return"),
+):
+    """
+    Get phones filtered by processor tier.
+    
+    Tiers: Flagship, Upper Mid, Mid, Low
+    """
+    try:
+        phones = [_add_processor_score(p) for p in fetch_products("phones")]
+        
+        if not phones:
+            return {"products": [], "message": "No phones available", "count": 0}
+        
+        tier_lower = tier.lower()
+        filtered = [p for p in phones if p.get("processor_tier", "").lower() == tier_lower]
+        
+        if not filtered:
+            return {"products": [], "message": f"No phones found in {tier} tier", "count": 0}
+        
+        # Sort by score within tier
+        filtered = sorted(filtered, key=lambda x: x.get("processor_score", 0), reverse=True)[:limit]
+        
+        return {
+            "products": filtered,
+            "tier": tier,
+            "count": len(filtered)
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching phones by tier: {str(e)}")
+
+
+@router.post("/phones/score-details")
+async def get_phone_score_details(
+    product_id: Optional[str] = Query(None, description="Product ID to get details for"),
+):
+    """
+    Get detailed score breakdown for a specific phone product.
+    """
+    try:
+        phones = fetch_products("phones")
+        
+        for phone in phones:
+            if phone.get("product_id") == product_id or phone.get("id") == product_id:
+                scored = _add_processor_score(phone)
+                return {
+                    "product": {
+                        "id": scored.get("id"),
+                        "name": scored.get("name"),
+                        "processor": scored.get("processor"),
+                        "gpu": scored.get("gpu"),
+                        "ram": scored.get("ram"),
+                        "battery": scored.get("battery"),
+                        "price": scored.get("price"),
+                    },
+                    "score": {
+                        "overall": scored.get("processor_score"),
+                        "tier": scored.get("processor_tier"),
+                        "normalized_processor": scored.get("normalized_processor"),
+                        "breakdown": scored.get("performance_breakdown"),
+                    }
+                }
+        
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching phone details: {str(e)}")
 
 
 @router.get("/{product_id}")
