@@ -19,6 +19,11 @@ class ProductModel {
   final String? gpu;
   final String? battery;
   final String? camera;
+  // Processor performance scoring fields
+  final double? processorScore;
+  final String? processorTier;
+  final String? normalizedProcessor;
+  final PerformanceBreakdown? performanceBreakdown;
 
   ProductModel({
     required this.id,
@@ -41,6 +46,10 @@ class ProductModel {
     this.gpu,
     this.battery,
     this.camera,
+    this.processorScore,
+    this.processorTier,
+    this.normalizedProcessor,
+    this.performanceBreakdown,
   });
 
   // Convert to JSON (for future backend)
@@ -66,6 +75,10 @@ class ProductModel {
       'gpu': gpu,
       'battery': battery,
       'camera': camera,
+      'processor_score': processorScore,
+      'processor_tier': processorTier,
+      'normalized_processor': normalizedProcessor,
+      'performance_breakdown': performanceBreakdown?.toJson(),
     };
   }
 
@@ -108,6 +121,12 @@ class ProductModel {
       gpu: json['gpu']?.toString(),
       battery: json['battery']?.toString(),
       camera: json['camera']?.toString(),
+      processorScore: _toDouble(json['processor_score']),
+      processorTier: json['processor_tier']?.toString(),
+      normalizedProcessor: json['normalized_processor']?.toString(),
+      performanceBreakdown: json['performance_breakdown'] != null
+          ? PerformanceBreakdown.fromJson(json['performance_breakdown'])
+          : null,
     );
   }
 
@@ -133,6 +152,10 @@ class ProductModel {
     String? gpu,
     String? battery,
     String? camera,
+    double? processorScore,
+    String? processorTier,
+    String? normalizedProcessor,
+    PerformanceBreakdown? performanceBreakdown,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -155,10 +178,52 @@ class ProductModel {
       gpu: gpu ?? this.gpu,
       battery: battery ?? this.battery,
       camera: camera ?? this.camera,
+      processorScore: processorScore ?? this.processorScore,
+      processorTier: processorTier ?? this.processorTier,
+      normalizedProcessor: normalizedProcessor ?? this.normalizedProcessor,
+      performanceBreakdown: performanceBreakdown ?? this.performanceBreakdown,
     );
   }
 
   @override
   String toString() =>
-      'ProductModel(id: $id, name: $name, brand: $brand, price: $price)';
+      'ProductModel(id: $id, name: $name, brand: $brand, price: $price, processorScore: $processorScore)';
+}
+
+/// Performance breakdown for processor scoring
+class PerformanceBreakdown {
+  final double? baseChipsetScore;
+  final double? ramScore;
+  final double? batteryScore;
+  final double? recencyScore;
+
+  PerformanceBreakdown({
+    this.baseChipsetScore,
+    this.ramScore,
+    this.batteryScore,
+    this.recencyScore,
+  });
+
+  factory PerformanceBreakdown.fromJson(Map<String, dynamic> json) {
+    return PerformanceBreakdown(
+      baseChipsetScore:
+          _toDouble(json['base_chipset_score']),
+      ramScore: _toDouble(json['ram_score']),
+      batteryScore: _toDouble(json['battery_score']),
+      recencyScore: _toDouble(json['recency_score']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'base_chipset_score': baseChipsetScore,
+      'ram_score': ramScore,
+      'battery_score': batteryScore,
+      'recency_score': recencyScore,
+    };
+  }
+
+  @override
+  String toString() =>
+      'PerformanceBreakdown(chipset: $baseChipsetScore, ram: $ramScore, battery: $batteryScore, recency: $recencyScore)';
 }

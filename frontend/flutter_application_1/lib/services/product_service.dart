@@ -192,4 +192,89 @@ class ProductService {
       rethrow;
     }
   }
+
+  /// Get phones sorted by processor performance score
+  Future<List<ProductModel>> getPhonesByPerformance({
+    int limit = 20,
+    double? minScore,
+    String? tier,
+  }) async {
+    try {
+      final token = await _authService.getIdToken();
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
+
+      final queryParams = {
+        'limit': limit.toString(),
+        if (minScore != null) 'min_score': minScore.toString(),
+        if (tier != null) 'tier': tier,
+      };
+
+      final response = await _apiService.get(
+        ApiConfig.phonesPerformance,
+        headers: headers,
+        queryParams: queryParams,
+      );
+
+      if (response['products'] != null) {
+        final List<dynamic> productsList = response['products'];
+        return productsList.map((json) => ProductModel.fromJson(json)).toList();
+      }
+
+      throw Exception('No phones in response');
+    } catch (e) {
+      print('Error fetching phones by performance: $e');
+      rethrow;
+    }
+  }
+
+  /// Get phones filtered by processor tier
+  Future<List<ProductModel>> getPhonesByTier(String tier, {int limit = 20}) async {
+    try {
+      final token = await _authService.getIdToken();
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
+
+      final response = await _apiService.get(
+        ApiConfig.phonesByTier,
+        headers: headers,
+        queryParams: {
+          'tier': tier,
+          'limit': limit.toString(),
+        },
+      );
+
+      if (response['products'] != null) {
+        final List<dynamic> productsList = response['products'];
+        return productsList.map((json) => ProductModel.fromJson(json)).toList();
+      }
+
+      throw Exception('No phones in response');
+    } catch (e) {
+      print('Error fetching phones by tier: $e');
+      rethrow;
+    }
+  }
+
+  /// Get detailed score information for a phone
+  Future<Map<String, dynamic>> getPhoneScoreDetails(String productId) async {
+    try {
+      final token = await _authService.getIdToken();
+      final headers =
+          token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
+
+      final response = await _apiService.post(
+        ApiConfig.phoneScoreDetails,
+        headers: headers,
+        body: {
+          'product_id': productId,
+        },
+      );
+
+      return response;
+    } catch (e) {
+      print('Error fetching phone score details: $e');
+      rethrow;
+    }
+  }
 }

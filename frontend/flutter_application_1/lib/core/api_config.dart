@@ -19,6 +19,12 @@ class ApiConfig {
   static const String productsRecommend = '$baseUrl/products/recommend';
   static const String productsSearch = '$baseUrl/products/search';
   static const String productsFilter = '$baseUrl/products/filter';
+  static const String productsTrending = '$baseUrl/products/trending';
+  
+  // Processor Performance Scoring Endpoints
+  static const String phonesPerformance = '$baseUrl/products/phones/performance';
+  static const String phonesByTier = '$baseUrl/products/phones/by-tier';
+  static const String phoneScoreDetails = '$baseUrl/products/phones/score-details';
   
   static const String chatSendMessage = '$baseUrl/chat/send-message';
 
