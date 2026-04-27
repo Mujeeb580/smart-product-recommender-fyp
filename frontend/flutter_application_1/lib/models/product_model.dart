@@ -206,11 +206,10 @@ class PerformanceBreakdown {
 
   factory PerformanceBreakdown.fromJson(Map<String, dynamic> json) {
     return PerformanceBreakdown(
-      baseChipsetScore:
-          _toDouble(json['base_chipset_score']),
-      ramScore: _toDouble(json['ram_score']),
-      batteryScore: _toDouble(json['battery_score']),
-      recencyScore: _toDouble(json['recency_score']),
+      baseChipsetScore: ProductModel._toDouble(json['base_chipset_score']),
+      ramScore: ProductModel._toDouble(json['ram_score']),
+      batteryScore: ProductModel._toDouble(json['battery_score']),
+      recencyScore: ProductModel._toDouble(json['recency_score']),
     );
   }
 
