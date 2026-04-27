@@ -1,29 +1,22 @@
-from fastapi import APIRouter, Header, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException, Header
 from firebase_admin import auth
-
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-class RegisterRequest(BaseModel):
-    email: str
-    password: str = Field(min_length=6)
-
-
 @router.post("/register")
-def register_user(payload: RegisterRequest):
+def register_user(email: str, password: str):
     try:
-        user = auth.create_user(email=payload.email, password=payload.password)
+        user = auth.create_user(email=email, password=password)
         return {"message": "User registered successfully", "uid": user.uid}
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/login")
 def login_user():
     return {
-        "message": "Login is handled by Firebase in frontend. Send ID token for protected requests."
+        "message": "Login handled by Firebase on frontend. Token required for protected routes."
     }
 
 
@@ -31,7 +24,7 @@ def login_user():
 def verify_token(authorization: str = Header(...)):
     try:
         token = authorization.split(" ")[1]
-        decoded = auth.verify_id_token(token)
-        return {"uid": decoded["uid"], "status": "Token is valid"}
+        decoded_token = auth.verify_id_token(token)
+        return {"uid": decoded_token["uid"], "status": "Token is valid"}
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired token")

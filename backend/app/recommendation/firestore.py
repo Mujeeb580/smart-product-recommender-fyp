@@ -1,102 +1,131 @@
-from typing import Dict, List, Optional
-from firebase_admin import firestore
-from app.core.firebase import firestore_db
+import firebase_admin
+from firebase_admin import credentials, firestore
+from typing import List, Dict, Optional
+import os
+
+# Global Firestore client
+_db = None
+
+def get_firestore_client():
+    """
+    Initialize and return Firestore client.
+    Uses singleton pattern to avoid multiple initializations.
+    """
+    global _db
+    if _db is None:
+        # Initialize Firebase (assumes credentials already exist)
+        if not firebase_admin._apps:
+            default_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "../../firebase-key.json")
+            )
+            env_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+            cred_path = os.path.abspath(env_path) if env_path else default_path
+            if not os.path.exists(cred_path):
+                raise FileNotFoundError(f"firebase-key.json not found at {cred_path}")
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+        _db = firestore.client()
+    return _db
 
 
-def _normalize_product(doc_id: str, payload: Dict, collection_name: str) -> Dict:
-    item = dict(payload or {})
-    item.setdefault("id", doc_id)
-    item.setdefault("collection", collection_name)
-    item.setdefault("product_id", doc_id)
-    item.setdefault("name", "Unknown Product")
-    item.setdefault("brand", "Unknown")
-    item.setdefault("category", collection_name)
-    item.setdefault("similarity_score", 0.0)
+def _normalize_product(doc_id: str, product: Dict, default_category: str = "") -> Dict:
+    normalized = product.copy()
+    normalized["id"] = doc_id
+    normalized["image_url"] = (
+        normalized.get("image_url")
+        or normalized.get("image")
+        or normalized.get("imageLink")
+        or normalized.get("image_link")
+        or ""
+    )
+    if default_category and not normalized.get("category"):
+        normalized["category"] = default_category
+    return normalized
 
-    raw_price = item.get("price", 0)
-    try:
-        if isinstance(raw_price, str):
-            cleaned = raw_price.replace("Rs", "").replace(",", "").strip()
-            item["price"] = float(cleaned) if cleaned else 0.0
-        else:
-            item["price"] = float(raw_price)
-    except Exception:
-        item["price"] = 0.0
+def _dedupe_products(products: List[Dict]) -> List[Dict]:
+    merged: List[Dict] = []
+    seen = set()
 
-    if not item.get("image"):
-        item["image"] = ""
+    for product in products:
+        key = product.get("product_id") or product.get("id") or product.get("url") or product.get("name")
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        merged.append(product)
 
-    if not item.get("specs"):
-        specs = []
-        for key in ["ram", "storage", "processor", "gpu", "battery", "camera"]:
-            value = item.get(key)
-            if value:
-                specs.append(f"{key}: {value}")
-        item["specs"] = " | ".join(specs)
-
-    return item
+    return merged
 
 
-def fetch_collection(collection_name: str, limit: int = 200) -> List[Dict]:
-    query = firestore_db.collection(collection_name)
-    if limit > 0:
-        query = query.limit(limit)
+def _category_filter(products: List[Dict], collection_name: str) -> List[Dict]:
+    if not collection_name:
+        return products
 
-    docs = query.stream()
-    products: List[Dict] = []
-    for doc in docs:
-        products.append(_normalize_product(doc.id, doc.to_dict(), collection_name))
-    return products
+    normalized = collection_name.lower().strip()
+    if normalized in {"laptop", "laptops"}:
+        keywords = ("laptop", "notebook", "macbook")
+    elif normalized in {"phone", "phones", "mobile", "mobiles"}:
+        keywords = ("phone", "mobile", "smartphone", "iphone")
+    else:
+        return products
+
+    filtered = []
+    for product in products:
+        text = " ".join(
+            str(product.get(field, "")) for field in ("category", "collection", "name", "brand")
+        ).lower()
+        if any(keyword in text for keyword in keywords):
+            filtered.append(product)
+
+    return filtered or products
 
 
 def fetch_products(collection_name: Optional[str] = None, limit: int = 300) -> List[Dict]:
-    """Fetch products from one collection or merge main product collections."""
+    """
+    Fetch products from one collection or merge the main product collections.
+
+    If a phone/laptop-specific collection is empty, fall back to the shared
+    products collection so UI category screens and chat queries still work.
+    """
+    db = get_firestore_client()
+
     if collection_name:
-        return fetch_collection(collection_name, limit=limit)
+        normalized_name = collection_name.lower().strip()
+        candidate_names = [normalized_name]
+
+        # Phone/laptop collections often need fallback to the shared products
+        # collection because scraped items may only exist there.
+        if normalized_name in {"phones", "phone", "laptops", "laptop"}:
+            candidate_names.append("products")
+
+        products: List[Dict] = []
+        print(f"Fetching products from '{collection_name}' collection...")
+        for name in candidate_names:
+            query = db.collection(name)
+            if limit > 0:
+                query = query.limit(limit)
+
+            for doc in query.stream():
+                products.append(_normalize_product(doc.id, doc.to_dict(), name))
+
+        products = _dedupe_products(_category_filter(products, collection_name))
+        print(f"Fetched {len(products)} products.")
+        return products
 
     merged: List[Dict] = []
     seen_ids = set()
 
     for name in ["products", "phones", "laptops"]:
-        for item in fetch_collection(name, limit=limit):
+        query = db.collection(name)
+        if limit > 0:
+            query = query.limit(limit)
+
+        for doc in query.stream():
+            item = _normalize_product(doc.id, doc.to_dict(), name)
             item_id = item.get("id") or item.get("product_id")
             if item_id in seen_ids:
                 continue
             seen_ids.add(item_id)
             merged.append(item)
 
+    print(f"Fetched {len(merged)} products.")
     return merged
-
-
-def save_chat_message(payload: Dict) -> str:
-    doc_ref = firestore_db.collection("chat_history").document()
-    doc_ref.set(payload)
-    return doc_ref.id
-
-
-def get_chat_history(limit: int = 50) -> List[Dict]:
-    query = (
-        firestore_db.collection("chat_history")
-        .order_by("timestamp", direction=firestore.Query.DESCENDING)
-        .limit(limit)
-    )
-
-    rows: List[Dict] = []
-    for doc in query.stream():
-        data = doc.to_dict() or {}
-        data["id"] = doc.id
-        rows.append(data)
-
-    rows.reverse()
-    return rows
-
-
-def update_product_fields(collection_name: str, doc_id: str, fields: Dict) -> None:
-    if not collection_name or not doc_id or not fields:
-        return
-
-    cleaned = {k: v for k, v in fields.items() if v not in (None, "", "unknown")}
-    if not cleaned:
-        return
-
-    firestore_db.collection(collection_name).document(doc_id).set(cleaned, merge=True)

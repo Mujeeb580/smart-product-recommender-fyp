@@ -1,6 +1,7 @@
 # Python
 .venv/
 venv/
+env/
 __pycache__/
 *.pyc
 *.pyo
@@ -39,3 +40,14 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Flutter/local generated files
+frontend/flutter_application_1/.dart_tool/
+frontend/flutter_application_1/build/
+
+# Firebase secrets / generated options
+frontend/flutter_application_1/android/app/google-services.json
+frontend/flutter_application_1/lib/firebase_options.dart
