@@ -14,14 +14,18 @@ class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   
-  // GoogleSignIn with web support
-  // For web: client ID is read from meta tag in index.html
-  // For mobile: uses default configuration from google-services.json/GoogleService-Info.plist
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // serverClientId is optional - used for backend authentication
-    // For web, the clientId is automatically read from the meta tag
-    scopes: ['email', 'profile'],
-  );
+  // GoogleSignIn with web support - lazily initialized for non-web platforms
+  // Avoid instantiating on web to prevent duplicate GSI initialization
+  GoogleSignIn? _googleSignIn;
+
+  GoogleSignIn _getGoogleSignIn() {
+    _googleSignIn ??= GoogleSignIn(
+      // serverClientId is optional - used for backend authentication
+      // For web, the clientId is automatically read from the meta tag
+      scopes: ['email', 'profile'],
+    );
+    return _googleSignIn!;
+  }
   
   final ApiService _apiService = ApiService();
 
@@ -95,27 +99,37 @@ class AuthService {
   /// Sign in with Google
   Future<User?> signInWithGoogle() async {
     try {
-      // Trigger Google Sign-In flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
-      if (googleUser == null) {
-        // User cancelled the sign-in
-        return null;
+      final UserCredential userCredential;
+
+      if (kIsWeb) {
+        final GoogleAuthProvider provider = GoogleAuthProvider()
+          ..addScope('email')
+          ..addScope('profile');
+
+        // Use Firebase's web popup flow to avoid Google Sign-In web token-client timeouts.
+        userCredential = await _auth.signInWithPopup(provider);
+      } else {
+        // Trigger Google Sign-In flow (mobile/native)
+        final GoogleSignInAccount? googleUser = await _getGoogleSignIn().signIn();
+
+        if (googleUser == null) {
+          // User cancelled the sign-in
+          return null;
+        }
+
+        // Obtain auth details from request
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
+        // Create a new credential
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        // Sign in to Firebase with the Google credential
+        userCredential = await _auth.signInWithCredential(credential);
       }
-
-      // Obtain auth details from request
-      final GoogleSignInAuthentication googleAuth = 
-          await googleUser.authentication;
-
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the Google credential
-      final UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
 
       // Save user token for API calls
       final token = await userCredential.user?.getIdToken();
@@ -150,10 +164,12 @@ class AuthService {
   /// Sign out
   Future<void> signOut() async {
     try {
-      await Future.wait([
-        _auth.signOut(),
-        _googleSignIn.signOut(),
-      ]);
+      // Sign out from Firebase and (if used) GoogleSignIn on non-web
+      final futures = <Future>[_auth.signOut()];
+      if (!kIsWeb) {
+        futures.add(_getGoogleSignIn().signOut());
+      }
+      await Future.wait(futures);
       await _clearToken();
     } catch (e) {
       throw Exception('Sign out failed: ${e.toString()}');

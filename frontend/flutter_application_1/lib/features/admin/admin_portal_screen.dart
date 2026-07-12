@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../models/product_model.dart';
 import '../../services/admin_service.dart';
@@ -27,7 +28,6 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
   Map<String, dynamic> _overview = {};
   List<Map<String, dynamic>> _collections = [];
   List<ProductModel> _products = [];
-  bool _isSaving = false;
 
   @override
   void initState() {
@@ -162,7 +162,6 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
 
   Future<void> _saveProduct(
       Map<String, dynamic> data, ProductModel? existingProduct) async {
-    setState(() => _isSaving = true);
     try {
       if (existingProduct == null) {
         await _adminService.createProduct(data);
@@ -187,10 +186,6 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           SnackBar(content: Text('Error: $e')),
         );
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
     }
   }
 
@@ -214,7 +209,6 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     );
 
     if (confirmed == true && mounted) {
-      setState(() => _isSaving = true);
       try {
         await _adminService.deleteProduct(product.collection, product.id);
         if (mounted) {
@@ -228,10 +222,6 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: $e')),
           );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isSaving = false);
         }
       }
     }
@@ -1014,6 +1004,8 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
                             _imageController.text,
                             height: 100,
                             fit: BoxFit.cover,
+                            webHtmlElementStrategy:
+                              WebHtmlElementStrategy.prefer,
                             errorBuilder: (_, __, ___) => Container(
                               height: 100,
                               color: Colors.grey,

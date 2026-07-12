@@ -18,9 +18,7 @@ class AppRoutes {
   }
 
   static void navigateAndRemove(BuildContext context, String route) {
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(route, (Route<dynamic> route) => false);
+    Navigator.of(context).pushReplacementNamed(route);
   }
 
   static void pop(BuildContext context) {

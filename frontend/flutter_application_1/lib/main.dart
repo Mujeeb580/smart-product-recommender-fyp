@@ -99,7 +99,11 @@ class _MainScreenState extends State<_MainScreen> {
             _selectedIndex = 0;
           });
         }),
-        const ProfileScreen(),
+        ProfileScreen(onBackPressed: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        }),
       ];
 
   @override

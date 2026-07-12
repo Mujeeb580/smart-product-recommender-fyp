@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import '../../core/routes.dart';
 import '../../services/theme_provider.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/glassy_shine.dart';
@@ -16,6 +17,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static const String _developerEmail = 'developer@fyndo.com';
+  static const String _developerPassword = 'Developer@123';
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -43,18 +47,40 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
+  bool _isDeveloperCredentials(String email, String password) {
+    return email.trim().toLowerCase() == _developerEmail &&
+        password == _developerPassword;
+  }
+
   Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
 
     setState(() => _isSubmitting = true);
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (_isDeveloperCredentials(email, password)) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Developer access granted'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.of(context).pushReplacementNamed(AppRoutes.admin);
+      return;
+    }
+
     try {
       // Call Firebase Authentication
       final authService = AuthService();
       final user = await authService.signInWithEmailPassword(
-        _emailController.text.trim(),
-        _passwordController.text,
+        email,
+        password,
       );
 
       if (!mounted) return;
@@ -69,8 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         // Navigate to home
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil('/home', (route) => false);
+        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
       }
     } catch (e) {
       if (!mounted) return;
@@ -107,8 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         // Navigate to home
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil('/home', (route) => false);
+        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
       } else {
         setState(() => _isSubmitting = false);
       }
@@ -466,7 +490,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           Expanded(
                                             child: Container(
                                               height: 1,
-                                              color: Colors.white.withOpacity(0.3),
+                                              color:
+                                                  Colors.white.withOpacity(0.3),
                                             ),
                                           ),
                                           Padding(
@@ -476,7 +501,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                             child: Text(
                                               'OR',
                                               style: TextStyle(
-                                                color: Colors.white.withOpacity(0.7),
+                                                color: Colors.white
+                                                    .withOpacity(0.7),
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -485,7 +511,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           Expanded(
                                             child: Container(
                                               height: 1,
-                                              color: Colors.white.withOpacity(0.3),
+                                              color:
+                                                  Colors.white.withOpacity(0.3),
                                             ),
                                           ),
                                         ],
@@ -493,7 +520,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       const SizedBox(height: 20),
                                       // Google Sign-In Button
                                       OutlinedButton.icon(
-                                        onPressed: _isSubmitting ? null : _signInWithGoogle,
+                                        onPressed: _isSubmitting
+                                            ? null
+                                            : _signInWithGoogle,
                                         style: OutlinedButton.styleFrom(
                                           backgroundColor: Colors.white,
                                           foregroundColor: Colors.black87,
@@ -501,7 +530,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                             vertical: 16,
                                           ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           side: BorderSide(
                                             color: Colors.grey.shade300,

@@ -9,7 +9,19 @@ import 'settings_screen.dart';
 import '../../core/routes.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final VoidCallback? onBackPressed;
+
+  const ProfileScreen({super.key, this.onBackPressed});
+
+  void _handleBack(BuildContext context) {
+    if (onBackPressed != null) {
+      onBackPressed!.call();
+      return;
+    }
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +60,7 @@ class ProfileScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               GestureDetector(
-                                onTap: () => Navigator.pop(context),
+                                onTap: () => _handleBack(context),
                                 child: const _GlassIconButton(
                                     icon: Icons.arrow_back_ios_new),
                               ),
@@ -251,16 +263,6 @@ class ProfileScreen extends StatelessWidget {
                           const _SectionTitle(title: 'Preferences'),
                           const SizedBox(height: 14),
 
-                          _GlassInfoCard(
-                            icon: Icons.admin_panel_settings_outlined,
-                            label: 'Administration',
-                            value: 'Open Firestore Admin Portal',
-                            onTap: () {
-                              Navigator.of(context).pushNamed(AppRoutes.admin);
-                            },
-                          ),
-                          const SizedBox(height: 12),
-
                           // Notification Toggle
                           const _GlassSettingItem(
                             icon: Icons.notifications_outlined,
@@ -398,8 +400,7 @@ class ProfileScreen extends StatelessWidget {
               try {
                 await AuthService().signOut();
                 if (!context.mounted) return;
-                Navigator.of(context)
-                    .pushNamedAndRemoveUntil('/login', (route) => false);
+                Navigator.of(context).pushReplacementNamed(AppRoutes.login);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Logged out successfully'),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:flutter_application_1/features/auth/login_screen.dart';
+import '../../core/routes.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -249,14 +249,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _goToLogin() {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 420),
-        pageBuilder: (_, animation, __) {
-          return FadeTransition(opacity: animation, child: const LoginScreen());
-        },
-      ),
-    );
+    Navigator.of(context).pushReplacementNamed(AppRoutes.login);
   }
 
   Widget _buildPage(OnboardingPage page) {

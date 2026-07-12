@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../services/theme_provider.dart';
@@ -315,72 +316,121 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _CategoriesSection extends StatelessWidget {
+class _CategoriesSection extends StatefulWidget {
   final bool isScrolling;
   const _CategoriesSection({required this.isScrolling});
 
   @override
-  Widget build(BuildContext context) {
-    final categories = [
-      _Category(
-        'mobiles'.tr(),
-        '250+ ${'models'.tr()}',
-        Icons.smartphone,
-        [
-          0xFF4E6BFF,
-          0xFF3CA6FF,
-          0xFF6366F1,
-        ],
-        'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&h=600&fit=crop&crop=center&auto=format&q=80',
-        'latest_smartphones'.tr(),
-      ),
-      _Category(
-        'laptops'.tr(),
-        '180+ ${'models'.tr()}',
-        Icons.laptop_mac,
-        [
-          0xFFFB4DA7,
-          0xFFFB7C38,
-          0xFFEC4899,
-        ],
-        'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800&h=600&fit=crop&crop=center&auto=format&q=80',
-        'high_performance_laptops'.tr(),
-      ),
-    ];
+  State<_CategoriesSection> createState() => _CategoriesSectionState();
+}
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.15,
-      ),
-      itemCount: categories.length,
-      itemBuilder: (context, index) {
-        final category = categories[index];
-        return _CategoryCard(
-          category: category,
-          isScrolling: isScrolling,
-          onTap: () {
-            if (category.title == 'mobiles'.tr()) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const SmartphonesScreen(),
+class _CategoriesSectionState extends State<_CategoriesSection> {
+  late final PageController _pageController;
+  int _activeIndex = 0;
+
+  final List<_Category> _categories = [
+    _Category(
+      'mobiles'.tr(),
+      '250+ ${'models'.tr()}',
+      Icons.smartphone,
+      [
+        0xFF4E6BFF,
+        0xFF3CA6FF,
+        0xFF6366F1,
+      ],
+      'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&h=600&fit=crop&crop=center&auto=format&q=80',
+      'latest_smartphones'.tr(),
+    ),
+    _Category(
+      'laptops'.tr(),
+      '180+ ${'models'.tr()}',
+      Icons.laptop_mac,
+      [
+        0xFFFB4DA7,
+        0xFFFB7C38,
+        0xFFEC4899,
+      ],
+      'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800&h=600&fit=crop&crop=center&auto=format&q=80',
+      'high_performance_laptops'.tr(),
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.82);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _handleTap(_Category category) {
+    if (category.title == 'mobiles'.tr()) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const SmartphonesScreen(),
+        ),
+      );
+    } else if (category.title == 'laptops'.tr()) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const LaptopsScreen(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 225,
+          child: PageView.builder(
+            controller: _pageController,
+            physics: const BouncingScrollPhysics(),
+            itemCount: _categories.length,
+            onPageChanged: (index) {
+              setState(() {
+                _activeIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final category = _categories[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: _CategoryCard(
+                  category: category,
+                  isScrolling: widget.isScrolling,
+                  onTap: () => _handleTap(category),
                 ),
               );
-            } else if (category.title == 'laptops'.tr()) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const LaptopsScreen(),
-                ),
-              );
-            }
-          },
-        );
-      },
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_categories.length, (index) {
+            final isActive = index == _activeIndex;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 18 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Colors.white.withOpacity(0.95)
+                    : Colors.white.withOpacity(0.35),
+                borderRadius: BorderRadius.circular(99),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 }
@@ -519,6 +569,8 @@ class _CategoryCardState extends State<_CategoryCard>
                                 child: Image.network(
                                   widget.category.imageUrl,
                                   fit: BoxFit.cover,
+                                  webHtmlElementStrategy:
+                                      WebHtmlElementStrategy.prefer,
                                   loadingBuilder:
                                       (context, child, loadingProgress) {
                                     if (loadingProgress == null) return child;
@@ -855,7 +907,8 @@ class _FilterChip extends StatelessWidget {
           _openFilteredProducts(
             context,
             title: 'Top Rated Picks',
-            future: productService.fetchRecommendedProducts(query: 'best rated phone'),
+            future: productService.fetchRecommendedProducts(
+                query: 'best rated phone'),
           );
           return;
         }
@@ -864,7 +917,8 @@ class _FilterChip extends StatelessWidget {
           _openFilteredProducts(
             context,
             title: 'Fast Delivery Picks',
-            future: productService.fetchCollectionProducts(collection: 'phones', limit: 40),
+            future: productService.fetchCollectionProducts(
+                collection: 'phones', limit: 40),
           );
           return;
         }
@@ -992,7 +1046,8 @@ class _HorizontalProducts extends StatelessWidget {
     final productService = ProductService();
 
     return FutureBuilder<List<ProductModel>>(
-      future: productService.fetchCollectionProducts(collection: 'phones', limit: 10),
+      future: productService.fetchCollectionProducts(
+          collection: 'phones', limit: 10),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return SizedBox(
@@ -1083,18 +1138,21 @@ class _ProductCard extends StatelessWidget {
                             ? Image.network(
                                 product.image,
                                 fit: BoxFit.cover,
+                                webHtmlElementStrategy:
+                                    WebHtmlElementStrategy.prefer,
                                 loadingBuilder:
                                     (context, child, loadingProgress) {
                                   if (loadingProgress == null) return child;
                                   return Center(
                                     child: CircularProgressIndicator(
-                                      value: loadingProgress.expectedTotalBytes !=
-                                              null
-                                          ? loadingProgress
-                                                  .cumulativeBytesLoaded /
-                                              loadingProgress
-                                                  .expectedTotalBytes!
-                                          : null,
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
                                       color: Colors.white,
                                       strokeWidth: 2,
                                     ),

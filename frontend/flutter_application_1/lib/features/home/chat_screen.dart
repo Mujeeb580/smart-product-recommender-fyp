@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/chat_message_model.dart';
 import '../../models/product_model.dart';
 import '../../services/chat_service.dart';
@@ -24,6 +25,7 @@ class _ChatScreenState extends State<ChatScreen> {
   List<ChatMessageModel> _messages = [];
   bool _isLoading = false;
   List<ProductModel>? _recommendedProducts;
+  String? _lastSentMessage;
 
   @override
   void initState() {
@@ -60,6 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
       );
       _isLoading = true;
       _messageController.clear();
+      _lastSentMessage = message;
     });
 
     _scrollToBottom();
@@ -85,11 +88,81 @@ class _ChatScreenState extends State<ChatScreen> {
 
       _scrollToBottom();
     } catch (e) {
-      // Error handling
+      final errMsg = e.toString();
+      // Error handling: show error message and allow retry
       setState(() {
         _messages.add(
           ChatMessageModel(
-            message: 'Sorry, something went wrong. Please try again.',
+            message: 'Sorry, something went wrong.\nError: $errMsg',
+            isUser: false,
+            timestamp: DateTime.now(),
+          ),
+        );
+        _isLoading = false;
+      });
+      _scrollToBottom();
+
+      // Show SnackBar with retry action
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $errMsg'),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: () {
+              if (_lastSentMessage != null && _lastSentMessage!.isNotEmpty) {
+                _messageController.text = _lastSentMessage!;
+                _sendMessage();
+              }
+            },
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _askAboutProduct(ProductModel product) async {
+    final message = 'Tell me about ${product.name}';
+
+    // Add user message
+    setState(() {
+      _messages.add(
+        ChatMessageModel(
+          message: message,
+          isUser: true,
+          timestamp: DateTime.now(),
+        ),
+      );
+      _isLoading = true;
+      _lastSentMessage = message;
+    });
+
+    _scrollToBottom();
+
+    try {
+      final response = await _chatService.sendMessage(message, product: product);
+      final botReply = response['reply'] as String;
+      final products = response['products'] as List<ProductModel>;
+
+      setState(() {
+        _messages.add(
+          ChatMessageModel(
+            message: botReply,
+            isUser: false,
+            timestamp: DateTime.now(),
+          ),
+        );
+        // Keep recommended products updated if backend returned product details
+        _recommendedProducts = products.isNotEmpty ? products : _recommendedProducts;
+        _isLoading = false;
+      });
+
+      _scrollToBottom();
+    } catch (e) {
+      final errMsg = e.toString();
+      setState(() {
+        _messages.add(
+          ChatMessageModel(
+            message: 'Sorry, something went wrong.\nError: $errMsg',
             isUser: false,
             timestamp: DateTime.now(),
           ),
@@ -272,8 +345,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(
-                                                  height: isDesktop ? 12 : 8),
+                                              SizedBox(height: isDesktop ? 12 : 8),
                                               SizedBox(
                                                 height: isDesktop
                                                     ? 200
@@ -289,32 +361,55 @@ class _ChatScreenState extends State<ChatScreen> {
                                                     final product =
                                                         _recommendedProducts![
                                                             index];
-                                                    return GestureDetector(
-                                                      onTap: () {
-                                                        Navigator.of(context)
-                                                            .push(
-                                                          MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                ProductListScreen(
-                                                              initialProducts:
-                                                                  _recommendedProducts,
-                                                              title:
-                                                                  'Recommended Products',
+                                                    return Stack(
+                                                      children: [
+                                                        GestureDetector(
+                                                          onTap: () {
+                                                            Navigator.of(context)
+                                                                .push(
+                                                              MaterialPageRoute(
+                                                                builder: (context) =>
+                                                                    ProductListScreen(
+                                                                  initialProducts:
+                                                                      _recommendedProducts,
+                                                                  title:
+                                                                      'Recommended Products',
+                                                                ),
+                                                              ),
+                                                            );
+                                                          },
+                                                          child: _GlassProductCard(
+                                                            product: product,
+                                                            isDesktop: isDesktop,
+                                                            isTablet: isTablet,
+                                                          ),
+                                                        ),
+                                                        Positioned(
+                                                          top: 6,
+                                                          right: 6,
+                                                          child: ClipOval(
+                                                            child: Material(
+                                                              color: Colors.black38,
+                                                              child: InkWell(
+                                                                onTap: () => _askAboutProduct(product),
+                                                                child: Padding(
+                                                                  padding: const EdgeInsets.all(6.0),
+                                                                  child: Icon(
+                                                                    Icons.question_mark_rounded,
+                                                                    color: Colors.white,
+                                                                    size: isDesktop ? 18 : 16,
+                                                                  ),
+                                                                ),
+                                                              ),
                                                             ),
                                                           ),
-                                                        );
-                                                      },
-                                                      child: _GlassProductCard(
-                                                        product: product,
-                                                        isDesktop: isDesktop,
-                                                        isTablet: isTablet,
-                                                      ),
+                                                        ),
+                                                      ],
                                                     );
                                                   },
                                                 ),
                                               ),
-                                              SizedBox(
-                                                  height: isDesktop ? 16 : 12),
+                                              SizedBox(height: isDesktop ? 16 : 12),
                                               SizedBox(
                                                 width: double.infinity,
                                                 child: ClipRRect(
@@ -535,13 +630,6 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
 }
 
 class _GlassQuickActionButton extends StatelessWidget {
@@ -685,6 +773,8 @@ class _GlassProductCard extends StatelessWidget {
                           ? Image.network(
                               product.image,
                               fit: BoxFit.cover,
+                              webHtmlElementStrategy:
+                                  WebHtmlElementStrategy.prefer,
                               loadingBuilder: (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return Container(

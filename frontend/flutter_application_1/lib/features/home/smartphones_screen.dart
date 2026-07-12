@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
-import '../../core/theme.dart';
 import '../../models/product_model.dart';
 import '../../services/product_service.dart';
 import '../../widgets/loading_widget.dart' as loading_widgets;
@@ -62,7 +62,7 @@ class _SmartphonesScreenState extends State<SmartphonesScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
-                      onTap: () => Navigator.pop(context),
+                      onTap: () => Navigator.maybePop(context),
                       child: const _GlassIconButton(icon: Icons.arrow_back_ios_new),
                     ),
                     Text(
@@ -216,6 +216,8 @@ class _CompactProductTile extends StatelessWidget {
                         ? Image.network(
                             product.image,
                             fit: BoxFit.cover,
+                          webHtmlElementStrategy:
+                              WebHtmlElementStrategy.prefer,
                             errorBuilder: (_, __, ___) => Icon(icon, color: Colors.white, size: 36),
                           )
                         : Icon(icon, color: Colors.white, size: 36),

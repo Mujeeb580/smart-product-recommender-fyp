@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../core/api_config.dart';
 
@@ -41,6 +42,8 @@ class ApiService {
       throw ApiException('Service unavailable. Please try again later.');
     } on FormatException {
       throw ApiException('Invalid response format from server.');
+    } on TimeoutException {
+      throw ApiException('Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
     } catch (e) {
       throw ApiException('Error: ${e.toString()}');
     }
@@ -53,6 +56,10 @@ class ApiService {
     Map<String, dynamic>? body,
   }) async {
     try {
+      // Log outgoing request for easier debugging in browser console
+      print('API POST -> $endpoint');
+      if (body != null) print('Request body: $body');
+
       final response = await _client
           .post(
             Uri.parse(endpoint),
@@ -62,6 +69,8 @@ class ApiService {
           .timeout(ApiConfig.connectionTimeout);
 
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException('Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
     } on SocketException {
       throw ApiException('No internet connection. Please check your network.');
     } on HttpException {
@@ -95,6 +104,8 @@ class ApiService {
       throw ApiException('Service unavailable. Please try again later.');
     } on FormatException {
       throw ApiException('Invalid response format from server.');
+    } on TimeoutException {
+      throw ApiException('Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
     } catch (e) {
       throw ApiException('Error: ${e.toString()}');
     }
@@ -120,6 +131,8 @@ class ApiService {
       throw ApiException('Service unavailable. Please try again later.');
     } on FormatException {
       throw ApiException('Invalid response format from server.');
+    } on TimeoutException {
+      throw ApiException('Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
     } catch (e) {
       throw ApiException('Error: ${e.toString()}');
     }

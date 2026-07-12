@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
 import '../../services/product_service.dart';
@@ -295,6 +296,8 @@ class _SearchResultCard extends StatelessWidget {
                       ? Image.network(
                           product.image,
                           fit: BoxFit.cover,
+                          webHtmlElementStrategy:
+                              WebHtmlElementStrategy.prefer,
                           errorBuilder: (_, __, ___) => const Icon(
                             Icons.smartphone,
                             color: Colors.white,

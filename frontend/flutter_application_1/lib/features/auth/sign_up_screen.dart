@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import '../../core/routes.dart';
 import '../../services/theme_provider.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/glassy_shine.dart';
@@ -78,8 +79,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
 
         // Navigate to home
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil('/home', (route) => false);
+        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
       }
     } catch (e) {
       if (!mounted) return;
@@ -116,8 +116,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
 
         // Navigate to home
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil('/home', (route) => false);
+        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
       } else {
         setState(() => _isSubmitting = false);
       }

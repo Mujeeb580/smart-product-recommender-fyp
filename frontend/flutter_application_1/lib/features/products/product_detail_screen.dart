@@ -115,6 +115,8 @@ class ProductDetailScreen extends StatelessWidget {
                                   ? Image.network(
                                       product.image,
                                       fit: BoxFit.contain,
+                                      webHtmlElementStrategy:
+                                          WebHtmlElementStrategy.prefer,
                                       loadingBuilder: (context, child, loadingProgress) {
                                         if (loadingProgress == null) {
                                           return child;

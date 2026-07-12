@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 import '../core/theme.dart';
 
@@ -67,6 +68,8 @@ class ProductCard extends StatelessWidget {
                           ? Image.network(
                               product.image,
                               fit: BoxFit.cover,
+                              webHtmlElementStrategy:
+                                  WebHtmlElementStrategy.prefer,
                               loadingBuilder:
                                   (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;

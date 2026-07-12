@@ -16,19 +16,24 @@ class ChatService {
   }
 
   /// Sends a message to AI backend and gets recommendations
-  Future<Map<String, dynamic>> sendMessage(String userMessage) async {
+  Future<Map<String, dynamic>> sendMessage(String userMessage, {ProductModel? product}) async {
     try {
       final token = await _authService.getIdToken();
       final headers =
           token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
+      final body = {
+        'message': userMessage,
+        'session_id': _getSessionId(),
+      };
+      if (product != null) {
+        body['product_id'] = product.productId ?? product.id ?? product.name;
+      }
+
       final response = await _apiService.post(
         ApiConfig.chatSendMessage,
         headers: headers,
-        body: {
-          'message': userMessage,
-          'session_id': _getSessionId(),
-        },
+        body: body,
       );
 
       String botReply = response['reply'] ?? 'I understand your request.';
