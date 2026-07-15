@@ -1,5 +1,7 @@
 import numpy as np
 import re
+import hashlib
+from threading import RLock
 
 from .model import get_model
 from .text_builder import product_to_text
@@ -7,6 +9,74 @@ from .text_builder import product_to_text
 
 PHONE_HINTS = ("phone", "phones", "mobile", "mobiles", "smartphone")
 LAPTOP_HINTS = ("laptop", "laptops", "notebook", "ultrabook", "macbook")
+
+GAMING_HINTS = (
+    "gaming",
+    "game",
+    "gamer",
+    "pubg",
+    "bgmi",
+    "fortnite",
+    "cod",
+    "call of duty",
+    "genshin",
+)
+
+BATTERY_HINTS = (
+    "battery",
+    "battery life",
+    "backup",
+    "long battery",
+    "all day",
+    "long lasting",
+    "mah",
+)
+
+SOCIAL_HINTS = (
+    "social media",
+    "instagram",
+    "facebook",
+    "tiktok",
+    "snapchat",
+    "reels",
+    "youtube",
+    "shorts",
+)
+
+STUDY_HINTS = (
+    "study",
+    "student",
+    "school",
+    "college",
+    "university",
+    "classes",
+    "class",
+    "online class",
+    "notes",
+    "lecture",
+)
+
+GENERAL_HINTS = (
+    "general use",
+    "everyday",
+    "daily use",
+    "normal use",
+    "basic use",
+    "regular use",
+    "for daily",
+)
+
+BUDGET_HINTS = (
+    "cheap",
+    "cheapest",
+    "budget",
+    "affordable",
+    "low budget",
+    "budget friendly",
+    "value for money",
+)
+
+DEFAULT_BUDGET_PHONE_MAX = 30000
 
 FLAGSHIP_PHONE_HINTS = (
     "snapdragon 8",
@@ -35,6 +105,10 @@ HIGH_END_LAPTOP_GPU_HINTS = (
     "rtx 5060",
     "rtx 4060",
 )
+
+
+_EMBEDDING_CACHE = {}
+_EMBEDDING_CACHE_LOCK = RLock()
 
 
 def _clean_text(value) -> str:
@@ -79,13 +153,15 @@ def _category_of(product: dict) -> str:
 
 def _query_has_any(query: str, words) -> bool:
     q = query.lower()
-    return any(w in q for w in words)
+    return any(re.search(rf"\b{re.escape(w)}\b", q) for w in words)
 
 
 def _extract_budget(query: str):
     q = query.lower()
     match = re.search(r"(?:under|below|less than|upto|up to|within)\s*(?:rs\.?\s*)?(\d+(?:\.\d+)?)\s*(k|m|lakh|lac)?", q)
     if not match:
+        if any(keyword in q for keyword in BUDGET_HINTS):
+            return float(DEFAULT_BUDGET_PHONE_MAX)
         return None
     value = float(match.group(1))
     unit = (match.group(2) or "").lower()
@@ -211,6 +287,34 @@ def _apply_hard_constraints(query: str, products: list) -> list:
     return constrained
 
 
+def _device_quality_score(product: dict) -> float:
+    raw = product.get("device_score")
+    if raw is None:
+        raw = product.get("processor_score", product.get("laptop_score", 0.5))
+    try:
+        score = float(raw)
+    except Exception:
+        score = 0.5
+    return max(0.0, min(score, 1.0))
+
+
+def _has_any(query: str, words) -> bool:
+    q = query.lower()
+    return any(word in q for word in words)
+
+
+def _battery_value(product: dict) -> int:
+    return _extract_number(product.get("battery", ""))
+
+
+def _ram_value(product: dict) -> int:
+    return _extract_number(product.get("ram", ""))
+
+
+def _storage_value(product: dict) -> int:
+    return _extract_number(product.get("storage", ""))
+
+
 def _processor_tier_score(processor: str, category: str) -> float:
     p = _clean_text(processor).lower()
     if not p:
@@ -235,6 +339,28 @@ def _processor_tier_score(processor: str, category: str) -> float:
         return 0.3
 
     return 0.0
+
+
+def _balanced_phone_score(product: dict) -> float:
+    ram = _ram_value(product)
+    storage = _storage_value(product)
+    battery = _battery_value(product)
+
+    ram_score = 1.0 if ram >= 12 else 0.75 if ram >= 8 else 0.45 if ram >= 6 else 0.2
+    storage_score = 1.0 if storage >= 256 else 0.75 if storage >= 128 else 0.45 if storage >= 64 else 0.2
+    battery_score = 1.0 if battery >= 6500 else 0.85 if battery >= 6000 else 0.7 if battery >= 5000 else 0.35 if battery >= 4000 else 0.15
+    return (ram_score * 0.35) + (storage_score * 0.25) + (battery_score * 0.4)
+
+
+def _balanced_laptop_score(product: dict) -> float:
+    ram = _ram_value(product)
+    storage = _storage_value(product)
+    battery = _battery_value(product)
+
+    ram_score = 1.0 if ram >= 16 else 0.8 if ram >= 8 else 0.5 if ram >= 6 else 0.2
+    storage_score = 1.0 if storage >= 512 else 0.8 if storage >= 256 else 0.5 if storage >= 128 else 0.2
+    battery_score = 1.0 if battery >= 7000 else 0.8 if battery >= 6000 else 0.6 if battery >= 5000 else 0.3 if battery >= 4000 else 0.15
+    return (ram_score * 0.38) + (storage_score * 0.32) + (battery_score * 0.3)
 
 
 def _gpu_tier_score(gpu: str) -> float:
@@ -272,6 +398,7 @@ def _camera_signal_score(product: dict) -> float:
 def _intent_boost(query: str, product: dict) -> float:
     q = query.lower()
     category = _category_of(product)
+    device_quality = _device_quality_score(product)
     boost = 0.0
 
     wants_phones = _query_has_any(q, PHONE_HINTS)
@@ -281,23 +408,60 @@ def _intent_boost(query: str, product: dict) -> float:
     if wants_laptops and not wants_phones:
         boost += 0.22 if category == "laptops" else -0.18
 
-    battery_intent = "battery" in q or "mah" in q or "backup" in q
+    battery_intent = _has_any(q, BATTERY_HINTS)
     if battery_intent:
-        battery = _extract_number(product.get("battery", ""))
+        battery = _battery_value(product)
         if category == "phones" and battery:
-            boost += min(0.35, max(0.0, (battery - 3500) / 5500))
+            boost += min(0.38, max(0.0, (battery - 3500) / 5500))
+            boost += device_quality * 0.12
+        elif category == "laptops" and battery:
+            boost += min(0.2, max(0.0, (battery - 4000) / 5000))
 
     camera_intent = "camera" in q
     if camera_intent and category == "phones":
         boost += _camera_signal_score(product) * 0.28
 
-    processor_intent = any(k in q for k in ("processor", "chipset", "cpu", "flagship", "gaming", "snapdragon", "core i7", "core i9", "ryzen"))
+    gaming_intent = _has_any(q, GAMING_HINTS)
+    processor_intent = any(k in q for k in ("processor", "chipset", "cpu", "flagship", "snapdragon", "core i7", "core i9", "ryzen"))
     if processor_intent:
         boost += _processor_tier_score(product.get("processor"), category) * 0.22
 
-    gpu_intent = any(k in q for k in ("gpu", "graphics", "gaming", "rtx"))
+    gpu_intent = any(k in q for k in ("gpu", "graphics", "rtx"))
+    if gaming_intent:
+        if category == "phones":
+            boost += _processor_tier_score(product.get("processor"), category) * 0.28
+            boost += device_quality * 0.20
+            boost += _balanced_phone_score(product) * 0.12
+        elif category == "laptops":
+            boost += _processor_tier_score(product.get("processor"), category) * 0.18
+            boost += _gpu_tier_score(product.get("gpu")) * 0.30
+            boost += device_quality * 0.15
+
     if gpu_intent and category == "laptops":
         boost += _gpu_tier_score(product.get("gpu")) * 0.24
+
+    social_intent = _has_any(q, SOCIAL_HINTS)
+    if social_intent and category == "phones":
+        boost += _balanced_phone_score(product) * 0.22
+        boost += device_quality * 0.15
+
+    study_intent = _has_any(q, STUDY_HINTS)
+    if study_intent:
+        if category == "phones":
+            boost += _balanced_phone_score(product) * 0.18
+            boost += device_quality * 0.10
+        elif category == "laptops":
+            boost += _balanced_laptop_score(product) * 0.20
+            boost += device_quality * 0.12
+
+    general_intent = _has_any(q, GENERAL_HINTS)
+    if general_intent:
+        if category == "phones":
+            boost += _balanced_phone_score(product) * 0.20
+            boost += device_quality * 0.10
+        elif category == "laptops":
+            boost += _balanced_laptop_score(product) * 0.18
+            boost += device_quality * 0.10
 
     office_intent = any(k in q for k in ("office", "lightweight", "portable", "coding"))
     if office_intent and category == "laptops":
@@ -308,11 +472,32 @@ def _intent_boost(query: str, product: dict) -> float:
         if 0 < price <= 250000:
             boost += 0.12
 
-    cheapest_intent = any(k in q for k in ("cheap", "cheapest", "budget", "under", "below"))
-    if cheapest_intent:
+    budget_intent = any(k in q for k in BUDGET_HINTS) or any(k in q for k in ("under", "below", "less than", "upto", "up to", "within"))
+    if budget_intent:
         price = _price_to_float(product.get("price"))
         if price > 0:
-            boost += max(-0.2, min(0.2, (250000 - price) / 250000))
+            if price <= DEFAULT_BUDGET_PHONE_MAX:
+                boost += 0.18
+            elif price <= 50000:
+                boost += 0.14
+            elif price <= 80000:
+                boost += 0.08
+            elif price <= 120000:
+                boost += 0.0
+            elif price <= 180000:
+                boost -= 0.18
+            else:
+                boost -= 0.35
+
+    daily_use_intent = _has_any(q, GENERAL_HINTS)
+    if daily_use_intent and category == "phones":
+        price = _price_to_float(product.get("price"))
+        if 0 < price <= 50000:
+            boost += 0.12
+        elif 50000 < price <= 90000:
+            boost += 0.08
+        elif price > 150000:
+            boost -= 0.2
 
     constraints = _parse_query_constraints(query)
     if constraints["budget_max"] is not None:
@@ -327,7 +512,7 @@ def _intent_boost(query: str, product: dict) -> float:
 
 def _normalize_output_product(product: dict) -> dict:
     item = product.copy()
-    item["name"] = _clean_text(item.get("name", ""))
+    item["name"] = _clean_text(item.get("normalized_name") or item.get("name", ""))
     item["processor"] = _clean_text(item.get("processor", ""))
     item["gpu"] = _clean_text(item.get("gpu", ""))
     item["battery"] = _clean_text(item.get("battery", ""))
@@ -345,6 +530,42 @@ def _sigmoid(value: float) -> float:
     return float(1.0 / (1.0 + np.exp(-2.2 * value)))
 
 
+def _embedding_cache_key(product: dict, product_text: str) -> str:
+    product_identity = (
+        str(product.get("id") or product.get("product_id") or product.get("url") or product.get("name") or "")
+        .strip()
+        .lower()
+    )
+    signature = hashlib.sha1(product_text.encode("utf-8", errors="ignore")).hexdigest()
+    return f"{product_identity}:{signature}"
+
+
+def _get_product_embeddings(model, products: list, product_texts: list) -> np.ndarray:
+    cached_embeddings = {}
+    missing_indices = []
+    missing_texts = []
+
+    with _EMBEDDING_CACHE_LOCK:
+        for index, (product, product_text) in enumerate(zip(products, product_texts)):
+            cache_key = _embedding_cache_key(product, product_text)
+            embedding = _EMBEDDING_CACHE.get(cache_key)
+            if embedding is None:
+                missing_indices.append(index)
+                missing_texts.append(product_text)
+            else:
+                cached_embeddings[index] = embedding
+
+    if missing_texts:
+        fresh_embeddings = model.encode(missing_texts)
+        with _EMBEDDING_CACHE_LOCK:
+            for index, product_text, embedding in zip(missing_indices, missing_texts, fresh_embeddings):
+                cache_key = _embedding_cache_key(products[index], product_text)
+                _EMBEDDING_CACHE[cache_key] = embedding
+                cached_embeddings[index] = embedding
+
+    return np.vstack([cached_embeddings[index] for index in range(len(products))])
+
+
 def recommend_products(query: str, products: list, top_n: int = 10):
     """
     Returns top N products based on semantic similarity.
@@ -353,19 +574,30 @@ def recommend_products(query: str, products: list, top_n: int = 10):
         return []
 
     constrained_products = _apply_hard_constraints(query, products)
+    if len(constrained_products) > 80:
+        candidate_limit = min(len(constrained_products), max(80, top_n * 10))
+        heuristic_ranked = sorted(
+            ((product, _intent_boost(query, product)) for product in constrained_products),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+        constrained_products = [product for product, _ in heuristic_ranked[:candidate_limit]]
+
     model = get_model()
 
     product_texts = [product_to_text(p) for p in constrained_products]
 
     query_embedding = model.encode([query])
-    product_embeddings = model.encode(product_texts)
+    product_embeddings = _get_product_embeddings(model, constrained_products, product_texts)
 
     similarities = np.matmul(query_embedding, product_embeddings.T)[0]
 
     scored = []
     for product, semantic_score in zip(constrained_products, similarities):
+        device_quality = _device_quality_score(product)
         boost = _intent_boost(query, product)
-        raw_score = float(semantic_score) + boost
+        quality_alignment = (device_quality - 0.5) * 0.55
+        raw_score = float(semantic_score) * 0.7 + quality_alignment + boost
         scored.append((product, float(semantic_score), boost, raw_score))
 
     ranked = sorted(scored, key=lambda x: x[3], reverse=True)

@@ -2,13 +2,16 @@ from .priceoye import scrape_priceoye_phones
 from .filters import filter_products
 from .cleaner import clean_products
 from app.core.firebase import firestore_db
+from app.recommendation.processor_engine import score_product
+from app.scraping.processor_normalizer import normalize_scraped_product_fields
 from datetime import datetime
 import hashlib
 
 
 def generate_product_id(product):
     """Generate a unique ID based on product name and URL to prevent duplicates"""
-    unique_string = product.get('url', '') + product.get('name', '')
+    unique_name = product.get('normalized_name') or product.get('name', '')
+    unique_string = product.get('url', '') + unique_name
     return hashlib.md5(unique_string.encode()).hexdigest()
 
 
@@ -20,6 +23,14 @@ def save_products_to_firestore(products, source):
         
         for product in products:
             try:
+                product['raw_name'] = product.get('raw_name') or product.get('name', '')
+
+                normalized_snapshot = normalize_scraped_product_fields(product)
+                normalized_name = normalized_snapshot.get('name', '')
+                if normalized_name:
+                    product['normalized_name'] = normalized_name
+                    product['name'] = normalized_name
+
                 # Generate unique document ID to prevent duplicates
                 doc_id = generate_product_id(product)
                 
@@ -32,21 +43,28 @@ def save_products_to_firestore(products, source):
                 product['source'] = source
                 product['product_id'] = doc_id
                 
-                # Extract specs for mobile (name, price, model, storage, ram)
-                specs = product.get('specs', {})
-                
-                # Ensure specs is a dict (not list or other type)
-                if not isinstance(specs, dict):
-                    specs = {}
-                
-                # Clean and deduplicate spec values for mobile phones
-                product['brand'] = specs.get('brand', 'Unknown')
-                product['ram'] = specs.get('ram', 'Unknown').replace(' RAM', '').replace('RAM', '').strip()
-                product['storage'] = specs.get('storage', 'Unknown').replace(' SSD', '').replace(' HDD', '').strip()
-                product['processor'] = specs.get('processor', 'Unknown').strip()
-                product['gpu'] = specs.get('gpu', 'Unknown').strip()
-                product['battery'] = specs.get('battery', 'Unknown').strip()
-                product['image_url'] = product.get('image_url', '').strip()
+                # Normalize all core fields before persistence.
+                normalized = normalize_scraped_product_fields(product)
+                product.update({
+                    'normalized_name': normalized['name'],
+                    'brand': normalized['brand'],
+                    'ram': normalized['ram'],
+                    'storage': normalized['storage'],
+                    'processor': normalized['processor'],
+                    'gpu': normalized['gpu'],
+                    'battery': normalized['battery'],
+                    'image_url': normalized['image_url'],
+                    'price_numeric': normalized['price_numeric'],
+                    'category': product.get('category', 'Phones') or 'Phones',
+                })
+
+                score_info = score_product(product)
+                product['device_score'] = float(score_info.get('score', 0.0))
+                product['device_tier'] = score_info.get('tier', 'Unknown')
+                product['normalized_processor'] = score_info.get('normalized_processor', 'Unknown')
+                product['performance_breakdown'] = score_info.get('breakdown', {})
+                product['score_specs'] = score_info.get('specs', {})
+                product['score_type'] = score_info.get('score_type', 'phone')
                 
                 # Remove specs field to avoid duplication
                 if 'specs' in product:
@@ -63,11 +81,14 @@ def save_products_to_firestore(products, source):
                 brand = product.get('brand', 'Unknown')
                 ram = product.get('ram', 'N/A')
                 storage = product.get('storage', 'N/A')
-                processor = product.get('processor', 'N/A')
+                processor = product.get('normalized_processor', product.get('processor', 'N/A'))
                 gpu = product.get('gpu', 'N/A')
                 battery = product.get('battery', 'N/A')
                 state = 'UPDATED' if existing_doc.exists else 'SAVED'
-                print(f"[{state}] {brand} | CPU: {processor} | GPU: {gpu} | RAM: {ram} | Battery: {battery} | Storage: {storage}")
+                print(
+                    f"[{state}] {brand} | CPU: {processor} | GPU: {gpu} | RAM: {ram} | "
+                    f"Battery: {battery} | Storage: {storage} | Score: {product.get('device_score', 0.0):.2f}"
+                )
                 
             except Exception as e:
                 print(f"[ERROR] Failed to save {product.get('name', 'Unknown')}: {str(e)}")

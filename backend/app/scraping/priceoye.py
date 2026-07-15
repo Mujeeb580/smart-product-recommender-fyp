@@ -6,6 +6,8 @@ import time
 import re
 import os
 
+from app.scraping.processor_normalizer import normalize_generic_processor
+
 
 def _decode_escaped_unicode(text):
     """Convert escaped unicode sequences like \u00ae into readable characters."""
@@ -123,6 +125,7 @@ def scrape_product_specs_mobile(driver, product_url, category):
                 specs["processor"] = _extract_escaped_spec(page_source, r"\\u0022Chipset\\u0022:\\u0022(.*?)\\u0022")
             if not specs.get("processor"):
                 specs["processor"] = _extract_escaped_spec(page_source, r"\\u0022Processor Speed\\u0022:\\u0022(.*?)\\u0022")
+            specs["processor"] = normalize_generic_processor(specs.get("processor", ""))
             if not specs.get("gpu"):
                 specs["gpu"] = _extract_escaped_spec(page_source, r"\\u0022GPU\\u0022:\\u0022(.*?)\\u0022")
             if not specs.get("gpu"):
@@ -144,6 +147,9 @@ def scrape_product_specs_mobile(driver, product_url, category):
                     specs["storage"] = parts[0].strip()
                     if not specs.get("ram"):
                         specs["ram"] = parts[1].strip()
+
+            if specs.get("processor"):
+                specs["processor"] = normalize_generic_processor(specs.get("processor"))
             
             # Add brand to specs
             if brand:

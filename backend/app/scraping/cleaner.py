@@ -1,6 +1,8 @@
 """Data cleaning module - normalizes and cleans product data"""
 import re
 
+from app.scraping.processor_normalizer import normalize_product_name
+
 
 def extract_laptop_specs_from_name(name):
     """Extract processor, GPU, RAM, storage from laptop name"""
@@ -136,11 +138,13 @@ def clean_products(products):
     
     for product in products:
         try:
-            name = product.get("name", "").strip()
+            raw_name = product.get("name", "").strip()
+            name = normalize_product_name(raw_name, product.get("category", ""))
             category = product.get("category", "Unknown")
             
             cleaned_product = {
                 "name": name,
+                "raw_name": raw_name,
                 "category": category,
                 "price": product.get("price", "").strip(),
                 "url": product.get("url", "").strip(),

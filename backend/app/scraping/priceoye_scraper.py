@@ -10,10 +10,13 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 from app.core.firebase import firestore_db
+from app.recommendation.processor_engine import score_product
+from app.scraping.processor_normalizer import normalize_scraped_product_fields
 
 
 def _generate_product_id(product: Dict[str, Any]) -> str:
-    unique_string = f"{product.get('url', '')}{product.get('name', '')}"
+    unique_name = product.get('normalized_name') or product.get('name', '')
+    unique_string = f"{product.get('url', '')}{unique_name}"
     return hashlib.md5(unique_string.encode()).hexdigest()
 
 
@@ -159,6 +162,13 @@ def scrape_priceoye_collection(
                         "image_url": image_url,
                     }
 
+                    product["raw_name"] = product["name"]
+                    normalized_snapshot = normalize_scraped_product_fields(product)
+                    normalized_name = normalized_snapshot.get("name", "")
+                    if normalized_name:
+                        product["normalized_name"] = normalized_name
+                        product["name"] = normalized_name
+
                     doc_id = _generate_product_id(product)
                     doc_ref = firestore_db.collection(firestore_collection).document(doc_id)
                     existing_doc = doc_ref.get()
@@ -177,12 +187,27 @@ def scrape_priceoye_collection(
                     product["scraped_at"] = datetime.now().isoformat()
                     product["source"] = "PriceOye"
                     product["product_id"] = doc_id
-                    product["brand"] = specs.get("brand", "Unknown")
-                    product["ram"] = (specs.get("ram", "Unknown") or "Unknown").replace(" RAM", "").replace("RAM", "").strip()
-                    product["storage"] = (specs.get("storage", "Unknown") or "Unknown").replace(" SSD", "").replace(" HDD", "").strip()
-                    product["processor"] = (specs.get("processor", "Unknown") or "Unknown").strip()
-                    product["gpu"] = (specs.get("gpu", "Unknown") or "Unknown").strip()
-                    product["battery"] = (specs.get("battery", "Unknown") or "Unknown").strip()
+                    product["category"] = category_name
+
+                    normalized = normalize_scraped_product_fields(product)
+                    product["normalized_name"] = normalized["name"]
+                    product["brand"] = normalized["brand"]
+                    product["ram"] = normalized["ram"]
+                    product["storage"] = normalized["storage"]
+                    product["processor"] = normalized["processor"]
+                    product["gpu"] = normalized["gpu"]
+                    product["battery"] = normalized["battery"]
+                    product["gpu_memory"] = normalized["gpu_memory"]
+                    product["image_url"] = normalized["image_url"] or product.get("image_url", "")
+                    product["price_numeric"] = normalized["price_numeric"]
+
+                    score_info = score_product(product)
+                    product["device_score"] = float(score_info.get("score", 0.0))
+                    product["device_tier"] = score_info.get("tier", "Unknown")
+                    product["normalized_processor"] = score_info.get("normalized_processor", "Unknown")
+                    product["performance_breakdown"] = score_info.get("breakdown", {})
+                    product["score_specs"] = score_info.get("specs", {})
+                    product["score_type"] = score_info.get("score_type", "unknown")
 
                     if existing_doc.exists:
                         doc_ref.set(product, merge=True)

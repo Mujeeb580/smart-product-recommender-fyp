@@ -2,30 +2,34 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Optional, List
 from app.recommendation.firestore import fetch_products
 from app.recommendation.engine import recommend_products
-from app.recommendation.processor_engine import calculate_phone_score
+from app.recommendation.processor_engine import score_product
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
 
-def _add_processor_score(product: dict) -> dict:
-    """Add processor performance score to phone products."""
+def _add_device_score(product: dict) -> dict:
+    """Add category-specific performance scores to phones and laptops."""
     item = product.copy()
-    
-    # Only calculate processor scores for phones
-    category = item.get("category", "").lower()
-    if "phone" in category or "mobile" in category:
-        try:
-            score_result = calculate_phone_score(item)
-            item["processor_score"] = score_result.get("score", 0)
-            item["processor_tier"] = score_result.get("tier", "Unknown")
-            item["normalized_processor"] = score_result.get("normalized_processor", item.get("processor", "Unknown"))
-            item["performance_breakdown"] = score_result.get("breakdown", {})
-        except Exception as e:
-            # Fallback if scoring fails
-            item["processor_score"] = 0.5
-            item["processor_tier"] = "Unknown"
-            item["normalized_processor"] = item.get("processor", "Unknown")
-            item["performance_breakdown"] = {}
+
+    try:
+        score_result = score_product(item)
+        item["device_score"] = score_result.get("score", 0.5)
+        item["device_tier"] = score_result.get("tier", "Unknown")
+        item["normalized_processor"] = score_result.get("normalized_processor", item.get("processor", "Unknown"))
+        item["performance_breakdown"] = score_result.get("breakdown", {})
+        item["score_type"] = score_result.get("score_type", "unknown")
+
+        if item.get("score_type") == "phone":
+            item["processor_score"] = item["device_score"]
+            item["processor_tier"] = item["device_tier"]
+        elif item.get("score_type") == "laptop":
+            item["laptop_score"] = item["device_score"]
+            item["laptop_tier"] = item["device_tier"]
+    except Exception:
+        item["device_score"] = 0.5
+        item["device_tier"] = "Unknown"
+        item["normalized_processor"] = item.get("processor", "Unknown")
+        item["performance_breakdown"] = {}
     
     return item
 
@@ -42,8 +46,8 @@ def _normalize_product(product: dict, default_category: str = "") -> dict:
     if default_category and not item.get("category"):
         item["category"] = default_category
     
-    # Add processor scores for phones
-    item = _add_processor_score(item)
+    # Add category-specific scores for phones and laptops
+    item = _add_device_score(item)
     return item
 
 
@@ -93,10 +97,10 @@ async def get_recommendations(
         if query:
             recommended = recommend_products(query, products, top_n=top_n)
         else:
-            # Return all products sorted by any existing score
+            # Return all products sorted by the best available score.
             recommended = sorted(
                 products,
-                key=lambda x: x.get("similarity_score", 0),
+                key=lambda x: x.get("device_score", x.get("similarity_score", 0)),
                 reverse=True
             )[:top_n]
         
@@ -245,22 +249,22 @@ async def get_phones_by_performance(
     - tier: Filter by tier (Flagship, Upper Mid, Mid, Low)
     """
     try:
-        phones = [_add_processor_score(p) for p in fetch_products("phones")]
+        phones = [_add_device_score(p) for p in fetch_products("phones")]
         
         if not phones:
             return {"products": [], "message": "No phones available", "count": 0}
         
         # Filter by minimum score
         if min_score is not None:
-            phones = [p for p in phones if p.get("processor_score", 0) >= min_score]
+            phones = [p for p in phones if p.get("device_score", p.get("processor_score", 0)) >= min_score]
         
         # Filter by tier
         if tier:
             tier_lower = tier.lower()
-            phones = [p for p in phones if p.get("processor_tier", "").lower() == tier_lower]
+            phones = [p for p in phones if p.get("device_tier", p.get("processor_tier", "")).lower() == tier_lower]
         
         # Sort by processor score descending
-        phones = sorted(phones, key=lambda x: x.get("processor_score", 0), reverse=True)[:limit]
+        phones = sorted(phones, key=lambda x: x.get("device_score", x.get("processor_score", 0)), reverse=True)[:limit]
         
         return {
             "products": phones,
@@ -287,19 +291,19 @@ async def get_phones_by_tier(
     Tiers: Flagship, Upper Mid, Mid, Low
     """
     try:
-        phones = [_add_processor_score(p) for p in fetch_products("phones")]
+        phones = [_add_device_score(p) for p in fetch_products("phones")]
         
         if not phones:
             return {"products": [], "message": "No phones available", "count": 0}
         
         tier_lower = tier.lower()
-        filtered = [p for p in phones if p.get("processor_tier", "").lower() == tier_lower]
+        filtered = [p for p in phones if p.get("device_tier", p.get("processor_tier", "")).lower() == tier_lower]
         
         if not filtered:
             return {"products": [], "message": f"No phones found in {tier} tier", "count": 0}
         
         # Sort by score within tier
-        filtered = sorted(filtered, key=lambda x: x.get("processor_score", 0), reverse=True)[:limit]
+        filtered = sorted(filtered, key=lambda x: x.get("device_score", x.get("processor_score", 0)), reverse=True)[:limit]
         
         return {
             "products": filtered,
@@ -323,7 +327,7 @@ async def get_phone_score_details(
         
         for phone in phones:
             if phone.get("product_id") == product_id or phone.get("id") == product_id:
-                scored = _add_processor_score(phone)
+                scored = _add_device_score(phone)
                 return {
                     "product": {
                         "id": scored.get("id"),
@@ -335,8 +339,8 @@ async def get_phone_score_details(
                         "price": scored.get("price"),
                     },
                     "score": {
-                        "overall": scored.get("processor_score"),
-                        "tier": scored.get("processor_tier"),
+                        "overall": scored.get("device_score", scored.get("processor_score")),
+                        "tier": scored.get("device_tier", scored.get("processor_tier")),
                         "normalized_processor": scored.get("normalized_processor"),
                         "breakdown": scored.get("performance_breakdown"),
                     }
@@ -348,6 +352,75 @@ async def get_phone_score_details(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching phone details: {str(e)}")
+
+
+@router.get("/laptops/performance")
+async def get_laptops_by_performance(
+    limit: int = Query(20, description="Max items to return"),
+    min_score: Optional[float] = Query(None, description="Minimum device score (0-1)"),
+    tier: Optional[str] = Query(None, description="Filter by processor tier: Flagship, Upper Mid, Mid, Low"),
+):
+    try:
+        laptops = [_add_device_score(p) for p in fetch_products("laptops")]
+
+        if not laptops:
+            return {"products": [], "message": "No laptops available", "count": 0}
+
+        if min_score is not None:
+            laptops = [p for p in laptops if p.get("device_score", p.get("laptop_score", 0)) >= min_score]
+
+        if tier:
+            tier_lower = tier.lower()
+            laptops = [p for p in laptops if p.get("device_tier", p.get("laptop_tier", "")).lower() == tier_lower]
+
+        laptops = sorted(laptops, key=lambda x: x.get("device_score", x.get("laptop_score", 0)), reverse=True)[:limit]
+
+        return {
+            "products": laptops,
+            "count": len(laptops),
+            "filters": {
+                "min_score": min_score,
+                "tier": tier,
+                "limit": limit,
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching laptops by performance: {str(e)}")
+
+
+@router.get("/laptops/score-details")
+async def get_laptop_score_details(
+    product_id: Optional[str] = Query(None, description="Product ID to get details for"),
+):
+    try:
+        laptops = fetch_products("laptops")
+
+        for laptop in laptops:
+            if laptop.get("product_id") == product_id or laptop.get("id") == product_id:
+                scored = _add_device_score(laptop)
+                return {
+                    "product": {
+                        "id": scored.get("id"),
+                        "name": scored.get("name"),
+                        "processor": scored.get("processor"),
+                        "gpu": scored.get("gpu"),
+                        "ram": scored.get("ram"),
+                        "storage": scored.get("storage"),
+                        "price": scored.get("price"),
+                    },
+                    "score": {
+                        "overall": scored.get("device_score", scored.get("laptop_score")),
+                        "tier": scored.get("device_tier", scored.get("laptop_tier")),
+                        "normalized_processor": scored.get("normalized_processor"),
+                        "breakdown": scored.get("performance_breakdown"),
+                    }
+                }
+
+        raise HTTPException(status_code=404, detail="Product not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching laptop details: {str(e)}")
 
 
 @router.get("/{product_id}")

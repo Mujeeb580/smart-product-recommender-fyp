@@ -69,6 +69,245 @@ CHIPSET_DB = {
 }
 
 
+PHONE_FLAGSHIP_HINTS = (
+    "snapdragon 8",
+    "dimensity 9300",
+    "dimensity 9200",
+    "a17",
+    "a16",
+    "a15",
+    "exynos 2400",
+)
+
+PHONE_UPPER_MID_HINTS = (
+    "snapdragon 7",
+    "dimensity 8200",
+    "dimensity 8100",
+    "snapdragon 778",
+    "exynos 1480",
+)
+
+PHONE_MID_HINTS = (
+    "snapdragon 6",
+    "dimensity 7050",
+    "dimensity 6080",
+    "helio g99",
+    "helio g95",
+    "helio g88",
+)
+
+PHONE_LOW_HINTS = (
+    "unisoc",
+    "helio g85",
+    "helio g80",
+    "helio g37",
+    "helio p",
+    "snapdragon 4",
+)
+
+LAPTOP_HIGH_CPU_HINTS = (
+    "core ultra 9",
+    "core i9",
+    "ryzen 9",
+    "hx",
+    "m4 max",
+    "m3 max",
+    "m2 max",
+    "m1 max",
+)
+
+LAPTOP_UPPER_CPU_HINTS = (
+    "core ultra 7",
+    "core i7",
+    "ryzen 7",
+    "u7",
+    "h7",
+)
+
+LAPTOP_MID_CPU_HINTS = (
+    "core ultra 5",
+    "core i5",
+    "ryzen 5",
+    "u5",
+    "i5-",
+)
+
+LAPTOP_LOW_CPU_HINTS = (
+    "core i3",
+    "ryzen 3",
+    "celeron",
+    "pentium",
+    "n100",
+    "n200",
+    "n305",
+)
+
+HIGH_END_LAPTOP_GPU_HINTS = (
+    "rtx 4090",
+    "rtx 4080",
+    "rtx 4070",
+    "rtx 5070",
+    "rtx 5060",
+    "rtx 4060",
+)
+
+
+def _clean_text(value) -> str:
+    text = str(value or "")
+    replacements = {
+        "\u00c2\u00ae": "",
+        "\u00c2": "",
+        "\u00ae": "",
+        "\u2122": "",
+        "\u00e2\u20ac\u00a2": "",
+        "\\/": "/",
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return " ".join(text.split()).strip()
+
+
+def _extract_storage_gb(text: str) -> int:
+    cleaned = _clean_text(text).lower()
+    if not cleaned:
+        return 0
+
+    match = re.search(r"(\d+(?:\.\d+)?)\s*(tb|gb)", cleaned)
+    if not match:
+        return 0
+
+    value = float(match.group(1))
+    if match.group(2) == "tb":
+        value *= 1024
+    return int(round(value))
+
+
+def _extract_year(text: str) -> int:
+    match = re.search(r"\b(20\d{2})\b", str(text or ""))
+    return int(match.group(1)) if match else 2020
+
+
+def _bounded_ratio(value: int, maximum: float, missing_default: float = 0.5) -> float:
+    if not value or value <= 0:
+        return missing_default
+    return min(value / maximum, 1.0)
+
+
+def _phone_chipset_profile(product: dict) -> tuple[str, float, str]:
+    raw_text = " ".join(
+        _clean_text(product.get(field, "")) for field in ("processor", "name", "gpu")
+    ).lower()
+
+    normalized = normalize_processor(product.get("processor", ""))
+    if normalized in CHIPSET_DB:
+        chipset_info = CHIPSET_DB[normalized]
+        return normalized, chipset_info["score"], chipset_info["tier"]
+
+    if any(hint in raw_text for hint in PHONE_FLAGSHIP_HINTS):
+        if "snapdragon" in raw_text or "sd" in raw_text:
+            return "Snapdragon 8 Series", 0.97, "Flagship"
+        if "dimensity" in raw_text:
+            return "Dimensity 9 Series", 0.96, "Flagship"
+        if "apple" in raw_text or "a17" in raw_text or "a16" in raw_text or "a15" in raw_text:
+            return "Apple A-Series", 0.97, "Flagship"
+        if "exynos" in raw_text:
+            return "Exynos 2400", 0.92, "Flagship"
+
+    if any(hint in raw_text for hint in PHONE_UPPER_MID_HINTS):
+        if "snapdragon" in raw_text or "sd" in raw_text:
+            return "Snapdragon 7 Series", 0.80, "Upper Mid"
+        if "dimensity" in raw_text:
+            return "Dimensity 8 Series", 0.79, "Upper Mid"
+        if "exynos" in raw_text:
+            return "Exynos Upper Mid", 0.78, "Upper Mid"
+
+    if any(hint in raw_text for hint in PHONE_MID_HINTS):
+        if "snapdragon" in raw_text or "sd" in raw_text:
+            return "Snapdragon 6 Series", 0.63, "Mid"
+        if "dimensity" in raw_text:
+            return "Dimensity Mid", 0.62, "Mid"
+        if "helio" in raw_text:
+            return "Helio Series", 0.60, "Mid"
+
+    if any(hint in raw_text for hint in PHONE_LOW_HINTS):
+        return _clean_text(product.get("processor", "")) or "Unknown", 0.40, "Low"
+
+    if raw_text:
+        return _clean_text(product.get("processor", "")) or "Unknown", 0.45, "Unknown"
+
+    return "Unknown", 0.0, "Unknown"
+
+
+def _laptop_cpu_profile(product: dict) -> tuple[str, float, str]:
+    raw_text = " ".join(
+        _clean_text(product.get(field, "")) for field in ("processor", "name", "gpu")
+    ).lower()
+    display = _clean_text(product.get("processor", "")) or _clean_text(product.get("name", "")) or "Unknown"
+
+    if not raw_text:
+        return "Unknown", 0.0, "Unknown"
+
+    if any(hint in raw_text for hint in LAPTOP_HIGH_CPU_HINTS):
+        return display, 1.0, "Flagship"
+
+    if any(hint in raw_text for hint in LAPTOP_UPPER_CPU_HINTS):
+        return display, 0.82, "Upper Mid"
+
+    if any(hint in raw_text for hint in LAPTOP_MID_CPU_HINTS):
+        return display, 0.62, "Mid"
+
+    if any(hint in raw_text for hint in LAPTOP_LOW_CPU_HINTS):
+        return display, 0.35, "Low"
+
+    if any(model in raw_text for model in ("m4", "m3", "m2", "m1")):
+        return display, 0.90, "Upper Mid"
+
+    if any(token in raw_text for token in ("ultra 7", "u7", "13500h", "13620h", "13700h", "14650hx", "12700h")):
+        return display, 0.84, "Upper Mid"
+
+    if any(token in raw_text for token in ("i5-", "1235u", "1240p", "1335u", "7530u", "7730u", "7520u")):
+        return display, 0.62, "Mid"
+
+    if any(token in raw_text for token in ("n305", "n200", "n100", "celeron", "pentium")):
+        return display, 0.30, "Low"
+
+    return display, 0.50, "Unknown"
+
+
+def _laptop_gpu_score(gpu: str) -> float:
+    g = _clean_text(gpu).lower()
+    if not g or g in ("unknown", "n/a", "na", "none"):
+        return 0.45
+    if any(x in g for x in HIGH_END_LAPTOP_GPU_HINTS):
+        return 1.0
+    if any(x in g for x in ("rtx 4050", "rtx 3050", "rtx 3060", "rtx 4060", "rtx 4070")):
+        return 0.80
+    if any(x in g for x in ("gtx", "rtx 20", "rtx 30")):
+        return 0.65
+    if any(x in g for x in ("iris xe", "iris", "uhd", "radeon graphics", "integrated")):
+        return 0.35
+    return 0.45
+
+
+def _camera_signal_score(product: dict) -> float:
+    camera_text = _clean_text(product.get("camera", "")).lower()
+    if not camera_text:
+        camera_text = _clean_text(product.get("name", "")).lower()
+    mp_values = [int(v) for v in re.findall(r"(\d+)\s*mp", camera_text)]
+    if not mp_values:
+        if any(x in camera_text for x in ("ultra", "pro", "pixel", "iphone")):
+            return 0.55
+        return 0.3
+    best = max(mp_values)
+    if best >= 200:
+        return 1.0
+    if best >= 108:
+        return 0.8
+    if best >= 64:
+        return 0.55
+    return 0.3
+
+
 # ============================================================================
 # STEP 2: NORMALIZE PROCESSOR NAME
 # ============================================================================
@@ -310,44 +549,31 @@ def calculate_phone_score(phone: dict) -> dict:
             - breakdown: Dict with component scores
             - specs: Dict with extracted specs
     """
-    # Extract and normalize processor
     processor_raw = phone.get("processor", "Unknown")
-    processor_normalized = normalize_processor(processor_raw)
+    processor_normalized, base_score, tier = _phone_chipset_profile(phone)
 
-    # Step 1: Get base score from chipset DB or GPU fallback
-    if processor_normalized in CHIPSET_DB:
-        chipset_info = CHIPSET_DB[processor_normalized]
-        base_score = chipset_info["score"]
-        tier = chipset_info["tier"]
-    else:
-        # Fallback to GPU-based scoring
-        gpu_str = phone.get("gpu", "Unknown")
-        base_score = infer_score_from_gpu(gpu_str)
-        tier = "Unknown"
+    ram_value = extract_ram(phone.get("ram", "0GB"))
+    ram_score = _bounded_ratio(ram_value, 12.0, missing_default=0.45)
 
-    # Step 2: Calculate RAM score (normalized to 12GB as max)
-    ram_str = phone.get("ram", "0GB")
-    ram_value = extract_ram(ram_str)
-    ram_score = min(ram_value / 12.0, 1.0)
+    battery_value = extract_battery(phone.get("battery", "0mAh"))
+    battery_score = _bounded_ratio(battery_value, 7000.0, missing_default=0.45)
 
-    # Step 3: Calculate battery score (normalized to 7000mAh as max)
-    battery_str = phone.get("battery", "0mAh")
-    battery_value = extract_battery(battery_str)
-    battery_score = min(battery_value / 7000.0, 1.0)
+    storage_value = _extract_storage_gb(phone.get("storage", ""))
+    storage_score = _bounded_ratio(storage_value, 512.0, missing_default=0.45)
 
-    # Step 4: Calculate recency score
-    # Phones from 2024-2025 get high scores, older phones get lower
-    release_date_str = phone.get("release_date", "2020")
-    year = extract_year(release_date_str)
-    years_old = 2025 - year
-    recency_score = max(1.0 - (years_old * 0.1), 0.3)  # Floor at 0.3
+    camera_score = _camera_signal_score(phone)
 
-    # Step 5: Calculate final score
+    release_year = _extract_year(phone.get("release_date", phone.get("launch_date", "2020")))
+    years_old = max(0, 2025 - release_year)
+    recency_score = max(1.0 - (years_old * 0.1), 0.3)
+
     final_score = (
-        base_score * 0.6 +
-        ram_score * 0.2 +
-        battery_score * 0.1 +
-        recency_score * 0.1
+        base_score * 0.50 +
+        ram_score * 0.18 +
+        battery_score * 0.10 +
+        storage_score * 0.08 +
+        camera_score * 0.07 +
+        recency_score * 0.07
     )
 
     # Ensure score is in valid range
@@ -361,14 +587,90 @@ def calculate_phone_score(phone: dict) -> dict:
             "base_chipset_score": round(base_score, 2),
             "ram_score": round(ram_score, 2),
             "battery_score": round(battery_score, 2),
+            "storage_score": round(storage_score, 2),
+            "camera_score": round(camera_score, 2),
             "recency_score": round(recency_score, 2),
         },
         "specs": {
             "processor": processor_normalized,
             "ram_gb": ram_value,
             "battery_mah": battery_value,
-            "release_year": year,
+            "storage_gb": storage_value,
+            "release_year": release_year,
         }
+    }
+
+
+def calculate_laptop_score(laptop: dict) -> dict:
+    """Calculate structured laptop performance score."""
+    cpu_normalized, cpu_score, tier = _laptop_cpu_profile(laptop)
+    gpu_score = _laptop_gpu_score(laptop.get("gpu", "Unknown"))
+
+    ram_value = extract_ram(laptop.get("ram", "0GB"))
+    ram_score = _bounded_ratio(ram_value, 32.0, missing_default=0.5)
+
+    storage_value = _extract_storage_gb(laptop.get("storage", ""))
+    storage_score = _bounded_ratio(storage_value, 1024.0, missing_default=0.5)
+
+    battery_value = extract_battery(laptop.get("battery", "0mAh"))
+    battery_score = _bounded_ratio(battery_value, 7000.0, missing_default=0.5)
+
+    release_year = _extract_year(laptop.get("release_date", laptop.get("launch_date", "2020")))
+    years_old = max(0, 2025 - release_year)
+    recency_score = max(1.0 - (years_old * 0.08), 0.35)
+
+    final_score = (
+        cpu_score * 0.38 +
+        gpu_score * 0.24 +
+        ram_score * 0.16 +
+        storage_score * 0.10 +
+        battery_score * 0.05 +
+        recency_score * 0.07
+    )
+
+    final_score = max(0.0, min(final_score, 1.0))
+
+    return {
+        "score": round(final_score, 2),
+        "tier": tier,
+        "normalized_processor": cpu_normalized,
+        "breakdown": {
+            "base_cpu_score": round(cpu_score, 2),
+            "gpu_score": round(gpu_score, 2),
+            "ram_score": round(ram_score, 2),
+            "storage_score": round(storage_score, 2),
+            "battery_score": round(battery_score, 2),
+            "recency_score": round(recency_score, 2),
+        },
+        "specs": {
+            "processor": cpu_normalized,
+            "ram_gb": ram_value,
+            "storage_gb": storage_value,
+            "battery_mah": battery_value,
+            "release_year": release_year,
+        }
+    }
+
+
+def score_product(product: dict) -> dict:
+    """Score a product using the appropriate category-specific scorer."""
+    category = _clean_text(product.get("category", "")).lower()
+    if "phone" in category or "mobile" in category:
+        result = calculate_phone_score(product)
+        result["score_type"] = "phone"
+        return result
+    if "laptop" in category or "notebook" in category:
+        result = calculate_laptop_score(product)
+        result["score_type"] = "laptop"
+        return result
+
+    return {
+        "score": 0.5,
+        "tier": "Unknown",
+        "normalized_processor": _clean_text(product.get("processor", "")) or "Unknown",
+        "breakdown": {},
+        "specs": {},
+        "score_type": "unknown",
     }
 
 

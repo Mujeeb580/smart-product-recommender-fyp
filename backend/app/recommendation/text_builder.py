@@ -1,3 +1,51 @@
+def _clean_text(value) -> str:
+    text = str(value or "")
+    replacements = {
+        "\u00c2\u00ae": "",
+        "\u00c2": "",
+        "\u00ae": "",
+        "\u2122": "",
+        "\u00e2\u20ac\u00a2": "",
+        "\\/": "/",
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return " ".join(text.split()).strip()
+
+
+def _category_label(category: str) -> str:
+    normalized = _clean_text(category).lower()
+    if "laptop" in normalized or "notebook" in normalized:
+        return "laptop"
+    if "phone" in normalized or "mobile" in normalized or "smartphone" in normalized:
+        return "phone"
+    return "product"
+
+
+def _price_context(price, category_label: str) -> str:
+    if not isinstance(price, (int, float)) or price <= 0:
+        return ""
+
+    if category_label == "laptop":
+        if price <= 40000:
+            return f"budget-friendly laptop at Rs {price}"
+        if price <= 80000:
+            return f"mid-range laptop at Rs {price}"
+        if price <= 150000:
+            return f"performance laptop at Rs {price}"
+        return f"premium laptop at Rs {price}"
+
+    if price <= 20000:
+        return f"budget-friendly phone at Rs {price}"
+    if price <= 35000:
+        return f"affordable mid-range phone at Rs {price}"
+    if price <= 60000:
+        return f"mid-range phone at Rs {price}"
+    if price <= 100000:
+        return f"premium phone at Rs {price}"
+    return f"flagship premium phone at Rs {price}"
+
+
 def product_to_text(product: dict) -> str:
     """
     Convert a Firestore product document into semantic-rich text for embedding.
@@ -9,18 +57,19 @@ def product_to_text(product: dict) -> str:
     Returns:
         Formatted string with product attributes and inferred context
     """
-    name = product.get('name', '')
-    brand = product.get('brand', '')
-    ram = product.get('ram', '')
-    storage = product.get('storage', '')
-    processor = product.get('processor', '')
-    gpu = product.get('gpu', '')
-    battery = product.get('battery', '')
+    name = _clean_text(product.get('normalized_name') or product.get('name', ''))
+    brand = _clean_text(product.get('brand', ''))
+    ram = _clean_text(product.get('ram', ''))
+    storage = _clean_text(product.get('storage', ''))
+    processor = _clean_text(product.get('normalized_processor') or product.get('processor', ''))
+    gpu = _clean_text(product.get('gpu', ''))
+    battery = _clean_text(product.get('battery', ''))
     category = product.get('category', 'product')
+    category_label = _category_label(category)
     price = _to_numeric_price(product.get('price', 0))
     
     # Build base description
-    parts = [f"{name}", f"{brand} brand"]
+    parts = [name, f"{brand} brand".strip()]
     
     # Add RAM context
     if ram:
@@ -68,18 +117,23 @@ def product_to_text(product: dict) -> str:
         elif battery_value >= 5000:
             parts.append("strong battery backup")
     
-    # Add price range context
-    if isinstance(price, (int, float)) and price > 0:
-        if price <= 20000:
-            parts.append(f"budget-friendly phone at Rs {price}")
-        elif price <= 35000:
-            parts.append(f"affordable mid-range phone at Rs {price}")
-        elif price <= 60000:
-            parts.append(f"mid-range phone at Rs {price}")
-        elif price <= 100000:
-            parts.append(f"premium phone at Rs {price}")
-        else:
-            parts.append(f"flagship premium phone at Rs {price}")
+    # Add category-aware price context
+    price_context = _price_context(price, category_label)
+    if price_context:
+        parts.append(price_context)
+
+    if category_label == "phone":
+        if any(key in processor.lower() for key in ("snapdragon 8", "dimensity 9", "a17", "a16", "a15", "exynos 2400")):
+            parts.append("flagship gaming phone")
+        elif any(key in processor.lower() for key in ("snapdragon 7", "dimensity 8", "helio g99", "helio g95")):
+            parts.append("balanced performance phone")
+    elif category_label == "laptop":
+        if any(key in processor.lower() for key in ("core i7", "core i9", "ryzen 7", "ryzen 9", "core ultra 7", "core ultra 9")):
+            parts.append("high performance laptop")
+        if any(key in gpu.lower() for key in ("rtx", "gtx")):
+            parts.append("gaming laptop")
+        elif any(key in gpu.lower() for key in ("iris", "uhd", "integrated", "radeon graphics")):
+            parts.append("portable everyday laptop")
     
     # Add premium brand indicators
     premium_brands = ['apple', 'samsung', 'google', 'oneplus', 'xiaomi', 'oppo', 'vivo', 'realme', 'nothing', 'motorola', 'nokia', 'honor', 'huawei']
@@ -89,9 +143,9 @@ def product_to_text(product: dict) -> str:
     # Add category
     category_lower = str(category).lower()
     parts.append(category_lower)
-    if 'phone' in category_lower or 'mobile' in category_lower:
+    if category_label == 'phone':
         parts.append('smartphone mobile device')
-    if 'laptop' in category_lower or 'notebook' in category_lower:
+    if category_label == 'laptop':
         parts.append('laptop notebook computer')
     
     return " | ".join(parts)
