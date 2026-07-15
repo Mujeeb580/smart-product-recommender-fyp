@@ -13,6 +13,25 @@ class ProfileScreen extends StatelessWidget {
 
   const ProfileScreen({super.key, this.onBackPressed});
 
+  String _displayNameFromEmail(String email) {
+    final localPart = email.split('@').first.trim();
+    if (localPart.isEmpty) return 'User';
+
+    final parts = localPart
+        .replaceAll(RegExp(r'[._-]+'), ' ')
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    if (parts.isEmpty) {
+      return localPart[0].toUpperCase() + localPart.substring(1);
+    }
+
+    return parts
+        .map((part) => part[0].toUpperCase() + part.substring(1))
+        .join(' ');
+  }
+
   void _handleBack(BuildContext context) {
     if (onBackPressed != null) {
       onBackPressed!.call();
@@ -29,10 +48,14 @@ class ProfileScreen extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final gradientColors = themeProvider.currentGradient;
 
-    // Dummy data for demonstration
-    const String dummyUserName = 'Ahmad Kamran';
-    const String dummyUserEmail = 'ahmadkamran@example.com';
     const String dummyUserPhone = '+92 300 1234567';
+    final authService = AuthService();
+    final currentUser = authService.currentUser;
+    final userEmail = currentUser?.email ?? 'user@example.com';
+    final userName = (currentUser?.displayName != null &&
+            currentUser!.displayName!.trim().isNotEmpty)
+        ? currentUser.displayName!.trim()
+        : _displayNameFromEmail(userEmail);
 
     return Scaffold(
       body: Container(
@@ -118,9 +141,9 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
                           // User Name
-                          const Text(
-                            dummyUserName,
-                            style: TextStyle(
+                          Text(
+                            userName,
+                            style: const TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -130,7 +153,7 @@ class ProfileScreen extends StatelessWidget {
                           const SizedBox(height: 6),
                           // User Email
                           Text(
-                            dummyUserEmail,
+                            userEmail,
                             style: TextStyle(
                               fontSize: 15,
                               color: Colors.white.withOpacity(0.85),
@@ -230,7 +253,7 @@ class ProfileScreen extends StatelessWidget {
                           _GlassInfoCard(
                             icon: Icons.email_outlined,
                             label: 'Email',
-                            value: dummyUserEmail,
+                            value: userEmail,
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -316,15 +339,7 @@ class ProfileScreen extends StatelessWidget {
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: GestureDetector(
-                                onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Account deletion not available in demo'),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
+                                onTap: () => _showDeleteAccountDialog(context),
                                 child: Container(
                                   width: double.infinity,
                                   padding:
@@ -375,7 +390,7 @@ class ProfileScreen extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
@@ -388,7 +403,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(
               'Cancel',
               style: TextStyle(color: isDark ? Colors.white70 : Colors.grey),
@@ -396,7 +411,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(dialogContext);
               try {
                 await AuthService().signOut();
                 if (!context.mounted) return;
@@ -419,6 +434,63 @@ class ProfileScreen extends StatelessWidget {
             },
             child: const Text(
               'Logout',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Delete Account',
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        ),
+        content: Text(
+          'This will permanently delete your account. Do you want to continue?',
+          style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: isDark ? Colors.white70 : Colors.grey),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                await AuthService().deleteAccount();
+                if (!context.mounted) return;
+                Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Account deleted successfully'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Delete failed: $e'),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+            child: const Text(
+              'Delete',
               style: TextStyle(color: Colors.redAccent),
             ),
           ),

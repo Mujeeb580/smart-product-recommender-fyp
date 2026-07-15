@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../services/theme_provider.dart';
 import '../../services/product_service.dart';
+import '../../services/auth_service.dart';
 import 'profile_screen.dart';
 import '../../widgets/glassy_shine.dart';
 import 'smartphones_screen.dart';
@@ -132,8 +133,31 @@ class _HeroHeader extends StatelessWidget {
 
   const _HeroHeader({this.onProfileTap});
 
+  String _displayName(String? displayName, String? email) {
+    final savedName = displayName?.trim() ?? '';
+    if (savedName.isNotEmpty) return savedName;
+
+    final localPart = (email ?? '').split('@').first.trim();
+    if (localPart.isEmpty) return 'there';
+
+    final parts = localPart
+        .replaceAll(RegExp(r'[._-]+'), ' ')
+        .split(' ')
+        .where((part) => part.isNotEmpty);
+
+    return parts
+        .map((part) => part[0].toUpperCase() + part.substring(1))
+        .join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentUser = AuthService().currentUser;
+    final userName = _displayName(
+      currentUser?.displayName,
+      currentUser?.email,
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       child: Column(
@@ -147,7 +171,9 @@ class _HeroHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, Ahmed!',
+                      'Hello, $userName!',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 color: Colors.white,
@@ -829,8 +855,8 @@ class _QuickFilters extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filters = [
-      _Filter('budget'.tr(), Icons.attach_money, const Color(0xFF10B981)),
-      _Filter('brand'.tr(), Icons.sell_outlined, const Color(0xFFFB923C)),
+      _Filter('budget', 'budget'.tr(), Icons.attach_money, const Color(0xFF10B981)),
+      _Filter('brand', 'brand'.tr(), Icons.sell_outlined, const Color(0xFFFB923C)),
     ];
 
     return Wrap(
@@ -842,10 +868,11 @@ class _QuickFilters extends StatelessWidget {
 }
 
 class _Filter {
+  final String key;
   final String label;
   final IconData icon;
   final Color color;
-  _Filter(this.label, this.icon, this.color);
+  _Filter(this.key, this.label, this.icon, this.color);
 }
 
 class _FilterChip extends StatelessWidget {
@@ -884,26 +911,22 @@ class _FilterChip extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        final label = filter.label.toLowerCase();
-        if (label.contains('budget')) {
+        switch (filter.key) {
+        case 'budget':
           _openFilteredProducts(
             context,
             title: 'Budget Picks',
             future: productService.filterByPriceRange(0, 50000),
           );
           return;
-        }
-
-        if (label.contains('brand')) {
+        case 'brand':
           _openFilteredProducts(
             context,
             title: 'Samsung Phones',
             future: productService.searchProducts('Samsung'),
           );
           return;
-        }
-
-        if (label.contains('rating')) {
+        case 'rating':
           _openFilteredProducts(
             context,
             title: 'Top Rated Picks',
@@ -911,15 +934,15 @@ class _FilterChip extends StatelessWidget {
                 query: 'best rated phone'),
           );
           return;
-        }
-
-        if (label.contains('same day')) {
+        case 'same_day':
           _openFilteredProducts(
             context,
             title: 'Fast Delivery Picks',
             future: productService.fetchCollectionProducts(
                 collection: 'phones', limit: 40),
           );
+          return;
+        default:
           return;
         }
       },

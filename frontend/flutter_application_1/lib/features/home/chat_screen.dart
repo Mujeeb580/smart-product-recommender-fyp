@@ -63,6 +63,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _isLoading = true;
       _messageController.clear();
       _lastSentMessage = message;
+      _recommendedProducts = null;
     });
 
     _scrollToBottom();
@@ -151,8 +152,8 @@ class _ChatScreenState extends State<ChatScreen> {
             timestamp: DateTime.now(),
           ),
         );
-        // Keep recommended products updated if backend returned product details
-        _recommendedProducts = products.isNotEmpty ? products : _recommendedProducts;
+        // Replace stale recommendations with the latest response.
+        _recommendedProducts = products.isNotEmpty ? products : null;
         _isLoading = false;
       });
 

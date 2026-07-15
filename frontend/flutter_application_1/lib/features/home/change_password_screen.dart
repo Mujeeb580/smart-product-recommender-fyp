@@ -1,8 +1,85 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class ChangePasswordScreen extends StatelessWidget {
+import '../../services/auth_service.dart';
+
+class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
+
+  @override
+  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+}
+
+class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
+
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _newPasswordController.addListener(_onPasswordChanged);
+  }
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController
+      ..removeListener(_onPasswordChanged)
+      ..dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _onPasswordChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _updatePassword() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await _authService.changePassword(
+        currentPassword: _currentPasswordController.text,
+        newPassword: _newPasswordController.text,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password updated'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      _currentPasswordController.clear();
+      _newPasswordController.clear();
+      _confirmPasswordController.clear();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$e'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,69 +136,107 @@ class ChangePasswordScreen extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _GlassFormCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const _FieldLabel(text: 'Current password'),
-                              const SizedBox(height: 8),
-                              const _GlassTextField(
-                                hint: '••••••••',
-                                obscure: true,
-                              ),
-                              const SizedBox(height: 14),
-                              const _FieldLabel(text: 'New password'),
-                              const SizedBox(height: 8),
-                              const _GlassTextField(
-                                hint: '••••••••',
-                                obscure: true,
-                              ),
-                              const SizedBox(height: 14),
-                              const _FieldLabel(text: 'Confirm password'),
-                              const SizedBox(height: 8),
-                              const _GlassTextField(
-                                hint: '••••••••',
-                                obscure: true,
-                              ),
-                              const SizedBox(height: 18),
-                              _StrengthMeter(),
-                              const SizedBox(height: 16),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(
-                                        sigmaX: 10, sigmaY: 10),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.3),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _FieldLabel(text: 'Current password'),
+                                const SizedBox(height: 8),
+                                _GlassTextField(
+                                  controller: _currentPasswordController,
+                                  hint: '••••••••',
+                                  obscure: true,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Current password is required';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 14),
+                                const _FieldLabel(text: 'New password'),
+                                const SizedBox(height: 8),
+                                _GlassTextField(
+                                  controller: _newPasswordController,
+                                  hint: '••••••••',
+                                  obscure: true,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'New password is required';
+                                    }
+                                    if (value.length < 8) {
+                                      return 'Use at least 8 characters';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 14),
+                                const _FieldLabel(text: 'Confirm password'),
+                                const SizedBox(height: 8),
+                                _GlassTextField(
+                                  controller: _confirmPasswordController,
+                                  hint: '••••••••',
+                                  obscure: true,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please confirm your password';
+                                    }
+                                    if (value != _newPasswordController.text) {
+                                      return 'Passwords do not match';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 18),
+                                _StrengthMeter(password: _newPasswordController.text),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(
+                                          sigmaX: 10, sigmaY: 10),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(14),
+                                          border: Border.all(
+                                            color: Colors.white.withOpacity(0.3),
+                                          ),
                                         ),
-                                      ),
-                                      child: TextButton.icon(
-                                        onPressed: () {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Password updated'),
-                                              duration: Duration(seconds: 2),
+                                        child: TextButton.icon(
+                                          onPressed: _isSaving
+                                              ? null
+                                              : _updatePassword,
+                                          icon: _isSaving
+                                              ? const SizedBox(
+                                                  height: 18,
+                                                  width: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: Colors.white,
+                                                  ),
+                                                )
+                                              : const Icon(Icons.check_circle,
+                                                  color: Colors.white),
+                                          label: Text(
+                                            _isSaving
+                                                ? 'Updating...'
+                                                : 'Update Password',
+                                            style: const TextStyle(
+                                              color: Colors.white,
                                             ),
-                                          );
-                                        },
-                                        icon: const Icon(Icons.check_circle,
-                                            color: Colors.white),
-                                        label: const Text(
-                                          'Update Password',
-                                          style: TextStyle(color: Colors.white),
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -138,8 +253,28 @@ class ChangePasswordScreen extends StatelessWidget {
 }
 
 class _StrengthMeter extends StatelessWidget {
+  final String password;
+
+  const _StrengthMeter({required this.password});
+
   @override
   Widget build(BuildContext context) {
+    final length = password.length;
+    final score = length >= 12
+        ? 1.0
+        : length >= 8
+            ? 0.7
+            : length >= 6
+                ? 0.45
+                : 0.15;
+    final label = length >= 12
+        ? 'Strong'
+        : length >= 8
+            ? 'Good'
+            : length >= 6
+                ? 'Weak'
+                : 'Very weak';
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
@@ -165,7 +300,7 @@ class _StrengthMeter extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: LinearProgressIndicator(
-                  value: 0.7,
+                  value: score,
                   minHeight: 8,
                   backgroundColor: Colors.white.withOpacity(0.15),
                   valueColor:
@@ -174,7 +309,7 @@ class _StrengthMeter extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Strong',
+                label,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 12,
@@ -232,11 +367,21 @@ class _FieldLabel extends StatelessWidget {
 class _GlassTextField extends StatelessWidget {
   final String hint;
   final bool obscure;
-  const _GlassTextField({required this.hint, this.obscure = false});
+  final TextEditingController controller;
+  final String? Function(String?)? validator;
+
+  const _GlassTextField({
+    required this.hint,
+    required this.controller,
+    this.obscure = false,
+    this.validator,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
+      controller: controller,
+      validator: validator,
       obscureText: obscure,
       style: const TextStyle(color: Colors.white),
       cursorColor: Colors.white,

@@ -231,6 +231,33 @@ class AuthService {
     }
   }
 
+  /// Change user password after reauthenticating with the current password.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      final email = user?.email;
+      if (user == null || email == null || email.isEmpty) {
+        throw Exception('No signed-in user found. Please sign in again.');
+      }
+
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+      await user.reload();
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw Exception('Password change failed: ${e.toString()}');
+    }
+  }
+
   /// Delete user account
   Future<void> deleteAccount() async {
     try {

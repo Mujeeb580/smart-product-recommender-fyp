@@ -2,9 +2,22 @@ import 'package:flutter/foundation.dart';
 
 /// API Configuration for the Smart Product Recommender App
 class ApiConfig {
+  static const String _configuredBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: '',
+  );
+
   // Android emulator cannot reach host localhost directly.
   // Desktop and web can use localhost, while Android uses 10.0.2.2.
   static String get baseUrl {
+    final configuredUrl = _configuredBaseUrl.trim();
+    if (configuredUrl.isNotEmpty) {
+      // Endpoint getters add their own leading slash.
+      return configuredUrl.endsWith('/')
+          ? configuredUrl.substring(0, configuredUrl.length - 1)
+          : configuredUrl;
+    }
+
     if (kIsWeb) {
       return 'http://localhost:8000';
     }
