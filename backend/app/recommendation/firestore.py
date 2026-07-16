@@ -76,7 +76,7 @@ def _category_filter(products: List[Dict], collection_name: str) -> List[Dict]:
         if any(keyword in text for keyword in keywords):
             filtered.append(product)
 
-    return filtered or products
+    return filtered
 
 
 def fetch_products(collection_name: Optional[str] = None, limit: int = 300) -> List[Dict]:
@@ -108,6 +108,11 @@ def fetch_products(collection_name: Optional[str] = None, limit: int = 300) -> L
                 products.append(_normalize_product(doc.id, doc.to_dict(), name))
 
         products = _dedupe_products(_category_filter(products, collection_name))
+        if normalized_name in {"phones", "phone", "laptops", "laptop"}:
+            category = "Phones" if normalized_name in {"phones", "phone"} else "Laptops"
+            for product in products:
+                if str(product.get("category") or "").strip().lower() in ("", "product", "products"):
+                    product["category"] = category
         print(f"Fetched {len(products)} products.")
         return products
 

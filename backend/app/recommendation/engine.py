@@ -5,6 +5,13 @@ from threading import RLock
 
 from .model import get_model
 from .text_builder import product_to_text
+from .processor_engine import (
+    infer_score_from_gpu,
+    laptop_cpu_performance,
+    phone_chipset_performance,
+    score_product,
+)
+from .query_language import normalize_user_query
 
 
 PHONE_HINTS = ("phone", "phones", "mobile", "mobiles", "smartphone")
@@ -68,6 +75,7 @@ GENERAL_HINTS = (
 
 BUDGET_HINTS = (
     "cheap",
+    "cheaper",
     "cheapest",
     "budget",
     "affordable",
@@ -76,12 +84,13 @@ BUDGET_HINTS = (
     "value for money",
 )
 
-DEFAULT_BUDGET_PHONE_MAX = 30000
-
 FLAGSHIP_PHONE_HINTS = (
     "snapdragon 8",
+    "snapdragon 8 elite",
+    "snapdragon 8 gen 4",
     "dimensity 9300",
     "dimensity 9200",
+    "dimensity 9400",
     "a18",
     "a17",
     "a16",
@@ -92,7 +101,6 @@ HIGH_END_LAPTOP_CPU_HINTS = (
     "core i9",
     "core ultra 9",
     "ryzen 9",
-    "hx",
     "m3 max",
     "m4 max",
 )
@@ -134,12 +142,21 @@ def _extract_number(text: str) -> int:
 def _price_to_float(price) -> float:
     if isinstance(price, (int, float)):
         return float(price)
-    raw = str(price or "")
-    raw = raw.replace("Rs", "").replace("PKR", "").replace(",", "").strip()
-    try:
-        return float(raw)
-    except Exception:
+    raw = str(price or "").lower().replace(",", "").strip()
+    match = re.search(r"(\d+(?:\.\d+)?)\s*(crore|lakhs?|lacs?|laac|lak|million|m|k)?", raw)
+    if not match:
         return 0.0
+    value = float(match.group(1))
+    unit = match.group(2) or ""
+    if unit == "k":
+        value *= 1_000
+    elif unit in ("m", "million"):
+        value *= 1_000_000
+    elif unit in ("lakh", "lakhs", "lac", "lacs", "laac", "lak"):
+        value *= 100_000
+    elif unit == "crore":
+        value *= 10_000_000
+    return value
 
 
 def _category_of(product: dict) -> str:
@@ -156,22 +173,55 @@ def _query_has_any(query: str, words) -> bool:
     return any(re.search(rf"\b{re.escape(w)}\b", q) for w in words)
 
 
-def _extract_budget(query: str):
-    q = query.lower()
-    match = re.search(r"(?:under|below|less than|upto|up to|within)\s*(?:rs\.?\s*)?(\d+(?:\.\d+)?)\s*(k|m|lakh|lac)?", q)
-    if not match:
-        if any(keyword in q for keyword in BUDGET_HINTS):
-            return float(DEFAULT_BUDGET_PHONE_MAX)
-        return None
-    value = float(match.group(1))
-    unit = (match.group(2) or "").lower()
-    if unit == "k":
-        value *= 1000
-    elif unit == "m":
-        value *= 1000000
-    elif unit in ("lakh", "lac"):
-        value *= 100000
+_MONEY_TOKEN = r"(?:rs\.?|pkr)?\s*\d[\d,]*(?:\.\d+)?\s*(?:crore|lakhs?|lacs?|laac|lak|million|m|k)?"
+
+
+def _money_value(token: str, inherited_unit: str = "") -> float:
+    value = _price_to_float(token)
+    if value <= 0:
+        return 0.0
+    if inherited_unit and not re.search(r"(?:crore|lakhs?|lacs?|laac|lak|million|m|k)\s*$", token.strip(), re.IGNORECASE):
+        return _price_to_float(f"{token}{inherited_unit}")
     return value
+
+
+def _extract_price_constraints(query: str):
+    """Return explicit minimum/maximum prices without inventing a category budget."""
+    q = " ".join(str(query or "").lower().split())
+
+    range_match = re.search(
+        rf"(?:between|from)\s+({_MONEY_TOKEN})\s*(?:and|to|-)\s*({_MONEY_TOKEN})",
+        q,
+    )
+    if range_match:
+        high_token = range_match.group(2)
+        unit_match = re.search(r"(crore|lakhs?|lacs?|laac|lak|million|m|k)\s*$", high_token)
+        inherited_unit = unit_match.group(1) if unit_match else ""
+        first = _money_value(range_match.group(1), inherited_unit)
+        second = _money_value(high_token)
+        if first > 0 and second > 0:
+            return min(first, second), max(first, second)
+
+    max_match = re.search(
+        rf"(?:under|below|less than|not more than|up to|upto|within|max(?:imum)?(?: budget)?(?: of| is|:)?|budget(?: of| is|:)?)\s*({_MONEY_TOKEN})",
+        q,
+    )
+    if not max_match:
+        max_match = re.search(rf"({_MONEY_TOKEN})\s+(?:or less|max(?:imum)?|budget)\b", q)
+
+    min_match = re.search(
+        rf"(?:above|over|more than|at least|minimum(?: budget)?(?: of| is|:)?)\s*({_MONEY_TOKEN})",
+        q,
+    )
+
+    minimum = _money_value(min_match.group(1)) if min_match else None
+    maximum = _money_value(max_match.group(1)) if max_match else None
+    return minimum or None, maximum or None
+
+
+def _extract_budget(query: str):
+    """Backward-compatible helper returning an explicitly stated maximum budget."""
+    return _extract_price_constraints(query)[1]
 
 
 def _extract_required_gpu(query: str) -> str:
@@ -199,9 +249,9 @@ def _extract_ram_storage_constraints(query: str):
     if ram_match:
         ram = int(ram_match.group(1))
 
-    storage_match = re.search(r"(\d+)\s*gb\s*(?:storage|rom)", q)
+    storage_match = re.search(r"(\d+(?:\.\d+)?)\s*(gb|tb)\s*(?:storage|rom|ssd)", q)
     if storage_match:
-        storage = int(storage_match.group(1))
+        storage = int(float(storage_match.group(1)) * (1024 if storage_match.group(2) == "tb" else 1))
     else:
         all_gb = [int(n) for n in re.findall(r"(\d+)\s*gb", q)]
         if len(all_gb) >= 2:
@@ -212,9 +262,20 @@ def _extract_ram_storage_constraints(query: str):
     return ram, storage
 
 
+def _capacity_gb(value) -> int:
+    text = _clean_text(value).lower()
+    match = re.search(r"(\d+(?:\.\d+)?)\s*(tb|gb)?", text)
+    if not match:
+        return 0
+    amount = float(match.group(1))
+    if match.group(2) == "tb":
+        amount *= 1024
+    return int(amount)
+
+
 def _parse_query_constraints(query: str):
     q = query.lower()
-    budget_max = _extract_budget(q)
+    budget_min, budget_max = _extract_price_constraints(q)
     required_gpu = _extract_required_gpu(q)
     required_processor = _extract_required_processor(q)
     min_ram, min_storage = _extract_ram_storage_constraints(q)
@@ -226,6 +287,7 @@ def _parse_query_constraints(query: str):
         query_category = "laptops"
 
     return {
+        "budget_min": budget_min,
         "budget_max": budget_max,
         "required_gpu": required_gpu,
         "required_processor": required_processor,
@@ -235,62 +297,78 @@ def _parse_query_constraints(query: str):
     }
 
 
-def _apply_filter(current: list, predicate):
-    filtered = [p for p in current if predicate(p)]
-    return filtered if filtered else current
-
-
 def _apply_hard_constraints(query: str, products: list) -> list:
     constraints = _parse_query_constraints(query)
     constrained = list(products)
 
     if constraints["query_category"] != "unknown":
-        constrained = _apply_filter(
-            constrained,
-            lambda p: _category_of(p) == constraints["query_category"],
+        constrained = [p for p in constrained if _category_of(p) == constraints["query_category"]]
+
+    requested_brands = {
+        _clean_text(product.get("brand", "")).lower()
+        for product in products
+        if _clean_text(product.get("brand", "")).lower() not in ("", "unknown", "n/a")
+        and re.search(
+            rf"\b{re.escape(_clean_text(product.get('brand', '')).lower())}\b",
+            query.lower(),
         )
+    }
+    if requested_brands:
+        constrained = [
+            p for p in constrained
+            if _clean_text(p.get("brand", "")).lower() in requested_brands
+        ]
+
+    if constraints["budget_min"] is not None:
+        constrained = [
+            p for p in constrained
+            if _price_to_float(p.get("price")) >= constraints["budget_min"]
+        ]
 
     if constraints["budget_max"] is not None:
-        constrained = _apply_filter(
-            constrained,
-            lambda p: 0 < _price_to_float(p.get("price")) <= constraints["budget_max"],
-        )
+        constrained = [
+            p for p in constrained
+            if 0 < _price_to_float(p.get("price")) <= constraints["budget_max"]
+        ]
 
     if constraints["required_gpu"]:
         needle = constraints["required_gpu"]
-        constrained = _apply_filter(
-            constrained,
-            lambda p: needle in _clean_text(p.get("gpu", "")).lower().replace(" ", "")
-            or needle in _clean_text(p.get("name", "")).lower().replace(" ", ""),
-        )
+        constrained = [
+            p for p in constrained
+            if needle in _clean_text(p.get("gpu", "")).lower().replace(" ", "")
+            or needle in _clean_text(p.get("name", "")).lower().replace(" ", "")
+        ]
 
     if constraints["required_processor"]:
         needle = constraints["required_processor"]
-        constrained = _apply_filter(
-            constrained,
-            lambda p: needle in _clean_text(p.get("processor", "")).lower()
-            or needle in _clean_text(p.get("name", "")).lower(),
-        )
+        constrained = [
+            p for p in constrained
+            if needle in _clean_text(p.get("processor", "")).lower()
+            or needle in _clean_text(p.get("name", "")).lower()
+        ]
 
     if constraints["min_ram"]:
-        constrained = _apply_filter(
-            constrained,
-            lambda p: _extract_number(p.get("ram", "")) >= constraints["min_ram"],
-        )
+        constrained = [
+            p for p in constrained
+            if _memory_values(p)[0] >= constraints["min_ram"]
+        ]
 
     if constraints["min_storage"]:
-        constrained = _apply_filter(
-            constrained,
-            lambda p: _extract_number(p.get("storage", "")) >= constraints["min_storage"],
-        )
+        constrained = [
+            p for p in constrained
+            if _memory_values(p)[1] >= constraints["min_storage"]
+        ]
 
     return constrained
 
 
 def _device_quality_score(product: dict) -> float:
-    raw = product.get("device_score")
+    # Recalculate from current specs. Persisted scores may have been produced by
+    # an older chipset table and were the source of several inverted rankings.
+    calculated = score_product(product).get("score")
+    raw = calculated
     if raw is None:
-        raw = product.get("processor_score", product.get("laptop_score", 0.5))
+        raw = product.get("device_score", product.get("processor_score", product.get("laptop_score", 0.5)))
     try:
         score = float(raw)
     except Exception:
@@ -308,11 +386,22 @@ def _battery_value(product: dict) -> int:
 
 
 def _ram_value(product: dict) -> int:
-    return _extract_number(product.get("ram", ""))
+    return _memory_values(product)[0]
 
 
 def _storage_value(product: dict) -> int:
-    return _extract_number(product.get("storage", ""))
+    return _memory_values(product)[1]
+
+
+def _memory_values(product: dict) -> tuple[int, int]:
+    """Read RAM/storage and repair a common scraper field swap in memory."""
+    raw_ram = _clean_text(product.get("ram", "")).lower()
+    raw_storage = _clean_text(product.get("storage", "")).lower()
+    ram = _capacity_gb(raw_ram)
+    storage = _capacity_gb(raw_storage)
+    if ("tb" in raw_ram or ram > 64) and 0 < storage <= 64:
+        return storage, ram
+    return ram, storage
 
 
 def _processor_tier_score(processor: str, category: str) -> float:
@@ -321,23 +410,29 @@ def _processor_tier_score(processor: str, category: str) -> float:
         return 0.0
 
     if category == "phones":
-        if any(x in p for x in FLAGSHIP_PHONE_HINTS):
-            return 1.0
-        if "snapdragon 7" in p or "dimensity 8" in p:
-            return 0.65
-        if "snapdragon 6" in p or "dimensity 7" in p or "helio" in p:
-            return 0.35
-        return 0.45
+        return phone_chipset_performance({"processor": processor, "category": "Phones"})
 
     if category == "laptops":
-        if any(x in p for x in HIGH_END_LAPTOP_CPU_HINTS):
-            return 1.0
-        if "core i7" in p or "core ultra 7" in p or "ryzen 7" in p:
-            return 0.7
-        if "core i5" in p or "ryzen 5" in p:
-            return 0.45
-        return 0.3
+        return laptop_cpu_performance({"processor": processor, "category": "Laptops"})
 
+    return 0.0
+
+
+def _product_processor_score(product: dict) -> float:
+    category = _category_of(product)
+    if category == "phones":
+        return phone_chipset_performance(product)
+    if category == "laptops":
+        return laptop_cpu_performance(product)
+    return 0.0
+
+
+def _product_processor_score(product: dict) -> float:
+    category = _category_of(product)
+    if category == "phones":
+        return phone_chipset_performance(product)
+    if category == "laptops":
+        return laptop_cpu_performance(product)
     return 0.0
 
 
@@ -364,13 +459,21 @@ def _balanced_laptop_score(product: dict) -> float:
 
 
 def _gpu_tier_score(gpu: str) -> float:
-    g = _clean_text(gpu).lower()
+    g = re.sub(r"[^a-z0-9]+", " ", _clean_text(gpu).lower()).strip()
     if not g or g in ("unknown", "n/a", "na", "none"):
         return 0.0
-    if any(x in g for x in HIGH_END_LAPTOP_GPU_HINTS):
-        return 1.0
+    tiers = (
+        ("rtx 5090", 1.00), ("rtx 5080", 0.98), ("rtx 4090", 0.96),
+        ("rtx 5070 ti", 0.93), ("rtx 4080", 0.91), ("rtx 5070", 0.88),
+        ("rtx 5060", 0.83), ("rtx 4070", 0.81), ("rtx 4060", 0.75),
+        ("rtx 4050", 0.66), ("rtx 3090", 0.76), ("rtx 3080", 0.72),
+        ("rtx 3070", 0.65), ("rtx 3060", 0.58), ("rtx 3050", 0.50),
+    )
+    for model, score in tiers:
+        if model in g:
+            return score
     if "rtx 30" in g or "gtx" in g:
-        return 0.7
+        return 0.45
     if "radeon" in g or "iris" in g or "intel uhd" in g:
         return 0.35
     return 0.3
@@ -379,7 +482,16 @@ def _gpu_tier_score(gpu: str) -> float:
 def _camera_signal_score(product: dict) -> float:
     camera_text = _clean_text(product.get("camera", "")).lower()
     if not camera_text:
-        camera_text = _clean_text(product.get("name", "")).lower()
+        name = _clean_text(product.get("name", "")).lower()
+        if "ultra" in name:
+            return 0.90
+        if "pro max" in name or "pixel" in name:
+            return 0.85
+        if "pro" in name:
+            return 0.72
+        if "iphone" in name:
+            return 0.70
+        return 0.25
     mp_values = [int(v) for v in re.findall(r"(\d+)\s*mp", camera_text)]
     if not mp_values:
         if any(x in camera_text for x in ("ultra", "pro", "pixel", "iphone")):
@@ -393,6 +505,75 @@ def _camera_signal_score(product: dict) -> float:
     if best >= 64:
         return 0.55
     return 0.3
+
+
+def _phone_gaming_score(product: dict) -> float:
+    chipset = phone_chipset_performance(product)
+    gpu = infer_score_from_gpu(product.get("gpu", ""))
+    ram_score = min(_ram_value(product) / 12.0, 1.0) if _ram_value(product) else 0.35
+    storage_score = min(_storage_value(product) / 512.0, 1.0) if _storage_value(product) else 0.35
+    battery = _battery_value(product)
+    battery_score = min(battery / 6500.0, 1.0) if battery else 0.4
+    name = _clean_text(product.get("name", "")).lower()
+    gaming_design = 1.0 if any(token in name for token in ("rog", "redmagic", "red magic", "legion", "gt ")) else 0.0
+    return (
+        chipset * 0.72
+        + gpu * 0.10
+        + ram_score * 0.08
+        + storage_score * 0.04
+        + battery_score * 0.04
+        + gaming_design * 0.02
+    )
+
+
+def _laptop_gaming_score(product: dict) -> float:
+    return (
+        _gpu_tier_score(product.get("gpu")) * 0.72
+        + laptop_cpu_performance(product) * 0.15
+        + min(_ram_value(product) / 32.0, 1.0) * 0.08
+        + min(_storage_value(product) / 1024.0, 1.0) * 0.05
+    )
+
+
+def _intent_priority(query: str, product: dict) -> float:
+    q = query.lower()
+    category = _category_of(product)
+    if _has_any(q, GAMING_HINTS):
+        if category == "phones":
+            return _phone_gaming_score(product)
+        if category == "laptops":
+            return _laptop_gaming_score(product)
+    if any(term in q for term in ("performance", "fastest", "powerful", "processor", "chipset", "flagship")):
+        return _product_processor_score(product)
+    if _has_any(q, BATTERY_HINTS):
+        battery = _battery_value(product)
+        return min(battery / (8500.0 if category == "phones" else 9000.0), 1.0) if battery else 0.0
+    if "camera" in q and category == "phones":
+        # Megapixels alone are not camera quality; combine the catalog camera
+        # signal with current device/chipset quality as a conservative proxy.
+        return (
+            _camera_signal_score(product) * 0.35
+            + _device_quality_score(product) * 0.35
+            + phone_chipset_performance(product) * 0.30
+        )
+    budget_max = _extract_budget(q)
+    if budget_max is not None:
+        price = _price_to_float(product.get("price"))
+        if price <= 0 or price > budget_max:
+            return 0.0
+        affordability = max(0.0, 1.0 - (price / budget_max))
+        if any(term in q for term in ("cheapest", "lowest price", "least expensive")):
+            return affordability
+        quality = _device_quality_score(product)
+        if "best" in q:
+            # "Best" means the strongest capable product inside the hard
+            # ceiling; price is only a tie-breaker once every item fits.
+            return quality * 0.97 + affordability * 0.03
+        # Once the hard ceiling is satisfied, recommend the strongest option
+        # and use price only as a tie-breaker. Explicit cheapest queries above
+        # still sort by affordability.
+        return quality * 0.97 + affordability * 0.03
+    return 0.0
 
 
 def _intent_boost(query: str, product: dict) -> float:
@@ -424,16 +605,19 @@ def _intent_boost(query: str, product: dict) -> float:
     gaming_intent = _has_any(q, GAMING_HINTS)
     processor_intent = any(k in q for k in ("processor", "chipset", "cpu", "flagship", "snapdragon", "core i7", "core i9", "ryzen"))
     if processor_intent:
-        boost += _processor_tier_score(product.get("processor"), category) * 0.22
+        boost += _product_processor_score(product) * 0.22
 
     gpu_intent = any(k in q for k in ("gpu", "graphics", "rtx"))
     if gaming_intent:
         if category == "phones":
-            boost += _processor_tier_score(product.get("processor"), category) * 0.28
-            boost += device_quality * 0.20
-            boost += _balanced_phone_score(product) * 0.12
+            processor_score = _processor_tier_score(product.get("processor"), category)
+            boost += processor_score * 0.38
+            boost += device_quality * 0.16
+            boost += _balanced_phone_score(product) * 0.08
+            if processor_score >= 1.0:
+                boost += 0.08
         elif category == "laptops":
-            boost += _processor_tier_score(product.get("processor"), category) * 0.18
+            boost += _product_processor_score(product) * 0.18
             boost += _gpu_tier_score(product.get("gpu")) * 0.30
             boost += device_quality * 0.15
 
@@ -473,10 +657,12 @@ def _intent_boost(query: str, product: dict) -> float:
             boost += 0.12
 
     budget_intent = any(k in q for k in BUDGET_HINTS) or any(k in q for k in ("under", "below", "less than", "upto", "up to", "within"))
-    if budget_intent:
+    explicit_budget = _extract_budget(q) is not None
+    cheapest_intent = any(term in q for term in ("cheapest", "lowest price", "least expensive"))
+    if budget_intent and (not explicit_budget or cheapest_intent):
         price = _price_to_float(product.get("price"))
         if price > 0:
-            if price <= DEFAULT_BUDGET_PHONE_MAX:
+            if price <= 30000:
                 boost += 0.18
             elif price <= 50000:
                 boost += 0.14
@@ -523,6 +709,12 @@ def _normalize_output_product(product: dict) -> dict:
         or item.get("image_link")
         or ""
     )
+    score_details = score_product(item)
+    if score_details.get("score_type") != "unknown":
+        item["device_score"] = score_details.get("score", 0.5)
+        item["device_tier"] = score_details.get("tier", "Unknown")
+        item["normalized_processor"] = score_details.get("normalized_processor", item.get("processor", ""))
+        item["performance_breakdown"] = score_details.get("breakdown", {})
     return item
 
 
@@ -570,18 +762,44 @@ def recommend_products(query: str, products: list, top_n: int = 10):
     """
     Returns top N products based on semantic similarity.
     """
+    query = normalize_user_query(query)
     if not products:
         return []
 
     constrained_products = _apply_hard_constraints(query, products)
+    if not constrained_products:
+        return []
+    gaming_intent = _has_any(query, GAMING_HINTS)
+    has_priority_intent = _extract_budget(query) is not None or gaming_intent or _has_any(query, BATTERY_HINTS) or "camera" in query.lower() or any(
+        term in query.lower() for term in ("performance", "fastest", "powerful", "processor", "chipset", "flagship")
+    )
+    wants_both_categories = _query_has_any(query, PHONE_HINTS) and _query_has_any(query, LAPTOP_HINTS)
+    generic_budget_intent = any(k in query.lower() for k in BUDGET_HINTS) and _extract_budget(query) is None
+    candidate_prices = [_price_to_float(p.get("price")) for p in constrained_products]
+    candidate_prices = [price for price in candidate_prices if price > 0]
+    min_price = min(candidate_prices) if candidate_prices else 0.0
+    max_price = max(candidate_prices) if candidate_prices else 0.0
     if len(constrained_products) > 80:
         candidate_limit = min(len(constrained_products), max(80, top_n * 10))
-        heuristic_ranked = sorted(
-            ((product, _intent_boost(query, product)) for product in constrained_products),
-            key=lambda item: item[1],
-            reverse=True,
-        )
-        constrained_products = [product for product, _ in heuristic_ranked[:candidate_limit]]
+        def candidate_key(product: dict):
+            priority = _intent_priority(query, product) if has_priority_intent else 0.0
+            return priority, _intent_boost(query, product)
+
+        if wants_both_categories:
+            per_category = max(1, candidate_limit // 2)
+            phones = sorted(
+                (p for p in constrained_products if _category_of(p) == "phones"),
+                key=candidate_key,
+                reverse=True,
+            )[:per_category]
+            laptops = sorted(
+                (p for p in constrained_products if _category_of(p) == "laptops"),
+                key=candidate_key,
+                reverse=True,
+            )[:per_category]
+            constrained_products = phones + laptops
+        else:
+            constrained_products = sorted(constrained_products, key=candidate_key, reverse=True)[:candidate_limit]
 
     model = get_model()
 
@@ -596,18 +814,37 @@ def recommend_products(query: str, products: list, top_n: int = 10):
     for product, semantic_score in zip(constrained_products, similarities):
         device_quality = _device_quality_score(product)
         boost = _intent_boost(query, product)
+        if generic_budget_intent and max_price > min_price:
+            price = _price_to_float(product.get("price"))
+            if price > 0:
+                boost += ((max_price - price) / (max_price - min_price)) * 0.32
         quality_alignment = (device_quality - 0.5) * 0.55
         raw_score = float(semantic_score) * 0.7 + quality_alignment + boost
-        scored.append((product, float(semantic_score), boost, raw_score))
+        intent_priority = _intent_priority(query, product)
+        scored.append((product, float(semantic_score), boost, raw_score, intent_priority))
 
-    ranked = sorted(scored, key=lambda x: x[3], reverse=True)
+    if has_priority_intent:
+        ranked = sorted(scored, key=lambda x: (x[4], x[3]), reverse=True)
+    else:
+        ranked = sorted(scored, key=lambda x: x[3], reverse=True)
+
+    if wants_both_categories and top_n >= 2:
+        selected = [ranked[0]]
+        first_category = _category_of(ranked[0][0])
+        other = next((item for item in ranked if _category_of(item[0]) not in ("unknown", first_category)), None)
+        if other is not None:
+            selected.append(other)
+        selected.extend(item for item in ranked if item not in selected)
+        ranked = selected
 
     top_results = []
-    for product, semantic_score, boost, raw_score in ranked[:top_n]:
+    for product, semantic_score, boost, raw_score, intent_priority in ranked[:top_n]:
         product_copy = _normalize_output_product(product)
         product_copy["semantic_score"] = round(_sigmoid(float(semantic_score)), 4)
         product_copy["boosted_score"] = round(float(boost), 4)
         product_copy["similarity_score"] = round(_sigmoid(float(raw_score)), 4)
+        if has_priority_intent:
+            product_copy["intent_score"] = round(float(intent_priority), 4)
         top_results.append(product_copy)
 
     return top_results

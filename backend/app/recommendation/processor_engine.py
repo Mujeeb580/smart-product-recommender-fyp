@@ -109,7 +109,6 @@ LAPTOP_HIGH_CPU_HINTS = (
     "core ultra 9",
     "core i9",
     "ryzen 9",
-    "hx",
     "m4 max",
     "m3 max",
     "m2 max",
@@ -149,6 +148,54 @@ HIGH_END_LAPTOP_GPU_HINTS = (
     "rtx 5070",
     "rtx 5060",
     "rtx 4060",
+)
+
+
+# Ordered from newest/highest-performance mobile platforms to entry-level ones.
+# These are deliberately generation-aware: treating every "Snapdragon 8" or
+# "Dimensity 8" as equal was the main cause of incorrect gaming rankings.
+PHONE_CHIPSET_PATTERNS = (
+    (r"snapdragon\s*8\s*elite\s*gen\s*5", 1.00, "Flagship"),
+    (r"dimensity\s*9500", 0.99, "Flagship"),
+    (r"\ba19\s*pro\b", 0.98, "Flagship"),
+    (r"snapdragon\s*8\s*elite", 0.97, "Flagship"),
+    (r"dimensity\s*9400", 0.96, "Flagship"),
+    (r"\ba19\b", 0.95, "Flagship"),
+    (r"\ba18\s*pro\b", 0.95, "Flagship"),
+    (r"\ba18\b", 0.93, "Flagship"),
+    (r"snapdragon\s*8\s*gen\s*3", 0.92, "Flagship"),
+    (r"dimensity\s*9300", 0.91, "Flagship"),
+    (r"snapdragon\s*8s\s*gen\s*4", 0.90, "Flagship"),
+    (r"snapdragon\s*8\s*gen\s*2", 0.87, "Flagship"),
+    (r"dimensity\s*9200", 0.87, "Flagship"),
+    (r"snapdragon\s*8s\s*gen\s*3", 0.84, "Upper Mid"),
+    (r"dimensity\s*8500", 0.84, "Upper Mid"),
+    (r"dimensity\s*8400", 0.82, "Upper Mid"),
+    (r"snapdragon\s*8\+\s*gen\s*1", 0.80, "Upper Mid"),
+    (r"\ba17\s*pro\b", 0.89, "Flagship"),
+    (r"snapdragon\s*8\s*gen\s*1", 0.75, "Upper Mid"),
+    (r"\ba16\b", 0.82, "Upper Mid"),
+    (r"exynos\s*2500", 0.88, "Flagship"),
+    (r"exynos\s*2400", 0.82, "Upper Mid"),
+    (r"dimensity\s*8350", 0.79, "Upper Mid"),
+    (r"dimensity\s*8300", 0.78, "Upper Mid"),
+    (r"snapdragon\s*7\+\s*gen\s*3", 0.78, "Upper Mid"),
+    (r"snapdragon\s*7s?\s*gen\s*4", 0.72, "Upper Mid"),
+    (r"snapdragon\s*7\s*gen\s*3", 0.70, "Upper Mid"),
+    (r"snapdragon\s*7s\s*gen\s*3", 0.66, "Mid"),
+    (r"snapdragon\s*7\b", 0.62, "Mid"),
+    (r"dimensity\s*7400", 0.67, "Mid"),
+    (r"dimensity\s*7300", 0.65, "Mid"),
+    (r"exynos\s*1580", 0.68, "Mid"),
+    (r"exynos\s*1480", 0.64, "Mid"),
+    (r"snapdragon\s*6\s*gen\s*4", 0.62, "Mid"),
+    (r"dimensity\s*6400", 0.55, "Mid"),
+    (r"dimensity\s*6300", 0.53, "Mid"),
+    (r"snapdragon\s*6(?:85|80)", 0.48, "Low"),
+    (r"snapdragon\s*6", 0.52, "Mid"),
+    (r"helio\s*g(?:200|100|99)", 0.45, "Low"),
+    (r"helio\s*g(?:95|91|88|81)", 0.38, "Low"),
+    (r"unisoc|t7(?:100|2\d{2})|sc9863", 0.28, "Low"),
 )
 
 
@@ -198,6 +245,11 @@ def _phone_chipset_profile(product: dict) -> tuple[str, float, str]:
         _clean_text(product.get(field, "")) for field in ("processor", "name", "gpu")
     ).lower()
 
+    for pattern, score, tier in PHONE_CHIPSET_PATTERNS:
+        if re.search(pattern, raw_text):
+            display = _clean_text(product.get("processor", "")) or "Recognized mobile chipset"
+            return display, score, tier
+
     normalized = normalize_processor(product.get("processor", ""))
     if normalized in CHIPSET_DB:
         chipset_info = CHIPSET_DB[normalized]
@@ -233,9 +285,14 @@ def _phone_chipset_profile(product: dict) -> tuple[str, float, str]:
         return _clean_text(product.get("processor", "")) or "Unknown", 0.40, "Low"
 
     if raw_text:
-        return _clean_text(product.get("processor", "")) or "Unknown", 0.45, "Unknown"
+        return _clean_text(product.get("processor", "")) or "Unknown", 0.30, "Unknown"
 
     return "Unknown", 0.0, "Unknown"
+
+
+def phone_chipset_performance(product: dict) -> float:
+    """Return the generation-aware chipset score used for performance ranking."""
+    return _phone_chipset_profile(product)[1]
 
 
 def _laptop_cpu_profile(product: dict) -> tuple[str, float, str]:
@@ -247,52 +304,128 @@ def _laptop_cpu_profile(product: dict) -> tuple[str, float, str]:
     if not raw_text:
         return "Unknown", 0.0, "Unknown"
 
+    def result(score: float) -> tuple[str, float, str]:
+        score = max(0.2, min(score, 1.0))
+        tier = "Flagship" if score >= 0.90 else "Upper Mid" if score >= 0.76 else "Mid" if score >= 0.52 else "Low"
+        return display, round(score, 3), tier
+
+    apple_match = re.search(r"\bm([1-4])(?:\s+(max|pro))?\b", raw_text)
+    if apple_match:
+        generation = int(apple_match.group(1))
+        variant = apple_match.group(2) or ""
+        return result(0.72 + generation * 0.045 + (0.09 if variant == "max" else 0.05 if variant == "pro" else 0.0))
+
+    ultra_match = re.search(r"(?:core\s+)?ultra\s*([579])(?:\s|-)?(\d{3}[a-z]{0,2})?", raw_text)
+    if ultra_match:
+        family = int(ultra_match.group(1))
+        model = ultra_match.group(2) or ""
+        score = {5: 0.76, 7: 0.86, 9: 0.94}[family]
+        if model.startswith("2"):
+            score += 0.03
+        if model.endswith(("h", "hx")):
+            score += 0.025
+        return result(score)
+
+    intel_family = re.search(r"(?:core\s*)?i([3579])\b", raw_text)
+    intel_model = re.search(r"\bi[3579][\s-]*(\d{4,5})([a-z]{0,3}\d?)?\b", raw_text)
+    if not intel_model:
+        intel_model = re.search(r"\b(1[0-4]\d{2,3}|[6-9]\d{3})(hx|hk|h|p|u|g\d)?\b", raw_text)
+    generation_match = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)\s+gen", raw_text)
+    if intel_family:
+        family = int(intel_family.group(1))
+        score = {3: 0.48, 5: 0.64, 7: 0.76, 9: 0.88}[family]
+        generation = int(generation_match.group(1)) if generation_match else 0
+        suffix = ""
+        if intel_model:
+            digits = intel_model.group(1)
+            suffix = (intel_model.group(2) or "").lower()
+            if not generation:
+                first_two = int(digits[:2])
+                generation = first_two if 10 <= first_two <= 14 else int(digits[0])
+        score += 0.015 * (generation - 10) if generation else 0.0
+        if suffix.startswith("hx"):
+            score += 0.08
+        elif suffix.startswith(("h", "hk")):
+            score += 0.055
+        elif suffix.startswith("p"):
+            score += 0.025
+        elif suffix.startswith("u") or suffix.startswith("g"):
+            score -= 0.02
+        return result(score)
+
+    ryzen_match = re.search(r"ryzen\s*([3579])(?:\s|-)*(\d{4})?([a-z]{0,2})?", raw_text)
+    if ryzen_match:
+        family = int(ryzen_match.group(1))
+        model = ryzen_match.group(2) or ""
+        suffix = (ryzen_match.group(3) or "").lower()
+        score = {3: 0.48, 5: 0.66, 7: 0.78, 9: 0.90}[family]
+        if model:
+            series = int(model[0])
+            score += 0.018 * (series - 5)
+        if suffix.startswith("hx"):
+            score += 0.07
+        elif suffix.startswith(("hs", "h")):
+            score += 0.045
+        elif suffix.startswith("u"):
+            score -= 0.015
+        return result(score)
+
     if any(hint in raw_text for hint in LAPTOP_HIGH_CPU_HINTS):
-        return display, 1.0, "Flagship"
-
+        return result(0.90)
     if any(hint in raw_text for hint in LAPTOP_UPPER_CPU_HINTS):
-        return display, 0.82, "Upper Mid"
-
+        return result(0.78)
     if any(hint in raw_text for hint in LAPTOP_MID_CPU_HINTS):
-        return display, 0.62, "Mid"
-
+        return result(0.62)
     if any(hint in raw_text for hint in LAPTOP_LOW_CPU_HINTS):
-        return display, 0.35, "Low"
-
-    if any(model in raw_text for model in ("m4", "m3", "m2", "m1")):
-        return display, 0.90, "Upper Mid"
-
-    if any(token in raw_text for token in ("ultra 7", "u7", "13500h", "13620h", "13700h", "14650hx", "12700h")):
-        return display, 0.84, "Upper Mid"
-
-    if any(token in raw_text for token in ("i5-", "1235u", "1240p", "1335u", "7530u", "7730u", "7520u")):
-        return display, 0.62, "Mid"
+        return result(0.35)
 
     if any(token in raw_text for token in ("n305", "n200", "n100", "celeron", "pentium")):
         return display, 0.30, "Low"
 
-    return display, 0.50, "Unknown"
+    return display, 0.45, "Unknown"
+
+
+def laptop_cpu_performance(product: dict) -> float:
+    """Return the category-aware laptop CPU score used for ranking."""
+    return _laptop_cpu_profile(product)[1]
 
 
 def _laptop_gpu_score(gpu: str) -> float:
-    g = _clean_text(gpu).lower()
+    g = re.sub(r"[^a-z0-9]+", " ", _clean_text(gpu).lower()).strip()
     if not g or g in ("unknown", "n/a", "na", "none"):
-        return 0.45
-    if any(x in g for x in HIGH_END_LAPTOP_GPU_HINTS):
-        return 1.0
-    if any(x in g for x in ("rtx 4050", "rtx 3050", "rtx 3060", "rtx 4060", "rtx 4070")):
-        return 0.80
+        return 0.20
+    tiers = (
+        ("rtx 5090", 1.00), ("rtx 5080", 0.98), ("rtx 4090", 0.96),
+        ("rtx 5070 ti", 0.93), ("rtx 4080", 0.91), ("rtx 5070", 0.88),
+        ("rtx 5060", 0.83), ("rtx 4070", 0.81), ("rtx 4060", 0.75),
+        ("rtx 4050", 0.66), ("rtx 3090", 0.76), ("rtx 3080", 0.72),
+        ("rtx 3070", 0.65), ("rtx 3060", 0.58), ("rtx 3050", 0.50),
+    )
+    for model, score in tiers:
+        if model in g:
+            return score
     if any(x in g for x in ("gtx", "rtx 20", "rtx 30")):
-        return 0.65
-    if any(x in g for x in ("iris xe", "iris", "uhd", "radeon graphics", "integrated")):
+        return 0.45
+    if any(x in g for x in ("iris xe", "iris", "uhd", "radeon graphics", "integrated", "built in", "built-in")):
         return 0.35
-    return 0.45
+    if any(x in g for x in ("nvidia", "geforce", "radeon rx", "dedicated")):
+        return 0.45
+    return 0.25
 
 
 def _camera_signal_score(product: dict) -> float:
     camera_text = _clean_text(product.get("camera", "")).lower()
     if not camera_text:
-        camera_text = _clean_text(product.get("name", "")).lower()
+        name = _clean_text(product.get("name", "")).lower()
+        if "ultra" in name:
+            return 0.90
+        if "pro max" in name or "pixel" in name:
+            return 0.85
+        if "pro" in name:
+            return 0.72
+        if "iphone" in name:
+            return 0.70
+        return 0.25
     mp_values = [int(v) for v in re.findall(r"(\d+)\s*mp", camera_text)]
     if not mp_values:
         if any(x in camera_text for x in ("ultra", "pro", "pixel", "iphone")):
@@ -399,21 +532,37 @@ def infer_score_from_gpu(gpu_str: str) -> float:
 
     # Adreno 8xx (Flagship)
     if 'adreno' in gpu_lower:
-        if any(x in gpu_lower for x in ['870', '880', '885']):
-            return 0.95
-        elif any(x in gpu_lower for x in ['850', '860']):
-            return 0.90
+        if any(x in gpu_lower for x in ['840', '880', '885']):
+            return 0.99
+        elif '830' in gpu_lower:
+            return 0.96
         elif any(x in gpu_lower for x in ['750', '755', '760']):
-            return 0.80
-        elif any(x in gpu_lower for x in ['700', '710', '720', '722']):
+            return 0.90
+        elif '740' in gpu_lower:
+            return 0.83
+        elif '730' in gpu_lower:
             return 0.75
+        elif any(x in gpu_lower for x in ['810', '720', '722']):
+            return 0.70
+        elif any(x in gpu_lower for x in ['700', '710']):
+            return 0.66
         else:
-            return 0.65  # Generic Adreno
+            return 0.60  # Generic Adreno without a model number
 
     # Mali-G chips
     if 'mali' in gpu_lower:
-        if 'g710' in gpu_lower:
+        if 'g1-ultra' in gpu_lower or 'g1 ultra' in gpu_lower:
+            return 0.99
+        elif 'g720' in gpu_lower:
+            return 0.86 if 'mc8' in gpu_lower else 0.83 if 'mc7' in gpu_lower else 0.78
+        elif 'g715' in gpu_lower:
+            return 0.82
+        elif 'g710' in gpu_lower:
             return 0.80
+        elif 'g615' in gpu_lower:
+            return 0.65
+        elif 'g610' in gpu_lower:
+            return 0.62
         elif 'g77' in gpu_lower or 'g78' in gpu_lower:
             return 0.78
         elif 'g76' in gpu_lower:
@@ -429,7 +578,13 @@ def infer_score_from_gpu(gpu_str: str) -> float:
 
     # PowerVR (Apple legacy)
     if 'powervr' in gpu_lower:
-        return 0.85
+        return 0.35
+
+    if 'xclipse 940' in gpu_lower:
+        return 0.82
+
+    if 'apple gpu' in gpu_lower:
+        return 0.80
 
     # Unknown GPU
     return 0.50
@@ -563,9 +718,13 @@ def calculate_phone_score(phone: dict) -> dict:
 
     camera_score = _camera_signal_score(phone)
 
-    release_year = _extract_year(phone.get("release_date", phone.get("launch_date", "2020")))
-    years_old = max(0, 2025 - release_year)
-    recency_score = max(1.0 - (years_old * 0.1), 0.3)
+    release_text = phone.get("release_date", phone.get("launch_date", ""))
+    release_year = _extract_year(release_text) if release_text else 0
+    if release_year:
+        years_old = max(0, datetime.now().year - release_year)
+        recency_score = max(1.0 - (years_old * 0.1), 0.3)
+    else:
+        recency_score = 0.55
 
     final_score = (
         base_score * 0.50 +
@@ -615,9 +774,13 @@ def calculate_laptop_score(laptop: dict) -> dict:
     battery_value = extract_battery(laptop.get("battery", "0mAh"))
     battery_score = _bounded_ratio(battery_value, 7000.0, missing_default=0.5)
 
-    release_year = _extract_year(laptop.get("release_date", laptop.get("launch_date", "2020")))
-    years_old = max(0, 2025 - release_year)
-    recency_score = max(1.0 - (years_old * 0.08), 0.35)
+    release_text = laptop.get("release_date", laptop.get("launch_date", ""))
+    release_year = _extract_year(release_text) if release_text else 0
+    if release_year:
+        years_old = max(0, datetime.now().year - release_year)
+        recency_score = max(1.0 - (years_old * 0.08), 0.35)
+    else:
+        recency_score = 0.55
 
     final_score = (
         cpu_score * 0.38 +

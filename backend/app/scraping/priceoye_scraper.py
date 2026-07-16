@@ -114,6 +114,7 @@ def scrape_priceoye_collection(
     firestore_collection: str,
     stop_on_existing: bool = False,
     max_pages: int = 100,
+    max_products: int = 0,
 ) -> Dict[str, Any]:
     driver = _new_driver()
 
@@ -122,6 +123,8 @@ def scrape_priceoye_collection(
     updated_count = 0
     existing_hits = 0
     stopped_on_existing = False
+    error_count = 0
+    last_error = ""
 
     try:
         for page in range(1, max_pages + 1):
@@ -133,6 +136,10 @@ def scrape_priceoye_collection(
             if not cards:
                 break
 
+            # Read all listing-card values before visiting any detail page.
+            # Selenium card elements become stale as soon as driver.get()
+            # navigates away from this listing page.
+            page_products: List[Dict[str, Any]] = []
             for card in cards:
                 try:
                     name = card.find_element(By.CSS_SELECTOR, ".p-title").text.strip()
@@ -154,13 +161,22 @@ def scrape_priceoye_collection(
                     if not name or not price or not product_url:
                         continue
 
-                    product = {
+                    page_products.append({
                         "name": name[:100],
                         "price": price,
                         "url": product_url,
                         "category": category_name,
                         "image_url": image_url,
-                    }
+                    })
+                except Exception as exc:
+                    error_count += 1
+                    last_error = f"Listing card: {exc}"
+
+            if max_products > 0:
+                page_products = page_products[:max_products]
+
+            for product in page_products:
+                try:
 
                     product["raw_name"] = product["name"]
                     normalized_snapshot = normalize_scraped_product_fields(product)
@@ -178,8 +194,12 @@ def scrape_priceoye_collection(
                         stopped_on_existing = True
                         break
 
-                    details = _parse_detail_page(driver, product_url)
+                    details = _parse_detail_page(driver, product["url"])
                     specs = details.get("specs", {}) if isinstance(details, dict) else {}
+                    if not isinstance(specs, dict):
+                        specs = {}
+                    specs.setdefault("brand", product["name"].split(" ", 1)[0])
+                    product["specs"] = specs
                     detail_image = details.get("image_url", "") if isinstance(details, dict) else ""
                     if detail_image:
                         product["image_url"] = detail_image
@@ -217,8 +237,9 @@ def scrape_priceoye_collection(
                         saved_count += 1
 
                     total_seen += 1
-                except Exception:
-                    continue
+                except Exception as exc:
+                    error_count += 1
+                    last_error = f"{product.get('name', 'Unknown')}: {exc}"
 
             if stopped_on_existing:
                 break
@@ -231,24 +252,38 @@ def scrape_priceoye_collection(
             "updated": updated_count,
             "existing_hits": existing_hits,
             "stopped_on_existing": stopped_on_existing,
+            "errors": error_count,
+            "last_error": last_error,
         }
     finally:
         driver.quit()
 
 
-def scrape_phones(stop_on_existing: bool = False) -> Dict[str, Any]:
+def scrape_phones(
+    stop_on_existing: bool = False,
+    max_pages: int = 100,
+    max_products: int = 0,
+) -> Dict[str, Any]:
     return scrape_priceoye_collection(
         base_url="https://priceoye.pk/mobiles",
         category_name="Phones",
         firestore_collection="phones",
         stop_on_existing=stop_on_existing,
+        max_pages=max_pages,
+        max_products=max_products,
     )
 
 
-def scrape_laptops(stop_on_existing: bool = False) -> Dict[str, Any]:
+def scrape_laptops(
+    stop_on_existing: bool = False,
+    max_pages: int = 100,
+    max_products: int = 0,
+) -> Dict[str, Any]:
     return scrape_priceoye_collection(
         base_url="https://priceoye.pk/laptops",
         category_name="Laptops",
         firestore_collection="laptops",
         stop_on_existing=stop_on_existing,
+        max_pages=max_pages,
+        max_products=max_products,
     )
