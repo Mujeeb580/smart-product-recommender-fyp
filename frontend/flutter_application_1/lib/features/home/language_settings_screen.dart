@@ -38,7 +38,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final gradientColors = isDark
         ? const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
-        : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
+        : const [Color(0xFF0F766E), Color(0xFF0E7490), Color(0xFF38BDF8)];
 
     return Scaffold(
       body: Container(

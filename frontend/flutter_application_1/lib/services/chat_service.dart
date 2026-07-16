@@ -15,8 +15,15 @@ class ChatService {
     return _sessionId!;
   }
 
+  /// Starts a fresh recommendation conversation and clears backend context.
+  void startNewSession() {
+    _sessionId =
+        'session_${DateTime.now().millisecondsSinceEpoch}_${identityHashCode(this)}';
+  }
+
   /// Sends a message to AI backend and gets recommendations
-  Future<Map<String, dynamic>> sendMessage(String userMessage, {ProductModel? product}) async {
+  Future<Map<String, dynamic>> sendMessage(String userMessage,
+      {ProductModel? product}) async {
     try {
       final token = await _authService.getIdToken();
       final headers =
@@ -27,7 +34,9 @@ class ChatService {
         'session_id': _getSessionId(),
       };
       if (product != null) {
-        body['product_id'] = product.productId ?? product.id ?? product.name;
+        body['product_id'] = product.productId?.isNotEmpty == true
+            ? product.productId!
+            : (product.id.isNotEmpty ? product.id : product.name);
       }
 
       final response = await _apiService.post(

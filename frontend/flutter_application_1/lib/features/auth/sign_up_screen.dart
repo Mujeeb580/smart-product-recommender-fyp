@@ -253,7 +253,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                           Expanded(
                                             child: Container(
                                               height: 1,
-                                              color: Colors.white.withOpacity(0.3),
+                                              color:
+                                                  Colors.white.withOpacity(0.3),
                                             ),
                                           ),
                                           Padding(
@@ -263,7 +264,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                             child: Text(
                                               'OR',
                                               style: TextStyle(
-                                                color: Colors.white.withOpacity(0.7),
+                                                color: Colors.white
+                                                    .withOpacity(0.7),
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -272,7 +274,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                           Expanded(
                                             child: Container(
                                               height: 1,
-                                              color: Colors.white.withOpacity(0.3),
+                                              color:
+                                                  Colors.white.withOpacity(0.3),
                                             ),
                                           ),
                                         ],
@@ -280,7 +283,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       const SizedBox(height: 20),
                                       // Google Sign-In Button
                                       OutlinedButton.icon(
-                                        onPressed: _isSubmitting ? null : _signInWithGoogle,
+                                        onPressed: _isSubmitting
+                                            ? null
+                                            : _signInWithGoogle,
                                         style: OutlinedButton.styleFrom(
                                           backgroundColor: Colors.white,
                                           foregroundColor: Colors.black87,
@@ -288,7 +293,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                             vertical: 16,
                                           ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           side: BorderSide(
                                             color: Colors.grey.shade300,
@@ -483,7 +489,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       style: ElevatedButton.styleFrom(
         backgroundColor: themeProvider.isDarkMode
             ? Colors.grey.shade800
-            : const Color(0xFF6366F1),
+            : const Color(0xFF0E7490),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
@@ -495,7 +501,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         elevation: themeProvider.isDarkMode ? 2 : 4,
         shadowColor: themeProvider.isDarkMode
             ? Colors.black.withOpacity(0.5)
-            : const Color(0xFF6366F1).withOpacity(0.3),
+            : const Color(0xFF0E7490).withOpacity(0.3),
       ),
       child: _isSubmitting
           ? const SizedBox(

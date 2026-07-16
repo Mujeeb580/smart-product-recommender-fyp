@@ -64,8 +64,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     }
 
     if (_selectedBrand != null && _selectedBrand!.isNotEmpty) {
-      filtered = filtered.where(
-          (p) => p.brand.toLowerCase() == _selectedBrand!.toLowerCase());
+      filtered = filtered
+          .where((p) => p.brand.toLowerCase() == _selectedBrand!.toLowerCase());
     }
 
     if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
@@ -75,8 +75,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     if (_priceRange != null) {
       filtered = filtered.where(
-        (p) =>
-            p.price >= _priceRange!.start && p.price <= _priceRange!.end,
+        (p) => p.price >= _priceRange!.start && p.price <= _priceRange!.end,
       );
     }
 
@@ -123,106 +122,117 @@ class _ProductListScreenState extends State<ProductListScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Container(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1A2E),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
-              ),
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Filters',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _dropdownField(
-                        label: 'Brand',
-                        value: tempBrand,
-                        values: brands,
-                        onChanged: (value) => setModalState(() => tempBrand = value),
-                      ),
-                      const SizedBox(height: 12),
-                      _dropdownField(
-                        label: 'Category',
-                        value: tempCategory,
-                        values: categories,
-                        onChanged: (value) =>
-                            setModalState(() => tempCategory = value),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Price Range: Rs ${tempPriceRange.start.toStringAsFixed(0)} - Rs ${tempPriceRange.end.toStringAsFixed(0)}',
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                      RangeSlider(
-                        values: tempPriceRange,
-                        min: minPrice,
-                        max: maxPrice,
-                        divisions: 20,
-                        activeColor: const Color(0xFF7C3AED),
-                        inactiveColor: Colors.white24,
-                        labels: RangeLabels(
-                          tempPriceRange.start.toStringAsFixed(0),
-                          tempPriceRange.end.toStringAsFixed(0),
-                        ),
-                        onChanged: (values) =>
-                            setModalState(() => tempPriceRange = values),
-                      ),
-                      SwitchListTile(
-                        value: tempOnlyWithLink,
-                        onChanged: (value) =>
-                            setModalState(() => tempOnlyWithLink = value),
-                        activeColor: const Color(0xFF7C3AED),
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text(
-                          'Only products with purchase link',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
+            return Align(
+              alignment: Alignment.bottomCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1A2E),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(24)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedBrand = null;
-                                  _selectedCategory = null;
-                                  _priceRange = null;
-                                  _onlyWithLink = false;
-                                });
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Clear'),
+                          const Text(
+                            'Filters',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedBrand = tempBrand;
-                                  _selectedCategory = tempCategory;
-                                  _priceRange = tempPriceRange;
-                                  _onlyWithLink = tempOnlyWithLink;
-                                });
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Apply'),
+                          const SizedBox(height: 16),
+                          _dropdownField(
+                            label: 'Brand',
+                            value: tempBrand,
+                            values: brands,
+                            onChanged: (value) =>
+                                setModalState(() => tempBrand = value),
+                          ),
+                          const SizedBox(height: 12),
+                          _dropdownField(
+                            label: 'Category',
+                            value: tempCategory,
+                            values: categories,
+                            onChanged: (value) =>
+                                setModalState(() => tempCategory = value),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Price Range: Rs ${tempPriceRange.start.toStringAsFixed(0)} - Rs ${tempPriceRange.end.toStringAsFixed(0)}',
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          if (maxPrice > minPrice)
+                            RangeSlider(
+                              values: tempPriceRange,
+                              min: minPrice,
+                              max: maxPrice,
+                              divisions: 20,
+                              activeColor: const Color(0xFF0E7490),
+                              inactiveColor: Colors.white24,
+                              labels: RangeLabels(
+                                tempPriceRange.start.toStringAsFixed(0),
+                                tempPriceRange.end.toStringAsFixed(0),
+                              ),
+                              onChanged: (values) =>
+                                  setModalState(() => tempPriceRange = values),
                             ),
+                          SwitchListTile(
+                            value: tempOnlyWithLink,
+                            onChanged: (value) =>
+                                setModalState(() => tempOnlyWithLink = value),
+                            activeThumbColor: const Color(0xFF0E7490),
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text(
+                              'Only products with purchase link',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedBrand = null;
+                                      _selectedCategory = null;
+                                      _priceRange = null;
+                                      _onlyWithLink = false;
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Clear'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedBrand = tempBrand;
+                                      _selectedCategory = tempCategory;
+                                      _priceRange = tempPriceRange;
+                                      _onlyWithLink = tempOnlyWithLink;
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Apply'),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -240,7 +250,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     required ValueChanged<String?> onChanged,
   }) {
     return DropdownButtonFormField<String?>(
-      value: value,
+      initialValue: value,
       dropdownColor: const Color(0xFF1A1A2E),
       decoration: InputDecoration(
         labelText: label,
@@ -250,7 +260,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
       style: const TextStyle(color: Colors.white),
       items: [
         const DropdownMenuItem<String?>(value: null, child: Text('Any')),
-        ...values.map((v) => DropdownMenuItem<String?>(value: v, child: Text(v))),
+        ...values
+            .map((v) => DropdownMenuItem<String?>(value: v, child: Text(v))),
       ],
       onChanged: onChanged,
     );
@@ -274,38 +285,47 @@ class _ProductListScreenState extends State<ProductListScreen> {
           child: Column(
             children: [
               // Custom AppBar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: Colors.white.withOpacity(0.3)),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        widget.title ?? 'Recommended Products',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1240),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                              ),
                             ),
-                      ),
+                            child: const Icon(
+                              Icons.arrow_back_ios_new,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            widget.title ?? 'Recommended Products',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
               // Products Grid
@@ -362,77 +382,124 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
                     return Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _searchController,
-                                  onChanged: (_) => setState(() {}),
-                                  decoration: InputDecoration(
-                                    hintText: 'Search by name, brand, specs',
-                                    filled: true,
-                                    fillColor: Colors.white.withOpacity(0.85),
-                                    prefixIcon: const Icon(Icons.search),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1240),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _searchController,
+                                      onChanged: (_) => setState(() {}),
+                                      decoration: InputDecoration(
+                                        hintText:
+                                            'Search by name, brand, specs',
+                                        filled: true,
+                                        fillColor: Colors.white
+                                            .withValues(alpha: 0.85),
+                                        prefixIcon: const Icon(Icons.search),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.25),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () => _openFilters(products),
+                                      icon: const Icon(Icons.filter_alt,
+                                          color: Colors.white),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 10),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.25),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                      color: Colors.white.withOpacity(0.3)),
-                                ),
-                                child: IconButton(
-                                  onPressed: () => _openFilters(products),
-                                  icon: const Icon(Icons.filter_alt, color: Colors.white),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              '${filteredProducts.length} results',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.85),
-                                fontWeight: FontWeight.w600,
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1240),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '${filteredProducts.length} results',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Expanded(
-                          child: GridView.builder(
-                            padding: const EdgeInsets.all(AppTheme.paddingMedium),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.85,
-                              crossAxisSpacing: AppTheme.paddingMedium,
-                              mainAxisSpacing: AppTheme.paddingMedium,
-                            ),
-                            itemCount: filteredProducts.length,
-                            itemBuilder: (context, index) {
-                              final product = filteredProducts[index];
-                              return ProductCard(
-                                product: product,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          ProductDetailScreen(product: product),
-                                    ),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final width = constraints.maxWidth;
+                              final contentWidth =
+                                  width > 1240 ? 1240.0 : width;
+                              final sideInset =
+                                  ((width - contentWidth) / 2) + 16;
+                              final columns = contentWidth < 520
+                                  ? 1
+                                  : contentWidth < 820
+                                      ? 2
+                                      : contentWidth < 1100
+                                          ? 3
+                                          : 4;
+                              final cardHeight = columns == 1
+                                  ? 370.0
+                                  : columns == 2
+                                      ? 330.0
+                                      : 350.0;
+
+                              return GridView.builder(
+                                padding: EdgeInsets.fromLTRB(
+                                  sideInset,
+                                  8,
+                                  sideInset,
+                                  24,
+                                ),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  mainAxisExtent: cardHeight,
+                                  crossAxisSpacing: AppTheme.paddingMedium,
+                                  mainAxisSpacing: AppTheme.paddingMedium,
+                                ),
+                                itemCount: filteredProducts.length,
+                                itemBuilder: (context, index) {
+                                  final product = filteredProducts[index];
+                                  return ProductCard(
+                                    product: product,
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ProductDetailScreen(
+                                            product: product,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               );

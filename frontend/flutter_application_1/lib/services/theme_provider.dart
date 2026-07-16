@@ -8,11 +8,11 @@ class ThemeProvider extends ChangeNotifier {
 
   bool get isDarkMode => _isDarkMode;
 
-  // Light mode gradient colors (purple theme)
+  // Light mode gradient colors (ocean theme)
   List<Color> get lightGradient => const [
-        Color(0xFF4C1D95),
-        Color(0xFF5B21B6),
-        Color(0xFF93C5FD),
+        Color(0xFF0F766E),
+        Color(0xFF0E7490),
+        Color(0xFF38BDF8),
       ];
 
   // Dark mode gradient colors
@@ -54,7 +54,7 @@ class ThemeProvider extends ChangeNotifier {
       : Colors.white.withOpacity(0.9);
 
   // Button text color
-  Color get buttonText => const Color(0xFF5B21B6);
+  Color get buttonText => const Color(0xFF0F5E6B);
 
   // Accent color
   Color get accentColor => const Color(0xFF10B981);

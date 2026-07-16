@@ -24,6 +24,14 @@ class ProductDetailScreen extends StatelessWidget {
     final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 24.0 : 20.0);
     final imageHeight = isDesktop ? 500.0 : (isTablet ? 400.0 : 300.0);
     final hasImage = product.image.isNotEmpty;
+    final hasStructuredSpecs = [
+      product.ram,
+      product.storage,
+      product.processor,
+      product.gpu,
+      product.battery,
+      product.camera,
+    ].any((value) => value != null && value.trim().isNotEmpty);
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -96,7 +104,8 @@ class ProductDetailScreen extends StatelessWidget {
                     if (hasImage) ...[
                       // Product Image Section
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: horizontalPadding),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(24),
                           child: BackdropFilter(
@@ -117,21 +126,27 @@ class ProductDetailScreen extends StatelessWidget {
                                       fit: BoxFit.contain,
                                       webHtmlElementStrategy:
                                           WebHtmlElementStrategy.prefer,
-                                      loadingBuilder: (context, child, loadingProgress) {
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
                                         if (loadingProgress == null) {
                                           return child;
                                         }
                                         return Center(
                                           child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded /
-                                                    loadingProgress.expectedTotalBytes!
+                                            value: loadingProgress
+                                                        .expectedTotalBytes !=
+                                                    null
+                                                ? loadingProgress
+                                                        .cumulativeBytesLoaded /
+                                                    loadingProgress
+                                                        .expectedTotalBytes!
                                                 : null,
                                             color: Colors.white,
                                           ),
                                         );
                                       },
-                                      errorBuilder: (context, error, stackTrace) {
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
                                         return const Center(
                                           child: Icon(
                                             Icons.smartphone,
@@ -144,7 +159,8 @@ class ProductDetailScreen extends StatelessWidget {
                                   : Image.asset(
                                       product.image,
                                       fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) {
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
                                         return const Center(
                                           child: Icon(
                                             Icons.smartphone,
@@ -238,63 +254,49 @@ class ProductDetailScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 24),
 
-                                if (product.similarityScore > 0) ...[
-                                  _detailTile(
-                                    context,
-                                    'Similarity Score',
-                                    '${(product.similarityScore * 100).toStringAsFixed(1)}%',
-                                  ),
-                                  const SizedBox(height: 12),
-                                ],
-
-                                if (product.ram != null && product.ram!.isNotEmpty) ...[
+                                if (product.ram != null &&
+                                    product.ram!.isNotEmpty) ...[
                                   _detailTile(context, 'RAM', product.ram!),
                                   const SizedBox(height: 12),
                                 ],
-                                if (product.storage != null && product.storage!.isNotEmpty) ...[
-                                  _detailTile(context, 'Storage', product.storage!),
+                                if (product.storage != null &&
+                                    product.storage!.isNotEmpty) ...[
+                                  _detailTile(
+                                      context, 'Storage', product.storage!),
                                   const SizedBox(height: 12),
                                 ],
-                                if (product.processor != null && product.processor!.isNotEmpty) ...[
-                                  _detailTile(context, 'Processor', product.processor!),
+                                if (product.processor != null &&
+                                    product.processor!.isNotEmpty) ...[
+                                  _detailTile(
+                                      context, 'Processor', product.processor!),
                                   const SizedBox(height: 12),
                                 ],
-                                if (product.gpu != null && product.gpu!.isNotEmpty) ...[
+                                if (product.gpu != null &&
+                                    product.gpu!.isNotEmpty) ...[
                                   _detailTile(context, 'GPU', product.gpu!),
                                   const SizedBox(height: 12),
                                 ],
-                                if (product.battery != null && product.battery!.isNotEmpty) ...[
-                                  _detailTile(context, 'Battery', product.battery!),
+                                if (product.battery != null &&
+                                    product.battery!.isNotEmpty) ...[
+                                  _detailTile(
+                                      context, 'Battery', product.battery!),
                                   const SizedBox(height: 12),
                                 ],
-                                if (product.camera != null && product.camera!.isNotEmpty) ...[
-                                  _detailTile(context, 'Camera', product.camera!),
+                                if (product.camera != null &&
+                                    product.camera!.isNotEmpty) ...[
+                                  _detailTile(
+                                      context, 'Camera', product.camera!),
                                   const SizedBox(height: 12),
                                 ],
-                                if (product.specs != null && product.specs!.isNotEmpty) ...[
-                                  _detailTile(context, 'Specs', product.specs!),
+                                if (!hasStructuredSpecs &&
+                                    product.specs != null &&
+                                    product.specs!.trim().isNotEmpty) ...[
+                                  _detailTile(
+                                    context,
+                                    'Additional Specifications',
+                                    product.specs!,
+                                  ),
                                   const SizedBox(height: 12),
-                                ],
-                                if (product.source != null && product.source!.isNotEmpty) ...[
-                                  _detailTile(context, 'Source', product.source!),
-                                  const SizedBox(height: 12),
-                                ],
-                                if (product.collection != null && product.collection!.isNotEmpty) ...[
-                                  _detailTile(context, 'Collection', product.collection!),
-                                  const SizedBox(height: 12),
-                                ],
-                                if (product.productId != null && product.productId!.isNotEmpty) ...[
-                                  _detailTile(context, 'Product ID', product.productId!),
-                                  const SizedBox(height: 12),
-                                ],
-                                _detailTile(context, 'Document ID', product.id),
-                                if (product.scrapedAt != null && product.scrapedAt!.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  _detailTile(context, 'Scraped At', product.scrapedAt!),
-                                ],
-                                if (product.url != null && product.url!.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  _detailTile(context, 'Product Link', product.url!),
                                 ],
 
                                 // Price
@@ -303,7 +305,7 @@ class ProductDetailScreen extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        const Color(0xFF7C3AED)
+                                        const Color(0xFF0E7490)
                                             .withOpacity(0.3),
                                         const Color(0xFF22D3EE)
                                             .withOpacity(0.3),
@@ -378,7 +380,7 @@ class ProductDetailScreen extends StatelessWidget {
                                       Expanded(
                                         child: _buildButton(
                                           context,
-                                          'Purchase Now',
+                                          'View at Store',
                                           true,
                                           isDesktop,
                                         ),
@@ -397,7 +399,12 @@ class ProductDetailScreen extends StatelessWidget {
                                 else
                                   Column(
                                     children: [
-                                      _buildButton(context, 'Purchase Now', true, isDesktop),
+                                      _buildButton(
+                                        context,
+                                        'View at Store',
+                                        true,
+                                        isDesktop,
+                                      ),
                                       const SizedBox(height: 12),
                                       _buildButton(
                                         context,
@@ -438,7 +445,7 @@ class ProductDetailScreen extends StatelessWidget {
                     const SnackBar(
                       content: Text('No product link available for this item.'),
                       duration: Duration(seconds: 2),
-                      backgroundColor: Color(0xFF7C3AED),
+                      backgroundColor: Color(0xFF0E7490),
                     ),
                   );
                   return;
@@ -447,7 +454,7 @@ class ProductDetailScreen extends StatelessWidget {
                 _openOrCopyProductLink(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
+                backgroundColor: const Color(0xFF0E7490),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -526,13 +533,14 @@ class ProductDetailScreen extends StatelessWidget {
     }
 
     final uri = Uri.tryParse(link);
-    if (uri == null) {
-      Clipboard.setData(ClipboardData(text: link));
+    if (uri == null ||
+        (uri.scheme.toLowerCase() != 'http' &&
+            uri.scheme.toLowerCase() != 'https')) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Invalid URL format. Link copied to clipboard.'),
+          content: Text('This product link is not valid.'),
           duration: Duration(seconds: 2),
-          backgroundColor: Color(0xFF7C3AED),
+          backgroundColor: Color(0xFF0E7490),
         ),
       );
       return;
@@ -545,7 +553,7 @@ class ProductDetailScreen extends StatelessWidget {
         const SnackBar(
           content: Text('Could not open browser. Link copied to clipboard.'),
           duration: Duration(seconds: 2),
-          backgroundColor: Color(0xFF7C3AED),
+          backgroundColor: Color(0xFF0E7490),
         ),
       );
     }

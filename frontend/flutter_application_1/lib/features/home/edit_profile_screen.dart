@@ -1,219 +1,240 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
-class EditProfileScreen extends StatelessWidget {
+import '../../services/auth_service.dart';
+import '../../services/profile_service.dart';
+
+class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
+
+  @override
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  bool _loading = true;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final user = AuthService().currentUser;
+    final local = await ProfileService().load();
+    if (!mounted) return;
+    _nameController.text = user?.displayName ?? '';
+    _emailController.text = user?.email ?? '';
+    _phoneController.text = local.phone;
+    _addressController.text = local.address;
+    setState(() => _loading = false);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _saving = true);
+    try {
+      await Future.wait([
+        AuthService().updateProfile(displayName: _nameController.text.trim()),
+        ProfileService().save(
+          phone: _phoneController.text,
+          address: _addressController.text,
+        ),
+      ]);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final gradientColors = isDark
+    final colors = isDark
         ? const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
-        : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
-
+        : const [Color(0xFF0F766E), Color(0xFF0E7490), Color(0xFF38BDF8)];
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: gradientColors,
+            colors: colors,
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const _GlassIconButton(
-                          icon: Icons.arrow_back_ios_new,
-                        ),
-                      ),
-                      Text(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 20, 8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Back',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: Colors.white),
+                    ),
+                    const Expanded(
+                      child: Text(
                         'Edit Profile',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const _GlassIconButton(icon: Icons.edit_outlined),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _GlassFormCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _FieldLabel(text: 'Full name'),
-                        const SizedBox(height: 8),
-                        const _GlassTextField(hint: 'Ahmad Kamran'),
-                        const SizedBox(height: 14),
-                        const _FieldLabel(text: 'E-mail'),
-                        const SizedBox(height: 8),
-                        const _GlassTextField(hint: 'ahmadkamran@example.com'),
-                        const SizedBox(height: 14),
-                        const _FieldLabel(text: 'Phone number'),
-                        const SizedBox(height: 8),
-                        const _GlassTextField(hint: '+92 300 1234567'),
-                        const SizedBox(height: 14),
-                        const _FieldLabel(text: 'Address'),
-                        const SizedBox(height: 8),
-                        const _GlassTextField(
-                          hint: 'House #, Street, City',
-                          maxLines: 2,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                  ),
-                                ),
-                                child: TextButton.icon(
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Profile updated'),
-                                        duration: Duration(seconds: 2),
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _loading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              color: Colors.white.withOpacity(.12),
+                              child: Form(
+                                key: _formKey,
+                                child: Column(
+                                  children: [
+                                    _field(
+                                      controller: _nameController,
+                                      label: 'Full name',
+                                      icon: Icons.person_outline,
+                                      validator: (value) => value == null ||
+                                              value.trim().length < 2
+                                          ? 'Enter your full name'
+                                          : null,
+                                    ),
+                                    _field(
+                                      controller: _emailController,
+                                      label: 'Email',
+                                      icon: Icons.email_outlined,
+                                      enabled: false,
+                                      helper:
+                                          'Email is managed by your sign-in account.',
+                                    ),
+                                    _field(
+                                      controller: _phoneController,
+                                      label: 'Phone number (optional)',
+                                      icon: Icons.phone_outlined,
+                                      keyboardType: TextInputType.phone,
+                                      validator: (value) {
+                                        final text = value?.trim() ?? '';
+                                        if (text.isEmpty) return null;
+                                        return RegExp(r'^\+?[0-9 ()-]{7,20}$')
+                                                .hasMatch(text)
+                                            ? null
+                                            : 'Enter a valid phone number';
+                                      },
+                                    ),
+                                    _field(
+                                      controller: _addressController,
+                                      label: 'Address (optional)',
+                                      icon: Icons.location_on_outlined,
+                                      maxLines: 2,
+                                      validator: (value) =>
+                                          (value?.length ?? 0) > 200
+                                              ? 'Address is too long'
+                                              : null,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: FilledButton.icon(
+                                        onPressed: _saving ? null : _save,
+                                        icon: const Icon(Icons.save_outlined),
+                                        label: Text(
+                                          _saving
+                                              ? 'Saving...'
+                                              : 'Save Changes',
+                                        ),
                                       ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.save,
-                                      color: Colors.white),
-                                  label: const Text(
-                                    'Save Changes',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                      ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-}
 
-class _GlassFormCard extends StatelessWidget {
-  final Widget child;
-  const _GlassFormCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: Colors.white.withOpacity(0.85),
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-}
-
-class _GlassTextField extends StatelessWidget {
-  final String hint;
-  final int maxLines;
-  const _GlassTextField({required this.hint, this.maxLines = 1});
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      maxLines: maxLines,
-      style: const TextStyle(color: Colors.white),
-      cursorColor: Colors.white,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.08),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.white),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      ),
-    );
-  }
-}
-
-class _GlassIconButton extends StatelessWidget {
-  final IconData icon;
-  const _GlassIconButton({required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.3)),
-          ),
-          child: Icon(icon, color: Colors.white, size: 20),
+  Widget _field({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool enabled = true,
+    int maxLines = 1,
+    String? helper,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextFormField(
+        controller: controller,
+        enabled: enabled,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        validator: validator,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          helperText: helper,
+          helperMaxLines: 2,
+          prefixIcon: Icon(icon),
+          filled: true,
+          fillColor: Colors.white.withOpacity(.08),
+          labelStyle: const TextStyle(color: Colors.white70),
+          helperStyle: const TextStyle(color: Colors.white60),
+          errorStyle: const TextStyle(color: Color(0xFFFFCDD2)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
     );

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/routes.dart';
+import '../../services/admin_service.dart';
+import '../../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -48,12 +50,29 @@ class _SplashScreenState extends State<SplashScreen>
       }
     });
 
-    // Move to onboarding after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
-      }
-    });
+    _navigateAfterSplash();
+  }
+
+  Future<void> _navigateAfterSplash() async {
+    // Start restoring Firebase's persisted mobile session while the splash
+    // animation is playing. Firebase keeps the user signed in across restarts.
+    final sessionCheck = AuthService().isLoggedIn();
+    final adminSessionCheck = AdminService().hasValidSession();
+
+    await Future<void>.delayed(const Duration(seconds: 3));
+    final isAdminSignedIn = await adminSessionCheck;
+    final isSignedIn = await sessionCheck;
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      isAdminSignedIn
+          ? AppRoutes.admin
+          : isSignedIn
+              ? AppRoutes.home
+              : AppRoutes.onboarding,
+      (route) => false,
+    );
   }
 
   @override
@@ -74,16 +93,16 @@ class _SplashScreenState extends State<SplashScreen>
         builder: (context, child) {
           return Stack(
             children: [
-              // Gradient background - dark purple to light blue
+              // Gradient background - ocean teal to sky blue
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFF4C1D95),  // Dark purple
-                      Color(0xFF5B21B6),  // Medium dark purple
-                      Color(0xFF93C5FD),  // Light blue
+                      Color(0xFF0F766E), // Ocean teal
+                      Color(0xFF0E7490), // Deep cyan
+                      Color(0xFF93C5FD), // Light blue
                     ],
                   ),
                 ),
@@ -160,7 +179,7 @@ class _SplashScreenState extends State<SplashScreen>
                               fontSize: 12,
                               letterSpacing: 2.0,
                               color: _wipeAnimation.value > 0.5
-                                  ? Colors.white.withOpacity(0.8)
+                                  ? Colors.white.withValues(alpha: 0.8)
                                   : Colors.black54,
                               fontWeight: FontWeight.w300,
                             ),

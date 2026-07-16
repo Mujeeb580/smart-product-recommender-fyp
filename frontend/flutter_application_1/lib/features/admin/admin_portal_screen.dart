@@ -1,21 +1,24 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
+import '../../core/routes.dart';
 import '../../models/product_model.dart';
 import '../../services/admin_service.dart';
-import '../../widgets/loading_widget.dart' as loading_widgets;
+
+enum _AdminView { products, users }
 
 class AdminPortalScreen extends StatefulWidget {
-  const AdminPortalScreen({super.key});
+  final AdminService? adminService;
+
+  const AdminPortalScreen({super.key, this.adminService});
 
   @override
   State<AdminPortalScreen> createState() => _AdminPortalScreenState();
 }
 
 class _AdminPortalScreenState extends State<AdminPortalScreen> {
-  final AdminService _adminService = AdminService();
+  late final AdminService _adminService;
   final TextEditingController _searchController = TextEditingController();
 
   String _selectedCollection = 'products';
@@ -28,10 +31,13 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
   Map<String, dynamic> _overview = {};
   List<Map<String, dynamic>> _collections = [];
   List<ProductModel> _products = [];
+  List<Map<String, dynamic>> _users = [];
+  _AdminView _selectedView = _AdminView.products;
 
   @override
   void initState() {
     super.initState();
+    _adminService = widget.adminService ?? AdminService();
     _loadData();
   }
 
@@ -56,12 +62,14 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           query: query,
           limit: 250,
         ),
+        _adminService.getUsers(),
       ]);
 
       setState(() {
         _overview = results[0] as Map<String, dynamic>;
         _collections = results[1] as List<Map<String, dynamic>>;
         _products = results[2] as List<ProductModel>;
+        _users = results[3] as List<Map<String, dynamic>>;
         _isLoading = false;
       });
     } catch (e) {
@@ -89,13 +97,16 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
       final response = await _adminService.runScraper(mode: mode);
       final saved = response['saved'] ?? 0;
       final updated = response['updated'] ?? 0;
+      final errors = response['errors'] ?? 0;
       setState(() {
-        _scrapeStatus = '$label done. Saved: $saved, Updated: $updated';
+        _scrapeStatus =
+            '$label done. Saved: $saved, Updated: $updated, Errors: $errors';
         _scrapeHistory.insert(0, {
           'label': label,
           'mode': mode,
           'saved': saved,
           'updated': updated,
+          'errors': errors,
           'status': 'success',
           'time': DateTime.now(),
         });
@@ -171,8 +182,10 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           );
         }
       } else {
-        final collection = data['collection'] ?? _selectedCollection;
-        await _adminService.updateProduct(collection, existingProduct.id, data);
+        final sourceCollection =
+            existingProduct.collection ?? _selectedCollection;
+        await _adminService.updateProduct(
+            sourceCollection, existingProduct.id, data);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Product updated successfully')),
@@ -227,6 +240,57 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     }
   }
 
+  Future<void> _deleteUser(Map<String, dynamic> user) async {
+    final uid = user['uid']?.toString() ?? '';
+    final email = user['email']?.toString() ?? 'this user';
+    if (uid.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete User?'),
+        content: Text(
+          'Permanently delete $email? This user will no longer be able to sign in.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete permanently',
+                style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    try {
+      await _adminService.deleteUser(uid);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$email deleted')),
+      );
+      await _loadData(query: _searchController.text);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not delete user: $e')),
+      );
+    }
+  }
+
+  Future<void> _logout() async {
+    await _adminService.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRoutes.login,
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -242,68 +306,207 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           child: Column(
             children: [
               _Header(
-                onBack: () => Navigator.pop(context),
+                onLogout: _logout,
                 onRefresh: () => _loadData(query: _searchController.text),
-                onAddProduct: () => _openProductEditor(),
+                onAddProduct: _selectedView == _AdminView.products
+                    ? () => _openProductEditor()
+                    : null,
               ),
               if (_isLoading)
                 const Expanded(
-                  child: loading_widgets.LoadingWidget(
+                  child: _AdminStatusState(
                     message: 'Loading Firestore data...',
+                    isLoading: true,
                   ),
                 )
               else if (_error != null)
                 Expanded(
-                  child: loading_widgets.ErrorWidget(
+                  child: _AdminStatusState(
                     message: _error!,
                     onRetry: _loadData,
                   ),
                 )
               else
                 Expanded(
-                  child: Column(
-                    children: [
-                      _OverviewCards(overview: _overview),
-                      _ScrapePanel(
-                        isRunning: _isScrapeRunning,
-                        status: _scrapeStatus,
-                        onPhones: () =>
-                            _runScrape(mode: 'phones', label: 'Scrape Phones'),
-                        onLaptops: () => _runScrape(
-                            mode: 'laptops', label: 'Scrape Laptops'),
-                        onAll: () =>
-                            _runScrape(mode: 'all', label: 'Scrape All'),
-                        onNewPhones: () => _runScrape(
-                            mode: 'new_phones', label: 'Scrape New Phones'),
-                        onNewLaptops: () => _runScrape(
-                            mode: 'new_laptops', label: 'Scrape New Laptops'),
-                      ),
-                      _ScrapeHistoryCard(history: _scrapeHistory),
-                      _FilterRow(
-                        selectedCollection: _selectedCollection,
-                        collections: _collections,
-                        searchController: _searchController,
-                        onCollectionChanged: (value) {
-                          setState(() => _selectedCollection = value);
-                          _loadData(query: _searchController.text);
-                        },
-                        onSearch: () =>
-                            _loadData(query: _searchController.text),
-                      ),
-                      Expanded(
-                        child: _ProductTable(
-                          products: _products,
-                          onEdit: (product) => _openProductEditor(product: product),
-                          onDelete: _deleteProduct,
-                        ),
-                      ),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final showingProducts =
+                          _selectedView == _AdminView.products;
+                      final preferredHeight = showingProducts ? 330.0 : 145.0;
+                      final compactHeight = constraints.maxHeight *
+                          (showingProducts ? 0.62 : 0.35);
+                      final controlsHeight =
+                          constraints.maxHeight < preferredHeight + 180
+                              ? compactHeight
+                              : preferredHeight;
+
+                      return Column(
+                        children: [
+                          SizedBox(
+                            height: controlsHeight,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  _OverviewCards(overview: _overview),
+                                  _AdminViewSelector(
+                                    selected: _selectedView,
+                                    onChanged: (view) =>
+                                        setState(() => _selectedView = view),
+                                  ),
+                                  if (showingProducts) ...[
+                                    _ScrapePanel(
+                                      isRunning: _isScrapeRunning,
+                                      status: _scrapeStatus,
+                                      onPhones: () => _runScrape(
+                                          mode: 'phones',
+                                          label: 'Scrape Phones'),
+                                      onLaptops: () => _runScrape(
+                                          mode: 'laptops',
+                                          label: 'Scrape Laptops'),
+                                      onAll: () => _runScrape(
+                                          mode: 'all', label: 'Scrape All'),
+                                      onNewPhones: () => _runScrape(
+                                          mode: 'new_phones',
+                                          label: 'Scrape New Phones'),
+                                      onNewLaptops: () => _runScrape(
+                                          mode: 'new_laptops',
+                                          label: 'Scrape New Laptops'),
+                                    ),
+                                    _ScrapeHistoryCard(
+                                      history: _scrapeHistory,
+                                    ),
+                                    _FilterRow(
+                                      selectedCollection: _selectedCollection,
+                                      collections: _collections,
+                                      searchController: _searchController,
+                                      onCollectionChanged: (value) {
+                                        setState(
+                                          () => _selectedCollection = value,
+                                        );
+                                        _loadData(
+                                          query: _searchController.text,
+                                        );
+                                      },
+                                      onSearch: () => _loadData(
+                                        query: _searchController.text,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: showingProducts
+                                ? _ProductTable(
+                                    products: _products,
+                                    onEdit: (product) => _openProductEditor(
+                                      product: product,
+                                    ),
+                                    onDelete: _deleteProduct,
+                                  )
+                                : _UserTable(
+                                    users: _users,
+                                    onDelete: _deleteUser,
+                                  ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AdminStatusState extends StatelessWidget {
+  final String message;
+  final String? title;
+  final IconData icon;
+  final bool isLoading;
+  final VoidCallback? onRetry;
+
+  const _AdminStatusState({
+    required this.message,
+    this.title,
+    this.icon = Icons.info_outline,
+    this.isLoading = false,
+    this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxHeight < 180;
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(compact ? 8 : 24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: constraints.maxWidth > 48
+                  ? constraints.maxWidth - (compact ? 16 : 48)
+                  : 0,
+              minHeight: constraints.maxHeight > (compact ? 16 : 48)
+                  ? constraints.maxHeight - (compact ? 16 : 48)
+                  : 0,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isLoading)
+                  SizedBox(
+                    width: compact ? 28 : 38,
+                    height: compact ? 28 : 38,
+                    child: const CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
+                  )
+                else
+                  Icon(
+                    icon,
+                    size: compact ? 34 : 58,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                SizedBox(height: compact ? 6 : 14),
+                if (title != null) ...[
+                  Text(
+                    title!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: compact ? 15 : 19,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: compact ? 3 : 7),
+                ],
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    fontSize: compact ? 12 : 14,
+                  ),
+                ),
+                if (onRetry != null) ...[
+                  SizedBox(height: compact ? 6 : 14),
+                  FilledButton.icon(
+                    onPressed: onRetry,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -339,9 +542,9 @@ class _ScrapePanel extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.14),
+              color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.25)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.32)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,29 +558,36 @@ class _ScrapePanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _ScrapeButton(
-                        label: 'Scrape Phones',
-                        onTap: onPhones,
-                        enabled: !isRunning),
-                    _ScrapeButton(
-                        label: 'Scrape Laptops',
-                        onTap: onLaptops,
-                        enabled: !isRunning),
-                    _ScrapeButton(
-                        label: 'Scrape All', onTap: onAll, enabled: !isRunning),
-                    _ScrapeButton(
-                        label: 'Scrape New Phones',
-                        onTap: onNewPhones,
-                        enabled: !isRunning),
-                    _ScrapeButton(
-                        label: 'Scrape New Laptops',
-                        onTap: onNewLaptops,
-                        enabled: !isRunning),
-                  ],
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _ScrapeButton(
+                          label: 'Scrape Phones',
+                          onTap: onPhones,
+                          enabled: !isRunning),
+                      const SizedBox(width: 8),
+                      _ScrapeButton(
+                          label: 'Scrape Laptops',
+                          onTap: onLaptops,
+                          enabled: !isRunning),
+                      const SizedBox(width: 8),
+                      _ScrapeButton(
+                          label: 'Scrape All',
+                          onTap: onAll,
+                          enabled: !isRunning),
+                      const SizedBox(width: 8),
+                      _ScrapeButton(
+                          label: 'Scrape New Phones',
+                          onTap: onNewPhones,
+                          enabled: !isRunning),
+                      const SizedBox(width: 8),
+                      _ScrapeButton(
+                          label: 'Scrape New Laptops',
+                          onTap: onNewLaptops,
+                          enabled: !isRunning),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -394,7 +604,8 @@ class _ScrapePanel extends StatelessWidget {
                       child: Text(
                         status,
                         style: TextStyle(
-                            color: Colors.white.withOpacity(0.9), fontSize: 12),
+                            color: Colors.white.withValues(alpha: 0.92),
+                            fontSize: 12),
                       ),
                     ),
                   ],
@@ -433,9 +644,9 @@ class _ScrapeHistoryCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
+              color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.24)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -453,7 +664,8 @@ class _ScrapeHistoryCard extends StatelessWidget {
                   Text(
                     'No runs yet. Use any scrape button to start.',
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.8), fontSize: 12),
+                        color: Colors.white.withValues(alpha: 0.86),
+                        fontSize: 12),
                   )
                 else
                   ...history.map((item) {
@@ -470,7 +682,7 @@ class _ScrapeHistoryCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              '${item['label']}  •  Saved ${item['saved']}  •  Updated ${item['updated']}',
+                              '${item['label']}  •  Saved ${item['saved']}  •  Updated ${item['updated']}  •  Errors ${item['errors'] ?? 0}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -481,7 +693,7 @@ class _ScrapeHistoryCard extends StatelessWidget {
                           Text(
                             _formatTime(dt),
                             style: TextStyle(
-                                color: Colors.white.withOpacity(0.78),
+                                color: Colors.white.withValues(alpha: 0.82),
                                 fontSize: 11),
                           ),
                           const SizedBox(width: 8),
@@ -524,7 +736,7 @@ class _ScrapeButton extends StatelessWidget {
           foregroundColor: Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          side: BorderSide(color: Colors.white.withOpacity(0.3)),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
         ),
         child: Text(label),
       ),
@@ -533,12 +745,12 @@ class _ScrapeButton extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  final VoidCallback onBack;
+  final VoidCallback onLogout;
   final VoidCallback onRefresh;
-  final VoidCallback onAddProduct;
+  final VoidCallback? onAddProduct;
 
   const _Header({
-    required this.onBack,
+    required this.onLogout,
     required this.onRefresh,
     required this.onAddProduct,
   });
@@ -549,7 +761,7 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Row(
         children: [
-          _GlassIconButton(icon: Icons.arrow_back_ios_new, onTap: onBack),
+          _GlassIconButton(icon: Icons.logout, onTap: onLogout),
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
@@ -561,8 +773,10 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
-          _GlassIconButton(icon: Icons.add, onTap: onAddProduct),
-          const SizedBox(width: 8),
+          if (onAddProduct != null) ...[
+            _GlassIconButton(icon: Icons.add, onTap: onAddProduct!),
+            const SizedBox(width: 8),
+          ],
           _GlassIconButton(icon: Icons.refresh, onTap: onRefresh),
         ],
       ),
@@ -582,53 +796,100 @@ class _OverviewCards extends StatelessWidget {
       ('Products', overview['products'] ?? 0),
       ('Phones', overview['phones'] ?? 0),
       ('Laptops', overview['laptops'] ?? 0),
+      ('Users', overview['users'] ?? 0),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: cards
-            .map(
-              (entry) => ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    width: 140,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.16),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.25)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          entry.$1,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          entry.$2.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
-                    ),
+    return SizedBox(
+      height: 74,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemCount: cards.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final entry = cards[index];
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                width: 132,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.32),
                   ),
                 ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.$1,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      entry.$2.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            )
-            .toList(),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AdminViewSelector extends StatelessWidget {
+  final _AdminView selected;
+  final ValueChanged<_AdminView> onChanged;
+
+  const _AdminViewSelector({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: SegmentedButton<_AdminView>(
+        segments: const [
+          ButtonSegment(
+            value: _AdminView.products,
+            icon: Icon(Icons.inventory_2_outlined),
+            label: Text('Products'),
+          ),
+          ButtonSegment(
+            value: _AdminView.users,
+            icon: Icon(Icons.people_outline),
+            label: Text('Users'),
+          ),
+        ],
+        selected: {selected},
+        onSelectionChanged: (selection) => onChanged(selection.first),
+        style: ButtonStyle(
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? const Color(0xFF052A44)
+                : Colors.white,
+          ),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? Colors.white
+                : Colors.white.withValues(alpha: 0.12),
+          ),
+        ),
       ),
     );
   }
@@ -666,14 +927,28 @@ class _FilterRow extends StatelessWidget {
           Expanded(
             child: _GlassInput(
               child: DropdownButtonFormField<String>(
-                value: selectedCollection,
+                key: ValueKey(selectedCollection),
+                initialValue: selectedCollection,
                 dropdownColor: const Color(0xFF0D3A58),
-                decoration: const InputDecoration(border: InputBorder.none),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: true,
+                  fillColor: Color(0xFF123F5B),
+                ),
                 style: const TextStyle(color: Colors.white),
                 iconEnabledColor: Colors.white,
                 items: names
-                    .map((name) =>
-                        DropdownMenuItem(value: name, child: Text(name)))
+                    .map(
+                      (name) => DropdownMenuItem(
+                        value: name,
+                        child: Text(
+                          name,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    )
                     .toList(),
                 onChanged: (value) {
                   if (value != null) onCollectionChanged(value);
@@ -690,9 +965,17 @@ class _FilterRow extends StatelessWidget {
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: true,
+                  fillColor: const Color(0xFF123F5B),
                   hintText: 'Search name, brand, category',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  hintStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.78),
+                  ),
+                  prefixIconColor: Colors.white,
                 ),
+                cursorColor: Colors.white,
                 onSubmitted: (_) => onSearch(),
               ),
             ),
@@ -719,9 +1002,10 @@ class _ProductTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (products.isEmpty) {
-      return const loading_widgets.EmptyStateWidget(
+      return const _AdminStatusState(
         title: 'No Products',
-        subtitle: 'No rows found for this filter.',
+        message: 'No rows found for this filter.',
+        icon: Icons.inventory_2_outlined,
       );
     }
 
@@ -733,15 +1017,15 @@ class _ProductTable extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
+              color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
             ),
             child: ListView.separated(
               padding: const EdgeInsets.all(8),
               itemCount: products.length,
               separatorBuilder: (_, __) =>
-                  Divider(color: Colors.white.withOpacity(0.2)),
+                  Divider(color: Colors.white.withValues(alpha: 0.24)),
               itemBuilder: (context, index) {
                 final p = products[index];
                 return ListTile(
@@ -754,7 +1038,9 @@ class _ProductTable extends StatelessWidget {
                   ),
                   subtitle: Text(
                     '${p.brand} | ${p.category}',
-                    style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.84),
+                    ),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -791,6 +1077,97 @@ class _ProductTable extends StatelessWidget {
   }
 }
 
+class _UserTable extends StatelessWidget {
+  final List<Map<String, dynamic>> users;
+  final ValueChanged<Map<String, dynamic>> onDelete;
+
+  const _UserTable({required this.users, required this.onDelete});
+
+  String _dateLabel(dynamic milliseconds) {
+    final value = milliseconds is num
+        ? milliseconds.toInt()
+        : int.tryParse(milliseconds?.toString() ?? '');
+    if (value == null) return 'Unknown date';
+    final date = DateTime.fromMillisecondsSinceEpoch(value).toLocal();
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (users.isEmpty) {
+      return const _AdminStatusState(
+        title: 'No Users',
+        message: 'No Firebase Authentication users were found.',
+        icon: Icons.people_outline,
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ListView.separated(
+            padding: const EdgeInsets.all(8),
+            itemCount: users.length,
+            separatorBuilder: (_, __) =>
+                Divider(color: Colors.white.withValues(alpha: 0.18)),
+            itemBuilder: (context, index) {
+              final user = users[index];
+              final email = user['email']?.toString() ?? '';
+              final name = user['display_name']?.toString() ?? '';
+              final disabled = user['disabled'] == true;
+              final providers = (user['providers'] as List?)
+                      ?.map((provider) => provider.toString())
+                      .join(', ') ??
+                  'password';
+
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: disabled
+                      ? Colors.red.withValues(alpha: 0.2)
+                      : Colors.white.withValues(alpha: 0.18),
+                  child: Icon(
+                    disabled ? Icons.person_off : Icons.person,
+                    color: Colors.white,
+                  ),
+                ),
+                title: Text(
+                  name.isNotEmpty ? name : (email.isNotEmpty ? email : 'User'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  '${name.isNotEmpty ? '$email | ' : ''}$providers | Joined ${_dateLabel(user['created_at'])}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75)),
+                ),
+                trailing: IconButton(
+                  tooltip: 'Delete user',
+                  onPressed: () => onDelete(user),
+                  icon:
+                      const Icon(Icons.delete_forever, color: Colors.redAccent),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _GlassInput extends StatelessWidget {
   final Widget child;
 
@@ -805,9 +1182,9 @@ class _GlassInput extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
+            color: const Color(0xFF123F5B),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.32)),
           ),
           child: child,
         ),
@@ -833,9 +1210,9 @@ class _GlassIconButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.22),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.28)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.34)),
             ),
             child: Icon(icon, size: 20, color: Colors.white),
           ),
@@ -876,7 +1253,6 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
   late TextEditingController _batteryController;
   late TextEditingController _cameraController;
   late String _selectedCollection;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -950,8 +1326,11 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
           decoration: BoxDecoration(
             color: const Color(0xFF052A44),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border:
-                Border(top: BorderSide(color: Colors.white.withOpacity(0.2))),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.28),
+              ),
+            ),
           ),
           child: Column(
             children: [
@@ -981,20 +1360,18 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
                   controller: scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   children: [
-                    _buildTextField('Collection', _selectedCollection, (value) {
-                      _selectedCollection = value;
-                    },
+                    _buildTextField('Collection', null,
                         isDropdown: true,
                         dropdownValues: widget.availableCollections),
-                    _buildTextField('Name *', _nameController.text,
-                        (v) => _nameController.text = v),
-                    _buildTextField('Brand *', _brandController.text,
-                        (v) => _brandController.text = v),
-                    _buildTextField('Price', _priceController.text,
-                        (v) => _priceController.text = v,
+                    _buildTextField('Name *', _nameController),
+                    _buildTextField('Brand *', _brandController),
+                    _buildTextField('Price', _priceController,
                         keyboardType: TextInputType.number),
-                    _buildTextField('Image URL', _imageController.text,
-                        (v) => _imageController.text = v),
+                    _buildTextField(
+                      'Image URL',
+                      _imageController,
+                      onChanged: () => setState(() {}),
+                    ),
                     if (_imageController.text.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -1005,7 +1382,7 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
                             height: 100,
                             fit: BoxFit.cover,
                             webHtmlElementStrategy:
-                              WebHtmlElementStrategy.prefer,
+                                WebHtmlElementStrategy.prefer,
                             errorBuilder: (_, __, ___) => Container(
                               height: 100,
                               color: Colors.grey,
@@ -1017,15 +1394,11 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
                           ),
                         ),
                       ),
-                    _buildTextField('Category', _categoryController.text,
-                        (v) => _categoryController.text = v),
-                    _buildTextField('Description', _descriptionController.text,
-                        (v) => _descriptionController.text = v,
+                    _buildTextField('Category', _categoryController),
+                    _buildTextField('Description', _descriptionController,
                         maxLines: 3),
-                    _buildTextField('URL', _urlController.text,
-                        (v) => _urlController.text = v),
-                    _buildTextField('Source', _sourceController.text,
-                        (v) => _sourceController.text = v),
+                    _buildTextField('URL', _urlController),
+                    _buildTextField('Source', _sourceController),
                     const Divider(color: Colors.white24),
                     const Text(
                       'Specifications',
@@ -1035,18 +1408,12 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
                           fontSize: 14),
                     ),
                     const SizedBox(height: 8),
-                    _buildTextField('RAM', _ramController.text,
-                        (v) => _ramController.text = v),
-                    _buildTextField('Storage', _storageController.text,
-                        (v) => _storageController.text = v),
-                    _buildTextField('Processor', _processorController.text,
-                        (v) => _processorController.text = v),
-                    _buildTextField('GPU', _gpuController.text,
-                        (v) => _gpuController.text = v),
-                    _buildTextField('Battery', _batteryController.text,
-                        (v) => _batteryController.text = v),
-                    _buildTextField('Camera', _cameraController.text,
-                        (v) => _cameraController.text = v),
+                    _buildTextField('RAM', _ramController),
+                    _buildTextField('Storage', _storageController),
+                    _buildTextField('Processor', _processorController),
+                    _buildTextField('GPU', _gpuController),
+                    _buildTextField('Battery', _batteryController),
+                    _buildTextField('Camera', _cameraController),
                   ],
                 ),
               ),
@@ -1056,8 +1423,7 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey,
                           foregroundColor: Colors.white,
@@ -1068,20 +1434,14 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submit,
+                        onPressed: _submit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                         ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2),
-                              )
-                            : Text(
-                                widget.product == null ? 'Create' : 'Update'),
+                        child: Text(
+                          widget.product == null ? 'Create' : 'Update',
+                        ),
                       ),
                     ),
                   ],
@@ -1096,25 +1456,28 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
 
   Widget _buildTextField(
     String label,
-    String initialValue,
-    ValueChanged<String> onChanged, {
+    TextEditingController? controller, {
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
     bool isDropdown = false,
     List<String> dropdownValues = const [],
+    VoidCallback? onChanged,
   }) {
     if (isDropdown) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: DropdownButtonFormField<String>(
-          value: _selectedCollection,
+          key: ValueKey(_selectedCollection),
+          initialValue: _selectedCollection,
           dropdownColor: const Color(0xFF0D3A58),
           decoration: InputDecoration(
             labelText: label,
             labelStyle: const TextStyle(color: Colors.white),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+              borderSide: BorderSide(
+                color: Colors.white.withValues(alpha: 0.35),
+              ),
             ),
           ),
           style: const TextStyle(color: Colors.white),
@@ -1133,17 +1496,24 @@ class _ProductEditorSheetState extends State<_ProductEditorSheet> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
-        controller: TextEditingController(text: initialValue),
+        controller: controller,
         style: const TextStyle(color: Colors.white),
+        cursorColor: Colors.white,
         keyboardType: keyboardType,
         maxLines: maxLines,
-        onChanged: onChanged,
+        onChanged: (_) => onChanged?.call(),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.white70),
+          labelStyle: TextStyle(
+            color: Colors.white.withValues(alpha: 0.78),
+          ),
+          filled: true,
+          fillColor: const Color(0xFF0D3A58),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+            borderSide: BorderSide(
+              color: Colors.white.withValues(alpha: 0.35),
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),

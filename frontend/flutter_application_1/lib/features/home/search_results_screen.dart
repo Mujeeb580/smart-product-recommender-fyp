@@ -56,7 +56,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final gradientColors = isDark
         ? const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
-        : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
+        : const [Color(0xFF0F766E), Color(0xFF0E7490), Color(0xFF38BDF8)];
 
     return Scaffold(
       body: Container(
@@ -199,9 +199,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                     : FutureBuilder<List<ProductModel>>(
                         future: _resultsFuture,
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
                             return const Center(
-                              child: CircularProgressIndicator(color: Colors.white),
+                              child: CircularProgressIndicator(
+                                  color: Colors.white),
                             );
                           }
 
@@ -296,8 +298,7 @@ class _SearchResultCard extends StatelessWidget {
                       ? Image.network(
                           product.image,
                           fit: BoxFit.cover,
-                          webHtmlElementStrategy:
-                              WebHtmlElementStrategy.prefer,
+                          webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
                           errorBuilder: (_, __, ___) => const Icon(
                             Icons.smartphone,
                             color: Colors.white,

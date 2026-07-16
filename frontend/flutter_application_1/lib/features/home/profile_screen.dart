@@ -1,21 +1,41 @@
 import 'dart:ui';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/theme_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/profile_service.dart';
 import '../../widgets/glassy_shine.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import '../../core/routes.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
 
   const ProfileScreen({super.key, this.onBackPressed});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  LocalProfile _localProfile = const LocalProfile();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalProfile();
+  }
+
+  Future<void> _loadLocalProfile() async {
+    final profile = await ProfileService().load();
+    if (mounted) setState(() => _localProfile = profile);
+  }
+
   void _handleBack(BuildContext context) {
-    if (onBackPressed != null) {
-      onBackPressed!.call();
+    if (widget.onBackPressed != null) {
+      widget.onBackPressed!.call();
       return;
     }
     if (Navigator.canPop(context)) {
@@ -29,10 +49,12 @@ class ProfileScreen extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final gradientColors = themeProvider.currentGradient;
 
-    // Dummy data for demonstration
-    const String dummyUserName = 'Ahmad Kamran';
-    const String dummyUserEmail = 'ahmadkamran@example.com';
-    const String dummyUserPhone = '+92 300 1234567';
+    final user = AuthService().currentUser;
+    final userName = (user?.displayName?.trim().isNotEmpty ?? false)
+        ? user!.displayName!.trim()
+        : 'FYNDO User';
+    final userEmail = user?.email ?? 'No email available';
+    final userPhone = _localProfile.phone;
 
     return Scaffold(
       body: Container(
@@ -118,8 +140,8 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
                           // User Name
-                          const Text(
-                            dummyUserName,
+                          Text(
+                            userName,
                             style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
@@ -130,7 +152,7 @@ class ProfileScreen extends StatelessWidget {
                           const SizedBox(height: 6),
                           // User Email
                           Text(
-                            dummyUserEmail,
+                            userEmail,
                             style: TextStyle(
                               fontSize: 15,
                               color: Colors.white.withOpacity(0.85),
@@ -177,14 +199,19 @@ class ProfileScreen extends StatelessWidget {
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: GestureDetector(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const EditProfileScreen(),
-                                    ),
-                                  );
-                                },
+                                  onTap: () async {
+                                    final updated = await Navigator.of(context).push<bool>(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const EditProfileScreen(),
+                                      ),
+                                    );
+                                    if (updated == true) {
+                                      await AuthService().currentUser?.reload();
+                                      await _loadLocalProfile();
+                                      if (mounted) setState(() {});
+                                    }
+                                  },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 24, vertical: 12),
@@ -230,8 +257,12 @@ class ProfileScreen extends StatelessWidget {
                           _GlassInfoCard(
                             icon: Icons.email_outlined,
                             label: 'Email',
-                            value: dummyUserEmail,
-                            onTap: () {
+                            value: userEmail,
+                            onTap: user?.email == null ? null : () async {
+                              await Clipboard.setData(
+                                ClipboardData(text: userEmail),
+                              );
+                              if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Email copied to clipboard'),
@@ -242,34 +273,27 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
 
-                          _GlassInfoCard(
-                            icon: Icons.phone_outlined,
-                            label: 'Phone',
-                            value: dummyUserPhone,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text('Phone number copied to clipboard'),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            },
-                          ),
+                          if (userPhone.isNotEmpty)
+                            _GlassInfoCard(
+                              icon: Icons.phone_outlined,
+                              label: 'Phone',
+                              value: userPhone,
+                              onTap: () async {
+                                await Clipboard.setData(
+                                  ClipboardData(text: userPhone),
+                                );
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Phone number copied to clipboard',
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                            ),
 
-                          const SizedBox(height: 28),
-
-                          // Preferences Section
-                          const _SectionTitle(title: 'Preferences'),
-                          const SizedBox(height: 14),
-
-                          // Notification Toggle
-                          const _GlassSettingItem(
-                            icon: Icons.notifications_outlined,
-                            title: 'Notifications',
-                            subtitle: 'Enable product recommendations',
-                            isNotification: true,
-                          ),
                           const SizedBox(height: 32),
 
                           // Logout Button - Glassmorphic Style
@@ -316,15 +340,7 @@ class ProfileScreen extends StatelessWidget {
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: GestureDetector(
-                                onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Account deletion not available in demo'),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
+                                onTap: () => _showDeleteAccountDialog(context),
                                 child: Container(
                                   width: double.infinity,
                                   padding:
@@ -426,8 +442,53 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-}
 
+  void _showDeleteAccountDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+        title: const Text('Delete account?'),
+        content: const Text(
+          'This permanently deletes your account and cannot be undone. '
+          'Firebase may ask you to sign in again first.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                await AuthService().deleteAccount();
+                if (!context.mounted) return;
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRoutes.login,
+                  (_) => false,
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text(
+              'Delete permanently',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 // Glassmorphic Icon Button
 class _GlassIconButton extends StatelessWidget {
   final IconData icon;
@@ -553,93 +614,3 @@ class _GlassInfoCard extends StatelessWidget {
   }
 }
 
-// Glassmorphic Setting Item with Toggle
-class _GlassSettingItem extends StatefulWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool isNotification;
-
-  const _GlassSettingItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.isNotification = false,
-  });
-
-  @override
-  State<_GlassSettingItem> createState() => _GlassSettingItemState();
-}
-
-class _GlassSettingItemState extends State<_GlassSettingItem> {
-  bool _value = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(widget.icon, color: Colors.white, size: 22),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Switch(
-                value: _value,
-                onChanged: (value) {
-                  setState(() => _value = value);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          '${widget.title} ${value ? 'enabled' : 'disabled'}'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-                activeThumbColor: Colors.white,
-                activeTrackColor: const Color(0xFF4C1D95),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

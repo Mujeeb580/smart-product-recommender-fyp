@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import '../models/product_model.dart';
+
 import '../core/theme.dart';
+import '../models/product_model.dart';
 
 class ProductCard extends StatelessWidget {
   final ProductModel product;
@@ -15,190 +15,186 @@ class ProductCard extends StatelessWidget {
     this.showSimilarity = true,
   });
 
-  bool _isNetworkImage(String path) {
-    return path.startsWith('http://') || path.startsWith('https://');
+  bool _isNetworkImage(String path) =>
+      path.startsWith('http://') || path.startsWith('https://');
+
+  String _priceLabel(double price) {
+    final value = price.toStringAsFixed(0);
+    final formatted = value.replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]},',
+    );
+    return 'Rs $formatted';
+  }
+
+  String? _specSummary() {
+    final values = <String>[
+      if (product.ram?.trim().isNotEmpty ?? false) product.ram!.trim(),
+      if (product.storage?.trim().isNotEmpty ?? false) product.storage!.trim(),
+      if (product.processor?.trim().isNotEmpty ?? false)
+        product.processor!.trim(),
+    ];
+    return values.isEmpty ? null : values.take(2).join(' | ');
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, AppTheme.backgroundColor],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Product Image Container
-              Container(
-                height: 180,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppTheme.cardColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(AppTheme.radiusLarge),
-                    topRight: Radius.circular(AppTheme.radiusLarge),
+    final specs = _specSummary();
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 3,
+      clipBehavior: Clip.antiAlias,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: Colors.white.withValues(alpha: .45)),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    color: const Color(0xFFF4F2FA),
+                    padding: const EdgeInsets.all(12),
+                    child: _buildImage(),
                   ),
-                ),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Placeholder or image
-                    ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(AppTheme.radiusLarge),
-                        topRight: Radius.circular(AppTheme.radiusLarge),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: _badge(product.category, Colors.black87),
+                  ),
+                  if (showSimilarity && product.similarityScore > 0)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: _badge(
+                        '${(product.similarityScore * 100).round()}% match',
+                        AppTheme.primaryColor,
                       ),
-                      child: product.image.isEmpty
-                          ? Container(
-                              color: AppTheme.cardColor,
-                            )
-                          : _isNetworkImage(product.image)
-                          ? Image.network(
-                              product.image,
-                              fit: BoxFit.cover,
-                              webHtmlElementStrategy:
-                                  WebHtmlElementStrategy.prefer,
-                              loadingBuilder:
-                                  (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Container(
-                                  color: AppTheme.cardColor,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      value:
-                                          loadingProgress.expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                  loadingProgress
-                                                      .expectedTotalBytes!
-                                              : null,
-                                      color: AppTheme.primaryColor,
-                                    ),
-                                  ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: AppTheme.cardColor,
-                                );
-                              },
-                            )
-                          : Image.asset(
-                              product.image,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: AppTheme.cardColor,
-                                );
-                              },
-                            ),
                     ),
-                    // AI Score Badge
-                    if (showSimilarity)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            '${(product.similarityScore * 100).toStringAsFixed(0)}%',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                ],
               ),
-              // Product Info
-              Padding(
-                padding: const EdgeInsets.all(AppTheme.paddingMedium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Brand
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.brand.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      letterSpacing: .7,
+                      color: AppTheme.textSecondaryColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    product.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.18,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimaryColor,
+                    ),
+                  ),
+                  SizedBox(height: specs == null ? 22 : 7),
+                  if (specs != null)
                     Text(
-                      product.brand,
+                      specs,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondaryColor,
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    // Product Name
-                    Text(
-                      product.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Category & Price
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.secondaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            product.category,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppTheme.secondaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          'Rs ${product.price.toStringAsFixed(0)}',
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _priceLabel(product.price),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
                             color: AppTheme.primaryColor,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 20,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _badge(String label, Color color) => Container(
+        constraints: const BoxConstraints(maxWidth: 110),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: .88),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
           ),
         ),
+      );
+
+  Widget _buildImage() {
+    if (product.image.isEmpty) {
+      return const Center(
+        child: Icon(Icons.devices_rounded, size: 58, color: Colors.black26),
+      );
+    }
+    if (_isNetworkImage(product.image)) {
+      return Image.network(
+        product.image,
+        fit: BoxFit.contain,
+        webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        },
+        errorBuilder: (_, __, ___) => const Center(
+          child: Icon(Icons.devices_rounded, size: 58, color: Colors.black26),
+        ),
+      );
+    }
+    return Image.asset(
+      product.image,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => const Center(
+        child: Icon(Icons.devices_rounded, size: 58, color: Colors.black26),
       ),
     );
   }

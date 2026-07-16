@@ -31,11 +31,6 @@ const Duration longAnimation = Duration(milliseconds: 800);
 const double minPhonePrice = 20000;
 const double maxPhonePrice = 500000;
 
-// Dummy user data
-const String dummyUserName = 'Ahmed Hassan';
-const String dummyUserEmail = 'ahmed.hassan@example.com';
-const String dummyUserPhone = '+92 300 1234567';
-
 // App Messages
 const String loadingMessage = 'Loading...';
 const String errorMessage = 'Something went wrong. Please try again.';

@@ -43,7 +43,8 @@ class ApiService {
     } on FormatException {
       throw ApiException('Invalid response format from server.');
     } on TimeoutException {
-      throw ApiException('Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
+      throw ApiException(
+          'Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
     } catch (e) {
       throw ApiException('Error: ${e.toString()}');
     }
@@ -56,10 +57,6 @@ class ApiService {
     Map<String, dynamic>? body,
   }) async {
     try {
-      // Log outgoing request for easier debugging in browser console
-      print('API POST -> $endpoint');
-      if (body != null) print('Request body: $body');
-
       final response = await _client
           .post(
             Uri.parse(endpoint),
@@ -70,7 +67,8 @@ class ApiService {
 
       return _handleResponse(response);
     } on TimeoutException {
-      throw ApiException('Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
+      throw ApiException(
+          'Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
     } on SocketException {
       throw ApiException('No internet connection. Please check your network.');
     } on HttpException {
@@ -105,7 +103,8 @@ class ApiService {
     } on FormatException {
       throw ApiException('Invalid response format from server.');
     } on TimeoutException {
-      throw ApiException('Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
+      throw ApiException(
+          'Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
     } catch (e) {
       throw ApiException('Error: ${e.toString()}');
     }
@@ -132,7 +131,8 @@ class ApiService {
     } on FormatException {
       throw ApiException('Invalid response format from server.');
     } on TimeoutException {
-      throw ApiException('Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
+      throw ApiException(
+          'Request timed out after ${ApiConfig.connectionTimeout.inSeconds}s');
     } catch (e) {
       throw ApiException('Error: ${e.toString()}');
     }
@@ -143,6 +143,7 @@ class ApiService {
     switch (response.statusCode) {
       case 200:
       case 201:
+      case 202:
         try {
           return jsonDecode(response.body) as Map<String, dynamic>;
         } catch (e) {
@@ -160,6 +161,9 @@ class ApiService {
 
       case 404:
         throw ApiException('Not found: ${_getErrorMessage(response)}');
+
+      case 409:
+        throw ApiException('Conflict: ${_getErrorMessage(response)}');
 
       case 500:
         throw ApiException('Server error. Please try again later.');

@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../services/theme_provider.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/glassy_shine.dart';
 import 'help_support_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'language_settings_screen.dart';
-import 'storage_settings_screen.dart';
-import 'notification_settings_screen.dart';
 import 'change_password_screen.dart';
-import 'biometrics_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -21,6 +19,11 @@ class SettingsScreen extends StatelessWidget {
     final isDark = themeProvider.isDarkMode;
     const appVersion = '1.0.0';
     final gradientColors = themeProvider.currentGradient;
+    final canChangePassword = AuthService()
+            .currentUser
+            ?.providerData
+            .any((provider) => provider.providerId == 'password') ??
+        false;
 
     return Scaffold(
       body: Container(
@@ -77,21 +80,6 @@ class SettingsScreen extends StatelessWidget {
                         children: [
                           _SectionTitle(title: 'preferences'.tr()),
                           const SizedBox(height: 12),
-                          _GlassSettingItem(
-                            icon: Icons.notifications_outlined,
-                            title: 'notifications'.tr(),
-                            subtitle: 'enable_product_recommendations'.tr(),
-                            showArrow: true,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const NotificationSettingsScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
                           _GlassToggleItem(
                             icon: Icons.dark_mode_outlined,
                             title: 'dark_mode'.tr(),
@@ -101,38 +89,25 @@ class SettingsScreen extends StatelessWidget {
                               themeProvider.setDarkMode(value);
                             },
                           ),
-                          const SizedBox(height: 24),
-                          _SectionTitle(title: 'security'.tr()),
-                          const SizedBox(height: 12),
-                          _GlassSettingItem(
-                            icon: Icons.lock_outline,
-                            title: 'change_password'.tr(),
-                            subtitle: 'update_password'.tr(),
-                            showArrow: true,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ChangePasswordScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _GlassSettingItem(
-                            icon: Icons.fingerprint,
-                            title: 'biometrics'.tr(),
-                            subtitle: 'enable_face_id_fingerprint'.tr(),
-                            showArrow: true,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const BiometricsScreen(),
-                                ),
-                              );
-                            },
-                          ),
+                          if (canChangePassword) ...[
+                            const SizedBox(height: 24),
+                            _SectionTitle(title: 'security'.tr()),
+                            const SizedBox(height: 12),
+                            _GlassSettingItem(
+                              icon: Icons.lock_outline,
+                              title: 'change_password'.tr(),
+                              subtitle: 'update_password'.tr(),
+                              showArrow: true,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ChangePasswordScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                           const SizedBox(height: 24),
                           _SectionTitle(title: 'general'.tr()),
                           const SizedBox(height: 12),
@@ -146,21 +121,6 @@ class SettingsScreen extends StatelessWidget {
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const LanguageSettingsScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _GlassSettingItem(
-                            icon: Icons.storage,
-                            title: 'storage'.tr(),
-                            subtitle: 'manage_cached_data'.tr(),
-                            showArrow: true,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const StorageSettingsScreen(),
                                 ),
                               );
                             },
@@ -391,7 +351,7 @@ class _GlassToggleItem extends StatelessWidget {
                 value: value,
                 onChanged: onChanged,
                 activeThumbColor: Colors.white,
-                activeTrackColor: const Color(0xFF4C1D95),
+                activeTrackColor: const Color(0xFF0E7490),
               ),
             ],
           ),

@@ -28,7 +28,8 @@ class _LaptopsScreenState extends State<LaptopsScreen> {
   }
 
   Future<List<ProductModel>> _loadProducts() {
-    return _productService.fetchCollectionProducts(collection: 'laptops', limit: 40);
+    return _productService.fetchCollectionProducts(
+        collection: 'laptops', limit: 40);
   }
 
   void _refresh() {
@@ -42,7 +43,7 @@ class _LaptopsScreenState extends State<LaptopsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final gradientColors = isDark
         ? const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
-        : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
+        : const [Color(0xFF0F766E), Color(0xFF0E7490), Color(0xFF38BDF8)];
 
     return Scaffold(
       body: Container(
@@ -63,7 +64,8 @@ class _LaptopsScreenState extends State<LaptopsScreen> {
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.maybePop(context),
-                      child: const _GlassIconButton(icon: Icons.arrow_back_ios_new),
+                      child: const _GlassIconButton(
+                          icon: Icons.arrow_back_ios_new),
                     ),
                     Text(
                       'Laptops',
@@ -134,7 +136,9 @@ class _LaptopsScreenState extends State<LaptopsScreen> {
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (context) => ProductDetailScreen(product: product),
+                                        builder: (context) =>
+                                            ProductDetailScreen(
+                                                product: product),
                                       ),
                                     );
                                   },
@@ -160,7 +164,8 @@ class _LaptopsScreenState extends State<LaptopsScreen> {
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => ProductDetailScreen(product: product),
+                                      builder: (context) =>
+                                          ProductDetailScreen(product: product),
                                     ),
                                   );
                                 },
@@ -183,7 +188,8 @@ class _CompactProductTile extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _CompactProductTile({required this.product, required this.icon, required this.onTap});
+  const _CompactProductTile(
+      {required this.product, required this.icon, required this.onTap});
 
   bool _isNetworkImage(String path) {
     return path.startsWith('http://') || path.startsWith('https://');
@@ -216,9 +222,10 @@ class _CompactProductTile extends StatelessWidget {
                         ? Image.network(
                             product.image,
                             fit: BoxFit.cover,
-                          webHtmlElementStrategy:
-                              WebHtmlElementStrategy.prefer,
-                            errorBuilder: (_, __, ___) => Icon(icon, color: Colors.white, size: 36),
+                            webHtmlElementStrategy:
+                                WebHtmlElementStrategy.prefer,
+                            errorBuilder: (_, __, ___) =>
+                                Icon(icon, color: Colors.white, size: 36),
                           )
                         : Icon(icon, color: Colors.white, size: 36),
                   ),
@@ -230,7 +237,9 @@ class _CompactProductTile extends StatelessWidget {
                     children: [
                       Text(
                         product.brand,
-                        style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12),
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.75),
+                            fontSize: 12),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -246,7 +255,8 @@ class _CompactProductTile extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         product.specs ?? product.category,
-                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.7), fontSize: 12),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -256,7 +266,8 @@ class _CompactProductTile extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text(
                   'Rs ${product.price.toStringAsFixed(0)}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -283,12 +294,12 @@ class _GlassIconButton extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: isActive
-                ? const Color(0xFF7C3AED).withOpacity(0.5)
+                ? const Color(0xFF0E7490).withOpacity(0.5)
                 : Colors.white.withOpacity(0.2),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isActive
-                  ? const Color(0xFF7C3AED).withOpacity(0.8)
+                  ? const Color(0xFF0E7490).withOpacity(0.8)
                   : Colors.white.withOpacity(0.3),
               width: isActive ? 2 : 1,
             ),

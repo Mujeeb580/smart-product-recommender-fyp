@@ -1,9 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 import '../../models/chat_message_model.dart';
 import '../../models/product_model.dart';
 import '../../services/chat_service.dart';
+import '../../services/theme_provider.dart';
 import '../../widgets/chat_bubble.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/glassy_shine.dart';
@@ -34,20 +35,32 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _initializeChat() {
+    _chatService.startNewSession();
     // Add initial greeting
     setState(() {
       _messages = [
         ChatMessageModel(
           message:
-              'Hello! 👋 I\'m your AI product assistant. Tell me what you\'re looking for in a smartphone, and I\'ll recommend the best options for you!',
+              'Hi! 👋 I\'m your AI shopping assistant. Tell me your budget and what matters most, and I\'ll help you find the right phone or laptop.',
           isUser: false,
           timestamp: DateTime.now(),
         ),
       ];
+      _recommendedProducts = null;
+      _lastSentMessage = null;
+      _isLoading = false;
     });
   }
 
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _sendMessage() async {
+    if (_isLoading) return;
     final message = _messageController.text.trim();
     if (message.isEmpty) return;
 
@@ -61,6 +74,8 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
       _isLoading = true;
+      // Hide products from the previous answer while this query is pending.
+      _recommendedProducts = null;
       _messageController.clear();
       _lastSentMessage = message;
     });
@@ -73,6 +88,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final botReply = response['reply'] as String;
       final products = response['products'] as List<ProductModel>;
 
+      if (!mounted) return;
       // Add bot message
       setState(() {
         _messages.add(
@@ -88,6 +104,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       _scrollToBottom();
     } catch (e) {
+      if (!mounted) return;
       final errMsg = e.toString();
       // Error handling: show error message and allow retry
       setState(() {
@@ -121,6 +138,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _askAboutProduct(ProductModel product) async {
+    if (_isLoading) return;
     final message = 'Tell me about ${product.name}';
 
     // Add user message
@@ -133,16 +151,20 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
       _isLoading = true;
+      // The recommendation area should belong only to the pending answer.
+      _recommendedProducts = null;
       _lastSentMessage = message;
     });
 
     _scrollToBottom();
 
     try {
-      final response = await _chatService.sendMessage(message, product: product);
+      final response =
+          await _chatService.sendMessage(message, product: product);
       final botReply = response['reply'] as String;
       final products = response['products'] as List<ProductModel>;
 
+      if (!mounted) return;
       setState(() {
         _messages.add(
           ChatMessageModel(
@@ -151,13 +173,13 @@ class _ChatScreenState extends State<ChatScreen> {
             timestamp: DateTime.now(),
           ),
         );
-        // Keep recommended products updated if backend returned product details
-        _recommendedProducts = products.isNotEmpty ? products : _recommendedProducts;
+        _recommendedProducts = products;
         _isLoading = false;
       });
 
       _scrollToBottom();
     } catch (e) {
+      if (!mounted) return;
       final errMsg = e.toString();
       setState(() {
         _messages.add(
@@ -201,15 +223,13 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final gradientColors = isDark
-        ? const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F0F23)]
-        : const [Color(0xFF4C1D95), Color(0xFF5B21B6), Color(0xFF93C5FD)];
+    final gradientColors = context.watch<ThemeProvider>().currentGradient;
 
     // Responsive sizing
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth > 900;
     final isTablet = screenWidth > 600 && screenWidth <= 900;
-    final maxWidth = isDesktop ? 800.0 : double.infinity;
+    final maxWidth = isDesktop ? 980.0 : double.infinity;
     final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
     final titleFontSize = isDesktop ? 28.0 : (isTablet ? 24.0 : 20.0);
 
@@ -224,6 +244,22 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         child: Stack(
           children: [
+            Positioned(
+              top: -100,
+              right: -80,
+              child: _AmbientOrb(
+                size: isDesktop ? 360 : 250,
+                color: const Color(0xFF38BDF8),
+              ),
+            ),
+            Positioned(
+              bottom: 80,
+              left: -100,
+              child: _AmbientOrb(
+                size: isDesktop ? 300 : 220,
+                color: const Color(0xFF14B8A6),
+              ),
+            ),
             SafeArea(
               child: Center(
                 child: Container(
@@ -252,26 +288,80 @@ class _ChatScreenState extends State<ChatScreen> {
                               child: Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 12),
-                                child: Text(
-                                  'AI Product Assistant',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: isDesktop ? 46 : 40,
+                                      height: isDesktop ? 46 : 40,
+                                      decoration: BoxDecoration(
                                         color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: titleFontSize,
+                                        borderRadius: BorderRadius.circular(14),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            blurRadius: 18,
+                                          ),
+                                        ],
                                       ),
+                                      child: const Icon(
+                                        Icons.auto_awesome_rounded,
+                                        color: Color(0xFF0E7490),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 11),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'FYNDO Assistant',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: titleFontSize,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                width: 7,
+                                                height: 7,
+                                                decoration: const BoxDecoration(
+                                                  color: Color(0xFF86EFAC),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                'Online - Phones & laptops',
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.78),
+                                                  fontSize:
+                                                      isDesktop ? 12 : 10.5,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
                             GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _initializeChat();
-                                  _recommendedProducts = null;
-                                });
-                              },
+                              onTap: _initializeChat,
                               child: const _GlassIconButton(
                                 icon: Icons.refresh_rounded,
                               ),
@@ -345,7 +435,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: isDesktop ? 12 : 8),
+                                              SizedBox(
+                                                  height: isDesktop ? 12 : 8),
                                               SizedBox(
                                                 height: isDesktop
                                                     ? 200
@@ -365,11 +456,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                                       children: [
                                                         GestureDetector(
                                                           onTap: () {
-                                                            Navigator.of(context)
+                                                            Navigator.of(
+                                                                    context)
                                                                 .push(
                                                               MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    ProductListScreen(
+                                                                builder:
+                                                                    (context) =>
+                                                                        ProductListScreen(
                                                                   initialProducts:
                                                                       _recommendedProducts,
                                                                   title:
@@ -378,9 +471,11 @@ class _ChatScreenState extends State<ChatScreen> {
                                                               ),
                                                             );
                                                           },
-                                                          child: _GlassProductCard(
+                                                          child:
+                                                              _GlassProductCard(
                                                             product: product,
-                                                            isDesktop: isDesktop,
+                                                            isDesktop:
+                                                                isDesktop,
                                                             isTablet: isTablet,
                                                           ),
                                                         ),
@@ -389,15 +484,26 @@ class _ChatScreenState extends State<ChatScreen> {
                                                           right: 6,
                                                           child: ClipOval(
                                                             child: Material(
-                                                              color: Colors.black38,
+                                                              color: Colors
+                                                                  .black38,
                                                               child: InkWell(
-                                                                onTap: () => _askAboutProduct(product),
+                                                                onTap: () =>
+                                                                    _askAboutProduct(
+                                                                        product),
                                                                 child: Padding(
-                                                                  padding: const EdgeInsets.all(6.0),
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          6.0),
                                                                   child: Icon(
-                                                                    Icons.question_mark_rounded,
-                                                                    color: Colors.white,
-                                                                    size: isDesktop ? 18 : 16,
+                                                                    Icons
+                                                                        .question_mark_rounded,
+                                                                    color: Colors
+                                                                        .white,
+                                                                    size:
+                                                                        isDesktop
+                                                                            ? 18
+                                                                            : 16,
                                                                   ),
                                                                 ),
                                                               ),
@@ -409,7 +515,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   },
                                                 ),
                                               ),
-                                              SizedBox(height: isDesktop ? 16 : 12),
+                                              SizedBox(
+                                                  height: isDesktop ? 16 : 12),
                                               SizedBox(
                                                 width: double.infinity,
                                                 child: ClipRRect(
@@ -468,13 +575,17 @@ class _ChatScreenState extends State<ChatScreen> {
                       if (_isLoading)
                         const Padding(
                           padding: EdgeInsets.only(bottom: 8),
-                          child: LoadingWidget(message: 'AI is thinking...'),
+                          child: _ThinkingIndicator(),
                         ),
 
                       // Input Area
                       _GlassSection(
                         margin: EdgeInsets.fromLTRB(
-                            horizontalPadding, 0, horizontalPadding, 20),
+                          horizontalPadding,
+                          0,
+                          horizontalPadding,
+                          widget.onBackPressed != null ? 92 : 20,
+                        ),
                         padding: EdgeInsets.all(isDesktop ? 20 : 16),
                         child: Column(
                           children: [
@@ -495,34 +606,34 @@ class _ChatScreenState extends State<ChatScreen> {
                                     runSpacing: isDesktop ? 12 : 8,
                                     children: [
                                       _GlassQuickActionButton(
-                                        label: 'Budget phones',
+                                        label: 'Best value',
                                         isDesktop: isDesktop,
                                         onTap: () {
                                           _messageController.text =
-                                              'Show me budget smartphones';
+                                              'Show me the best value phone or laptop under my budget';
                                           _sendMessage();
                                         },
                                       ),
                                       _GlassQuickActionButton(
-                                        label: 'Flagship phones',
+                                        label: 'Work laptop',
                                         isDesktop: isDesktop,
                                         onTap: () {
                                           _messageController.text =
-                                              'Best flagship phones';
+                                              'Recommend a reliable laptop for work and study';
                                           _sendMessage();
                                         },
                                       ),
                                       _GlassQuickActionButton(
-                                        label: 'Gaming phones',
+                                        label: 'Gaming setup',
                                         isDesktop: isDesktop,
                                         onTap: () {
                                           _messageController.text =
-                                              'Best phones for gaming';
+                                              'Recommend the best gaming phone or laptop';
                                           _sendMessage();
                                         },
                                       ),
                                       _GlassQuickActionButton(
-                                        label: 'Camera phones',
+                                        label: 'Great camera',
                                         isDesktop: isDesktop,
                                         onTap: () {
                                           _messageController.text =
@@ -553,10 +664,16 @@ class _ChatScreenState extends State<ChatScreen> {
                                           'Describe what you\'re looking for...',
                                       hintStyle: TextStyle(
                                         color: isDark
-                                            ? Colors.white.withOpacity(0.6)
-                                            : Colors.black.withOpacity(0.5),
+                                            ? Colors.white
+                                                .withValues(alpha: 0.58)
+                                            : const Color(0xFF486581),
                                         fontSize: isDesktop ? 16 : 14,
                                       ),
+                                      filled: true,
+                                      fillColor: isDark
+                                          ? Colors.white.withValues(alpha: 0.08)
+                                          : Colors.white
+                                              .withValues(alpha: 0.94),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(24),
                                         borderSide: BorderSide(
@@ -572,7 +689,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(24),
                                         borderSide: const BorderSide(
-                                          color: Colors.white,
+                                          color: Color(0xFF67E8F9),
                                           width: 2,
                                         ),
                                       ),
@@ -581,6 +698,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                         vertical: isDesktop ? 16 : 12,
                                       ),
                                     ),
+                                    cursorColor: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0E7490),
                                     maxLines: null,
                                     textInputAction: TextInputAction.send,
                                     onSubmitted: (_) => _sendMessage(),
@@ -594,7 +714,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                         sigmaX: 10, sigmaY: 10),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.25),
+                                        gradient: const LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Color(0xFF14B8A6),
+                                            Color(0xFF0284C7),
+                                          ],
+                                        ),
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
                                           color: Colors.white.withOpacity(0.3),
@@ -627,6 +754,68 @@ class _ChatScreenState extends State<ChatScreen> {
             const GlassyShine(opacity: 0.1),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AmbientOrb extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _AmbientOrb({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: 55, sigmaY: 55),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color.withValues(alpha: 0.2),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ThinkingIndicator extends StatelessWidget {
+  const _ThinkingIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 15,
+            height: 15,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFF67E8F9),
+            ),
+          ),
+          SizedBox(width: 9),
+          Text(
+            'Finding the best matches...',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -775,7 +964,8 @@ class _GlassProductCard extends StatelessWidget {
                               fit: BoxFit.cover,
                               webHtmlElementStrategy:
                                   WebHtmlElementStrategy.prefer,
-                              loadingBuilder: (context, child, loadingProgress) {
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return Container(
                                   color: Colors.white.withOpacity(0.1),

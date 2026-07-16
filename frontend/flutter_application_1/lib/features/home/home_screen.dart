@@ -5,11 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../services/theme_provider.dart';
 import '../../services/product_service.dart';
+import '../../services/auth_service.dart';
 import 'profile_screen.dart';
 import '../../widgets/glassy_shine.dart';
 import 'smartphones_screen.dart';
 import 'laptops_screen.dart';
-import 'voice_assistant_screen.dart';
 import 'chat_screen.dart';
 import '../products/product_detail_screen.dart';
 import '../../models/product_model.dart';
@@ -134,6 +134,12 @@ class _HeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayName = AuthService().currentUser?.displayName?.trim();
+    final firstName = displayName == null || displayName.isEmpty
+        ? null
+        : displayName.split(RegExp(r'\s+')).first;
+    final greeting = firstName == null ? 'Hello!' : 'Hello, $firstName!';
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       child: Column(
@@ -147,7 +153,7 @@ class _HeroHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, Ahmed!',
+                      greeting,
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 color: Colors.white,
@@ -278,13 +284,18 @@ class _SearchBarState extends State<_SearchBar> {
                     minWidth: 40,
                     minHeight: 40,
                   ),
-                  icon: const Icon(Icons.mic, color: Colors.white, size: 22),
+                  tooltip: 'Open AI assistant',
+                  icon: const Icon(
+                    Icons.chat_bubble_outline,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const VoiceAssistantScreen(),
+                        builder: (context) => const ChatScreen(),
                       ),
                     );
                   },
@@ -336,7 +347,7 @@ class _CategoriesSectionState extends State<_CategoriesSection> {
       [
         0xFF4E6BFF,
         0xFF3CA6FF,
-        0xFF6366F1,
+        0xFF0E7490,
       ],
       'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&h=600&fit=crop&crop=center&auto=format&q=80',
       'latest_smartphones'.tr(),
@@ -1011,7 +1022,7 @@ class _AiCard extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white.withOpacity(0.9),
-                    foregroundColor: const Color(0xFF5B21B6),
+                    foregroundColor: const Color(0xFF0F5E6B),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

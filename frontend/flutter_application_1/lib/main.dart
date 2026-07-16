@@ -132,8 +132,8 @@ class _MainScreenState extends State<_MainScreen> {
                         const Color(0xFF16213E).withOpacity(0.9),
                       ]
                     : [
-                        const Color(0xFF7C3AED).withOpacity(0.85),
-                        const Color(0xFF6D28D9).withOpacity(0.85),
+                        const Color(0xFF0F766E).withOpacity(0.9),
+                        const Color(0xFF0369A1).withOpacity(0.9),
                       ],
               ),
               border: Border(

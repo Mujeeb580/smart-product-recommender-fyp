@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/routes.dart';
 import '../../services/theme_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/admin_service.dart';
 import '../../widgets/glassy_shine.dart';
 import 'sign_up_screen.dart';
 
@@ -17,9 +18,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  static const String _developerEmail = 'developer@fyndo.com';
-  static const String _developerPassword = 'Developer@123';
-
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -42,15 +40,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) return 'Password is required';
-    if (value.length < 8) return 'Min 8 characters';
-    if (!RegExp(r'[0-9]').hasMatch(value)) return 'Include at least 1 number';
     return null;
   }
 
-  bool _isDeveloperCredentials(String email, String password) {
-    return email.trim().toLowerCase() == _developerEmail &&
-        password == _developerPassword;
-  }
+  bool _isAdminEmail(String email) =>
+      email.trim().toLowerCase() == AdminService.adminUsername;
 
   Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
@@ -61,21 +55,14 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (_isDeveloperCredentials(email, password)) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Developer access granted'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      Navigator.of(context).pushReplacementNamed(AppRoutes.admin);
-      return;
-    }
-
     try {
+      if (_isAdminEmail(email)) {
+        await AdminService().login(email, password);
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed(AppRoutes.admin);
+        return;
+      }
+
       // Call Firebase Authentication
       final authService = AuthService();
       final user = await authService.signInWithEmailPassword(
@@ -162,6 +149,80 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _showPasswordResetDialog() async {
+    final resetController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    final resetFormKey = GlobalKey<FormState>();
+    var sending = false;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: !sending,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Reset password'),
+          content: Form(
+            key: resetFormKey,
+            child: TextFormField(
+              controller: resetController,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              decoration: const InputDecoration(
+                labelText: 'Email address',
+                hintText: 'you@example.com',
+              ),
+              validator: _validateEmail,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      if (!(resetFormKey.currentState?.validate() ?? false)) {
+                        return;
+                      }
+                      setDialogState(() => sending = true);
+                      try {
+                        await AuthService().resetPassword(
+                          resetController.text.trim(),
+                        );
+                        if (!dialogContext.mounted) return;
+                        Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Password reset email sent. Check your inbox.',
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } catch (e) {
+                        if (!dialogContext.mounted) return;
+                        setDialogState(() => sending = false);
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString()),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+              child: Text(sending ? 'Sending...' : 'Send reset link'),
+            ),
+          ],
+        ),
+      ),
+    );
+    resetController.dispose();
   }
 
   @override
@@ -418,16 +479,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Align(
                                         alignment: Alignment.centerRight,
                                         child: TextButton(
-                                          onPressed: () {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Forgot password coming soon',
-                                                ),
-                                              ),
-                                            );
-                                          },
+                                          onPressed: _showPasswordResetDialog,
                                           child: const Text(
                                             'Forgot password?',
                                             style:
@@ -443,7 +495,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           backgroundColor:
                                               themeProvider.isDarkMode
                                                   ? Colors.grey.shade800
-                                                  : const Color(0xFF6366F1),
+                                                  : const Color(0xFF0E7490),
                                           foregroundColor: Colors.white,
                                           padding: const EdgeInsets.symmetric(
                                             vertical: 16,
@@ -462,7 +514,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               themeProvider.isDarkMode ? 2 : 4,
                                           shadowColor: themeProvider.isDarkMode
                                               ? Colors.black.withOpacity(0.5)
-                                              : const Color(0xFF6366F1)
+                                              : const Color(0xFF0E7490)
                                                   .withOpacity(0.3),
                                         ),
                                         child: _isSubmitting
