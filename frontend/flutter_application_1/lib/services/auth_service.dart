@@ -234,6 +234,7 @@ class AuthService {
       );
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
+      await user.reload();
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {

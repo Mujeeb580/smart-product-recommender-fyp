@@ -49,7 +49,7 @@ dependencies:
   google_sign_in: ^6.2.1
   
   # Icons
-  font_awesome_flutter: ^10.7.0
+  font_awesome_flutter: ^11.0.0
 
 dev_dependencies:
   flutter_test:
