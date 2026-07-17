@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.recommendation.firestore import fetch_products
-from app.recommendation.engine import recommend_products
+from app.recommendation.engine import _format_price_pkr, _parse_query_constraints, recommend_products
 from app.recommendation.query_language import normalize_user_query, prefers_roman_urdu
 from app.services.llm_service import generate_explanation
 from app.services.web_verifier import build_verification_context
@@ -47,6 +47,14 @@ FOLLOW_UP_PATTERN = re.compile(
 REFINEMENT_PATTERN = re.compile(
     r"\b(cheap|cheaper|affordable|more expensive|another|other options?|more options?|instead|"
     r"under|below|less than|up to|upto|within|above|over|at least|budget)\b",
+    re.IGNORECASE,
+)
+ALTERNATIVE_PATTERN = re.compile(
+    r"\b(?:not\s+(?:this|that)(?:\s+(?:one|phone|mobile|laptop))?|"
+    r"(?:do\s+not|don't|dont)\s+show\s+(?:this|that)|"
+    r"another|something\s+else|different\s+(?:one|phone|mobile|laptop|option)|"
+    r"other\s+(?:one|phone|mobile|laptop|option)|koi\s+aur|aur\s+dikhao|"
+    r"ye+h?\s+nahi|doosra|dusra)\b",
     re.IGNORECASE,
 )
 
@@ -145,7 +153,20 @@ def _is_contextual_follow_up(query: str, context: Optional[Dict]) -> bool:
 
 
 def _is_refinement(query: str, context: Optional[Dict]) -> bool:
-    return bool(context and _explicit_scope(query) is None and REFINEMENT_PATTERN.search(query))
+    return bool(
+        context
+        and (
+            ALTERNATIVE_PATTERN.search(query)
+            or (
+                _explicit_scope(query) is None
+                and REFINEMENT_PATTERN.search(query)
+            )
+        )
+    )
+
+
+def _wants_alternative(query: str) -> bool:
+    return bool(ALTERNATIVE_PATTERN.search(_normalize_text(query)))
 
 
 def _focus_from_query(query: str, products: List[Dict]) -> List[Dict]:
@@ -179,6 +200,23 @@ def _numeric_price(value) -> float:
 
 
 def _no_matches_reply(user_query: str) -> str:
+    normalized_query = normalize_user_query(user_query)
+    constraints = _parse_query_constraints(normalized_query)
+    budget_max = constraints.get("budget_max")
+    if budget_max is not None:
+        scope = _detect_scope(normalized_query)
+        item_name = (
+            "phones"
+            if scope == "phones"
+            else "laptops"
+            if scope == "laptops"
+            else "matching products"
+        )
+        budget_text = f"PKR {float(budget_max):,.0f}"
+        if prefers_roman_urdu(user_query):
+            return f"{budget_text} ke andar koi {item_name} available nahi hai."
+        return f"No {item_name} are available within {budget_text}."
+
     if prefers_roman_urdu(user_query):
         return (
             "Aap ke budget aur requirements ke andar catalog mein matching laptop ya phone nahi mila. "
@@ -212,6 +250,7 @@ def _normalize_product(product: Dict, default_category: str = "") -> Dict:
     )
     if default_category and not normalized.get("category"):
         normalized["category"] = default_category
+    normalized["price"] = _format_price_pkr(normalized.get("price"))
     return normalized
 
 
@@ -226,6 +265,27 @@ def _merge_products(*product_lists: List[Dict]) -> List[Dict]:
             seen.add(key)
             merged.append(product)
     return merged
+
+
+def _product_identity(product: Dict) -> str:
+    return str(
+        product.get("product_id")
+        or product.get("id")
+        or product.get("url")
+        or product.get("normalized_name")
+        or product.get("name")
+        or ""
+    ).strip().lower()
+
+
+def _exclude_products(products: List[Dict], excluded: List[Dict]) -> List[Dict]:
+    excluded_ids = {_product_identity(product) for product in excluded}
+    excluded_ids.discard("")
+    return [
+        product
+        for product in products
+        if _product_identity(product) not in excluded_ids
+    ]
 
 
 def _load_products(scope: str) -> List[Dict]:
@@ -314,6 +374,13 @@ async def send_chat_message(chat_message: ChatMessage):
         contextual_follow_up = False
         if _is_refinement(normalized_query, session_context):
             ranking_query = f"Follow-up requirement: {normalized_query}"
+            if _wants_alternative(normalized_query):
+                focused = (
+                    session_context.get("focused_products")
+                    or session_context.get("products")
+                    or []
+                )
+                products = _exclude_products(products, focused[:1])
             if re.search(r"\b(?:cheap|cheaper|less expensive)\b", normalized_query):
                 focused = session_context.get("focused_products") or session_context.get("products") or []
                 current_price = _numeric_price(focused[0].get("price")) if focused else 0
@@ -373,7 +440,10 @@ async def send_chat_message(chat_message: ChatMessage):
             f"elapsed_ms={(ranked_at - products_loaded_at) * 1000:.1f}"
         )
 
-        verification_context = build_verification_context(user_query, recommended_products)
+        verification_context = build_verification_context(
+            user_query,
+            recommended_products,
+        )
 
         # Ask LLM to explain why these products match the user intent.
         ai_response = generate_explanation(

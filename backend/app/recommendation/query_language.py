@@ -38,8 +38,17 @@ _PHRASE_REPLACEMENTS = (
 )
 
 _TOKEN_REPLACEMENTS = {
-    "mobail": "mobile", "mobil": "mobile", "fone": "phone",
-    "leptop": "laptop", "labtop": "laptop",
+    "mobail": "mobile", "mobil": "mobile", "moblie": "mobile",
+    "moble": "mobile", "moible": "mobile", "mobilee": "mobile",
+    "mobilen": "mobile", "fone": "phone", "phon": "phone",
+    "phne": "phone", "phoen": "phone", "phonee": "phone",
+    "phonen": "phone", "phome": "phone", "phobe": "phone",
+    "smarphone": "smartphone", "smartfone": "smartphone",
+    "leptop": "laptop", "labtop": "laptop", "laptopn": "laptop",
+    "laptoop": "laptop", "latop": "laptop", "laptp": "laptop",
+    "lapotp": "laptop", "laptpo": "laptop", "laptap": "laptop",
+    "laptob": "laptop", "lapto": "laptop", "laptopss": "laptops",
+    "notebok": "notebook", "notbook": "notebook",
     "chahiye": "want", "chahye": "want", "chaheye": "want",
     "sasta": "cheap", "sasti": "cheap", "saste": "cheap",
     "acha": "good", "achi": "good", "achha": "good",
@@ -58,6 +67,11 @@ _TOKEN_REPLACEMENTS = {
 }
 
 _MONEY = r"(?:rs\.?|pkr)?\s*\d[\d,]*(?:\.\d+)?\s*(?:crore|lakhs?|lacs?|laac|lak|million|m|k|hazar|hazaar)?"
+_MONEY_WITH_MARKER = (
+    r"(?:(?:rs\.?|pkr)\s*\d[\d,]*(?:\.\d+)?"
+    r"\s*(?:crore|lakhs?|lacs?|laac|lak|million|m|k|hazar|hazaar)?|"
+    r"\d[\d,]*(?:\.\d+)?\s*(?:crore|lakhs?|lacs?|laac|lak|million|m|k|hazar|hazaar))"
+)
 
 
 def prefers_roman_urdu(text: str) -> bool:
@@ -80,7 +94,12 @@ def normalize_user_query(text: str) -> str:
     # Users commonly mix Roman Urdu grammar with the English comparator, for
     # example "2 lac ke under" or "2 laac ka under".
     query = re.sub(
-        rf"(?P<amount>{_MONEY})\s+(?:(?:ke|ka|ki)\s+)?(?:under|below|or\s+less)",
+        rf"(?P<amount>{_MONEY})\s+(?:ke|ka|ki)\s+(?:under|below|or\s+less)",
+        lambda match: f" under {match.group('amount')} ",
+        query,
+    )
+    query = re.sub(
+        rf"(?P<amount>{_MONEY_WITH_MARKER})\s+(?:under|below|or\s+less)",
         lambda match: f" under {match.group('amount')} ",
         query,
     )

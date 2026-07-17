@@ -59,9 +59,23 @@ def _display_price(price: Any) -> str:
     text = str(price or "").strip()
     if not text:
         return ""
-    if re.match(r"^(?:rs\.?|pkr|₨)\s*", text, re.IGNORECASE):
-        return text
-    return f"Rs. {text}"
+    text = re.sub(r"^(?:rs\.?|pkr|₨)\s*", "", text, flags=re.IGNORECASE)
+    return f"PKR {text}"
+
+
+def _normalize_currency_labels(text: str) -> str:
+    """Ensure chat replies use Pakistan's PKR label, never INR/Rs symbols."""
+    normalized = str(text or "")
+    normalized = re.sub(r"(?:₹|₨)\s*", "PKR ", normalized)
+    normalized = re.sub(r"\b(?:INR|Rs\.?)\s*", "PKR ", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(
+        r"(?<![\w,])(\d[\d,]*(?:\.\d+)?)\s+(?:Indian\s+)?rupees?\b",
+        r"PKR \1",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(r"\bPKR\s+(?:PKR\s+)+", "PKR ", normalized, flags=re.IGNORECASE)
+    return normalized
 
 
 def _has_dedicated_laptop_gpu(product: Dict[str, Any]) -> bool:
@@ -240,7 +254,7 @@ def generate_explanation(
     """
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        return _fallback_explanation(user_query, products)
+        return _normalize_currency_labels(_fallback_explanation(user_query, products))
 
     model = os.getenv("OPENROUTER_MODEL", "openai/gpt-oss-120b:free")
     base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
@@ -258,6 +272,9 @@ def generate_explanation(
                     "If the user asks a follow-up, comparison, or product-specific question, answer that exact question directly. "
                     "Use only facts present in the product or verification JSON; clearly say when a requested fact is unavailable. "
                     "Treat the user's stated maximum budget as a hard limit and never describe an over-budget product as matching it. "
+                    "All prices are Pakistani rupees: always write the currency as PKR (for example, PKR 30,000). Never use ₹, INR, Rs, or Rs. "
+                    "For basic work, office, or study requests without demanding performance needs, prefer practical affordable laptops and do not recommend premium gaming or workstation hardware. "
+                    "For calls, messaging, social media, daily use, or student phone requests, prefer capable affordable phones and avoid unnecessary flagships unless the user requests flagship, camera, or gaming performance. "
                     "When ranked products are supplied, do not tell the user to increase the budget. "
                     "If a gaming-laptop query only has integrated-graphics results, clearly state that no dedicated-GPU option matched the budget and do not call those products ideal for demanding gaming. "
                     "Prefer the product ranking and scores shown in the input JSON when explaining the choice."
@@ -299,9 +316,9 @@ def generate_explanation(
         )
         response.raise_for_status()
         data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
+        return _normalize_currency_labels(data["choices"][0]["message"]["content"].strip())
     except Exception:
         reply = _fallback_explanation(user_query, products)
         if verification_context and verification_context.get("verified_count") is not None:
-            return f"{reply} Live web check: {verification_context.get('summary', '')}".strip()
-        return reply
+            reply = f"{reply} Live web check: {verification_context.get('summary', '')}".strip()
+        return _normalize_currency_labels(reply)

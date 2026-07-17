@@ -20,6 +20,7 @@ LAPTOP_HINTS = ("laptop", "laptops", "notebook", "ultrabook", "macbook")
 GAMING_HINTS = (
     "gaming",
     "game",
+    "games",
     "gamer",
     "pubg",
     "bgmi",
@@ -71,6 +72,86 @@ GENERAL_HINTS = (
     "basic use",
     "regular use",
     "for daily",
+)
+
+BASIC_LAPTOP_USE_HINTS = (
+    "work",
+    "office work",
+    "study",
+    "student",
+    "school",
+    "college",
+    "university",
+    "assignments",
+    "documents",
+    "browsing",
+    "email",
+    "typing",
+    "meetings",
+    "video calls",
+    "spreadsheets",
+    "presentations",
+    "coding",
+    "programming",
+    "business",
+    "research",
+    "online class",
+    "online classes",
+    "classes",
+    "zoom",
+    "basic use",
+    "daily use",
+    "general use",
+)
+
+BASIC_PHONE_USE_HINTS = (
+    "work",
+    "study",
+    "student",
+    "school",
+    "college",
+    "university",
+    "daily use",
+    "everyday",
+    "general use",
+    "basic use",
+    "calls",
+    "calling",
+    "whatsapp",
+    "messaging",
+    "email",
+    "browsing",
+    "assignments",
+    "notes",
+    "online class",
+    "online classes",
+    "classes",
+    "video calls",
+    "meetings",
+    "business",
+    "navigation",
+    "streaming",
+    "netflix",
+    "social media",
+    "instagram",
+    "facebook",
+    "tiktok",
+)
+
+HIGH_PERFORMANCE_HINTS = (
+    "gaming",
+    "rendering",
+    "3d",
+    "video editing",
+    "machine learning",
+    "deep learning",
+    "data science",
+    "autocad",
+    "cad",
+    "rtx",
+    "powerful",
+    "performance",
+    "workstation",
 )
 
 BUDGET_HINTS = (
@@ -159,6 +240,16 @@ def _price_to_float(price) -> float:
     return value
 
 
+def _format_price_pkr(price) -> str:
+    """Return a consistent display price while keeping invalid values untouched."""
+    value = _price_to_float(price)
+    if value <= 0:
+        return str(price or "").strip()
+    if value.is_integer():
+        return f"PKR {value:,.0f}"
+    return f"PKR {value:,.2f}".rstrip("0").rstrip(".")
+
+
 def _category_of(product: dict) -> str:
     category = _clean_text(product.get("category", "")).lower()
     if "phone" in category or "mobile" in category:
@@ -203,7 +294,7 @@ def _extract_price_constraints(query: str):
             return min(first, second), max(first, second)
 
     max_match = re.search(
-        rf"(?:under|below|less than|not more than|up to|upto|within|max(?:imum)?(?: budget)?(?: of| is|:)?|budget(?: of| is|:)?)\s*({_MONEY_TOKEN})",
+        rf"(?:under|below|less than|not more than|up to|upto|within|in|for|max(?:imum)?(?: budget)?(?: of| is|:)?|budget(?: of| is|:)?)\s*({_MONEY_TOKEN})",
         q,
     )
     if not max_match:
@@ -378,7 +469,12 @@ def _device_quality_score(product: dict) -> float:
 
 def _has_any(query: str, words) -> bool:
     q = query.lower()
-    return any(word in q for word in words)
+    # Letter-aware boundaries still recognize values such as "5000mAh", but
+    # prevent short intents such as "cod" from matching unrelated "coding".
+    return any(
+        re.search(rf"(?<![a-z]){re.escape(word)}(?![a-z])", q)
+        for word in words
+    )
 
 
 def _battery_value(product: dict) -> int:
@@ -535,6 +631,115 @@ def _laptop_gaming_score(product: dict) -> float:
     )
 
 
+def _is_basic_laptop_use_query(query: str) -> bool:
+    q = query.lower()
+    wants_phone = _query_has_any(q, PHONE_HINTS)
+    basic_use = any(
+        _query_has_any(q, hints)
+        for hints in (BASIC_LAPTOP_USE_HINTS, STUDY_HINTS, GENERAL_HINTS)
+    )
+    high_performance = _query_has_any(q, HIGH_PERFORMANCE_HINTS)
+    return basic_use and not wants_phone and not high_performance
+
+
+def _basic_laptop_value_score(product: dict) -> float:
+    """Prefer adequate, affordable laptops over unnecessary premium hardware."""
+    if _category_of(product) != "laptops":
+        return 0.0
+
+    price = _price_to_float(product.get("price"))
+    if price <= 0:
+        return 0.0
+
+    ram = _ram_value(product)
+    storage = _storage_value(product)
+    processor = laptop_cpu_performance(product)
+    ram_score = 1.0 if 8 <= ram <= 24 else 0.85 if ram > 24 else 0.35 if ram >= 4 else 0.1
+    storage_score = 1.0 if 256 <= storage <= 1024 else 0.85 if storage > 1024 else 0.3
+    processor_score = min(processor / 0.55, 1.0)
+    capability = ram_score * 0.35 + storage_score * 0.30 + processor_score * 0.35
+
+    if price <= 125_000:
+        affordability = 1.0
+    elif price <= 150_000:
+        affordability = 0.92
+    elif price <= 175_000:
+        affordability = 0.82
+    elif price <= 225_000:
+        affordability = 0.65
+    elif price <= 300_000:
+        affordability = 0.40
+    elif price <= 500_000:
+        affordability = 0.15
+    else:
+        affordability = 0.0
+
+    gpu = _clean_text(product.get("gpu", "")).lower()
+    unnecessary_gpu_penalty = 0.15 if re.search(r"\b(?:rtx|gtx)\s*\d", gpu) else 0.0
+    premium_price_penalty = 0.30 if price > 500_000 else 0.12 if price > 300_000 else 0.0
+    return max(
+        0.0,
+        capability * 0.60
+        + affordability * 0.40
+        - unnecessary_gpu_penalty
+        - premium_price_penalty,
+    )
+
+
+def _is_basic_phone_use_query(query: str) -> bool:
+    q = query.lower()
+    wants_phone = _query_has_any(q, PHONE_HINTS)
+    basic_use = any(
+        _query_has_any(q, hints)
+        for hints in (BASIC_PHONE_USE_HINTS, STUDY_HINTS, GENERAL_HINTS, SOCIAL_HINTS)
+    )
+    high_performance = _query_has_any(q, HIGH_PERFORMANCE_HINTS) or "camera" in q
+    return wants_phone and basic_use and not high_performance
+
+
+def _basic_phone_value_score(product: dict) -> float:
+    """Rank affordable phones that comfortably cover everyday tasks."""
+    if _category_of(product) != "phones":
+        return 0.0
+
+    price = _price_to_float(product.get("price"))
+    if price <= 0:
+        return 0.0
+
+    ram = _ram_value(product)
+    storage = _storage_value(product)
+    battery = _battery_value(product)
+    processor = phone_chipset_performance(product)
+    ram_score = 1.0 if 6 <= ram <= 12 else 0.85 if ram > 12 else 0.55 if ram >= 4 else 0.2
+    storage_score = 1.0 if 128 <= storage <= 512 else 0.85 if storage > 512 else 0.55 if storage >= 64 else 0.2
+    battery_score = 1.0 if battery >= 5000 else 0.75 if battery >= 4000 else 0.4
+    processor_score = min(processor / 0.65, 1.0)
+    capability = (
+        ram_score * 0.25
+        + storage_score * 0.25
+        + battery_score * 0.25
+        + processor_score * 0.25
+    )
+
+    if price <= 30_000:
+        affordability = 1.0
+    elif price <= 50_000:
+        affordability = 0.95
+    elif price <= 80_000:
+        affordability = 0.85
+    elif price <= 120_000:
+        affordability = 0.65
+    elif price <= 160_000:
+        affordability = 0.45
+    elif price <= 220_000:
+        affordability = 0.20
+    else:
+        affordability = 0.0
+
+    premium_price_penalty = 0.20 if price > 220_000 else 0.0
+    return max(0.0, capability * 0.60 + affordability * 0.40 - premium_price_penalty)
+
+
 def _intent_priority(query: str, product: dict) -> float:
     q = query.lower()
     category = _category_of(product)
@@ -556,6 +761,10 @@ def _intent_priority(query: str, product: dict) -> float:
             + _device_quality_score(product) * 0.35
             + phone_chipset_performance(product) * 0.30
         )
+    if _is_basic_laptop_use_query(q):
+        return _basic_laptop_value_score(product)
+    if _is_basic_phone_use_query(q):
+        return _basic_phone_value_score(product)
     budget_max = _extract_budget(q)
     if budget_max is not None:
         price = _price_to_float(product.get("price"))
@@ -715,6 +924,7 @@ def _normalize_output_product(product: dict) -> dict:
         item["device_tier"] = score_details.get("tier", "Unknown")
         item["normalized_processor"] = score_details.get("normalized_processor", item.get("processor", ""))
         item["performance_breakdown"] = score_details.get("breakdown", {})
+    item["price"] = _format_price_pkr(item.get("price"))
     return item
 
 
@@ -770,7 +980,7 @@ def recommend_products(query: str, products: list, top_n: int = 10):
     if not constrained_products:
         return []
     gaming_intent = _has_any(query, GAMING_HINTS)
-    has_priority_intent = _extract_budget(query) is not None or gaming_intent or _has_any(query, BATTERY_HINTS) or "camera" in query.lower() or any(
+    has_priority_intent = _extract_budget(query) is not None or gaming_intent or _is_basic_laptop_use_query(query) or _is_basic_phone_use_query(query) or _has_any(query, BATTERY_HINTS) or "camera" in query.lower() or any(
         term in query.lower() for term in ("performance", "fastest", "powerful", "processor", "chipset", "flagship")
     )
     wants_both_categories = _query_has_any(query, PHONE_HINTS) and _query_has_any(query, LAPTOP_HINTS)

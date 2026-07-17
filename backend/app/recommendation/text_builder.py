@@ -28,22 +28,22 @@ def _price_context(price, category_label: str) -> str:
 
     if category_label == "laptop":
         if price <= 40000:
-            return f"budget-friendly laptop at Rs {price}"
+            return f"budget-friendly laptop at PKR {price}"
         if price <= 80000:
-            return f"mid-range laptop at Rs {price}"
+            return f"mid-range laptop at PKR {price}"
         if price <= 150000:
-            return f"performance laptop at Rs {price}"
-        return f"premium laptop at Rs {price}"
+            return f"performance laptop at PKR {price}"
+        return f"premium laptop at PKR {price}"
 
     if price <= 20000:
-        return f"budget-friendly phone at Rs {price}"
+        return f"budget-friendly phone at PKR {price}"
     if price <= 35000:
-        return f"affordable mid-range phone at Rs {price}"
+        return f"affordable mid-range phone at PKR {price}"
     if price <= 60000:
-        return f"mid-range phone at Rs {price}"
+        return f"mid-range phone at PKR {price}"
     if price <= 100000:
-        return f"premium phone at Rs {price}"
-    return f"flagship premium phone at Rs {price}"
+        return f"premium phone at PKR {price}"
+    return f"flagship premium phone at PKR {price}"
 
 
 def product_to_text(product: dict) -> str:

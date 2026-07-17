@@ -4,9 +4,10 @@ from unittest.mock import patch
 
 import numpy as np
 
-from app.api import chat_routes
+from app.api import chat_routes, product_routes
 from app.recommendation import engine
 from app.recommendation.processor_engine import phone_chipset_performance
+from app.services import llm_service
 
 
 class _ZeroEmbedder:
@@ -39,6 +40,68 @@ class RecommendationConstraintTests(unittest.TestCase):
         self.assertEqual(engine._extract_budget("maximum budget is 100k"), 100_000)
         self.assertEqual(engine._extract_budget("laptop budget 1.5 lakh"), 150_000)
         self.assertEqual(engine._extract_price_constraints("between 50 and 80k"), (50_000, 80_000))
+        self.assertEqual(engine._extract_budget("show phone in 30000"), 30_000)
+        self.assertEqual(engine._extract_budget("show laptop for 30000"), 30_000)
+
+    def test_prices_are_returned_with_pkr_currency(self):
+        self.assertEqual(engine._format_price_pkr("Rs. 30,000"), "PKR 30,000")
+        self.assertEqual(engine._format_price_pkr(49999), "PKR 49,999")
+
+    def test_chat_currency_is_forced_to_pkr(self):
+        reply = (
+            "Three phones fit your ₹30,000 budget: ₹26,999, "
+            "Rs. 27,699, INR 29,499, and 25,000 rupees."
+        )
+        normalized = llm_service._normalize_currency_labels(reply)
+        self.assertEqual(
+            normalized,
+            "Three phones fit your PKR 30,000 budget: PKR 26,999, "
+            "PKR 27,699, PKR 29,499, and PKR 25,000.",
+        )
+        self.assertNotRegex(normalized, r"₹|₨|\bINR\b|\bRs\.?\b")
+
+    def test_gpu_and_processor_numbers_are_not_moved_into_the_budget(self):
+        gpu_query = engine.normalize_user_query(
+            "gaming laptop rtx 3050 under 150000"
+        )
+        gpu_constraints = engine._parse_query_constraints(gpu_query)
+        self.assertEqual(gpu_constraints["required_gpu"], "rtx3050")
+        self.assertEqual(gpu_constraints["budget_max"], 150_000)
+
+        cpu_query = engine.normalize_user_query(
+            "core i7 laptop under 200000"
+        )
+        cpu_constraints = engine._parse_query_constraints(cpu_query)
+        self.assertEqual(cpu_constraints["required_processor"], "core i7")
+        self.assertEqual(cpu_constraints["budget_max"], 200_000)
+
+        self.assertEqual(
+            engine.normalize_user_query("phone 50k under"),
+            "phone under 50k",
+        )
+
+    def test_common_category_typos_are_normalized_before_filtering(self):
+        laptop_typos = (
+            "laptopn", "laptpo", "lapotp", "leptop", "labtop", "latop",
+        )
+        phone_typos = (
+            "phoen", "phne", "phonee", "moblie", "moible", "fone",
+        )
+        for typo in laptop_typos:
+            normalized = engine.normalize_user_query(f"{typo} under 150000")
+            self.assertIn("laptop", normalized, typo)
+            self.assertEqual(chat_routes._detect_scope(normalized), "laptops", typo)
+        for typo in phone_typos:
+            normalized = engine.normalize_user_query(f"{typo} under 150000")
+            self.assertRegex(normalized, r"\b(?:phone|mobile)\b", typo)
+            self.assertEqual(chat_routes._detect_scope(normalized), "phones", typo)
+
+        products = [
+            _product("Matching Laptop", "Laptops", 149_999),
+            _product("Cheaper Phone", "Phones", 25_000),
+        ]
+        results = engine.recommend_products("laptopn under 150000", products)
+        self.assertEqual([item["name"] for item in results], ["Matching Laptop"])
 
     def test_roman_urdu_laptop_budget_is_a_hard_limit(self):
         products = [
@@ -64,6 +127,15 @@ class RecommendationConstraintTests(unittest.TestCase):
         self.assertEqual([item["name"] for item in results], ["Affordable Phone"])
         self.assertLessEqual(engine._price_to_float(results[0]["price"]), 50_000)
 
+    def test_in_budget_phrase_filters_and_formats_results(self):
+        products = [
+            _product("Within Budget", "Phones", "Rs. 29,999"),
+            _product("Over Budget", "Phones", "Rs. 30,001"),
+        ]
+        results = engine.recommend_products("show phone in 30000", products)
+        self.assertEqual([item["name"] for item in results], ["Within Budget"])
+        self.assertEqual(results[0]["price"], "PKR 29,999")
+
     def test_best_under_budget_prefers_capability_over_the_cheapest_item(self):
         products = [
             _product(
@@ -77,6 +149,81 @@ class RecommendationConstraintTests(unittest.TestCase):
         ]
         results = engine.recommend_products("best phone under 50k", products)
         self.assertEqual(results[0]["name"], "Strong Within Budget")
+
+    def test_work_and_study_prefers_practical_laptops_over_premium_models(self):
+        products = [
+            _product(
+                "PKR 15 Lakh Gaming Laptop", "Laptops", 1_500_000,
+                processor="Core Ultra 9 275HX", gpu="RTX 5090 24GB",
+                ram="64GB", storage="2TB",
+            ),
+            _product("Dell Basic", "Laptops", 122_999, processor="Core i3-1305U", ram="8GB", storage="512GB"),
+            _product("Lenovo Student", "Laptops", 152_999, processor="Core i5-13420H", ram="16GB", storage="512GB"),
+            _product("HP Office", "Laptops", 142_999, processor="Ryzen 5 7430U", ram="8GB", storage="512GB"),
+            _product("Asus Everyday", "Laptops", 149_999, processor="Core i5-1335U", ram="8GB", storage="512GB"),
+            _product("Infinix Study", "Laptops", 119_999, processor="Core i3-1215U", ram="8GB", storage="256GB"),
+            _product("Acer Work", "Laptops", 167_999, processor="Core i5-1335U", ram="8GB", storage="512GB"),
+        ]
+        for query in (
+            "laptop for work and study",
+            "student laptop",
+            "laptop for office work",
+            "laptop for online classes",
+            "laptop for browsing and documents",
+            "basic laptop for daily use",
+            "laptop for email meetings and presentations",
+            "laptop for basic coding and research",
+        ):
+            results = engine.recommend_products(query, products, top_n=5)
+            self.assertEqual(len(results), 5, query)
+            self.assertNotIn(
+                "PKR 15 Lakh Gaming Laptop",
+                {item["name"] for item in results},
+                query,
+            )
+            self.assertTrue(
+                all(engine._price_to_float(item["price"]) < 200_000 for item in results),
+                query,
+            )
+            self.assertGreater(
+                engine._basic_laptop_value_score(results[0]),
+                engine._basic_laptop_value_score(products[0]),
+                query,
+            )
+
+        self.assertFalse(engine._has_any("laptop for basic coding", engine.GAMING_HINTS))
+        self.assertTrue(engine._has_any("laptop for COD gaming", engine.GAMING_HINTS))
+
+    def test_basic_phone_queries_avoid_unnecessary_flagships(self):
+        products = [
+            _product(
+                "Premium Flagship", "Phones", 459_999,
+                processor="Snapdragon 8 Elite", ram="16GB", storage="1TB", battery="5000mAh",
+            ),
+            _product("Daily Phone", "Phones", 44_999, processor="Helio G99", ram="8GB", storage="256GB", battery="5000mAh"),
+            _product("Student Phone", "Phones", 34_999, processor="Snapdragon 685", ram="8GB", storage="128GB", battery="5000mAh"),
+            _product("Social Phone", "Phones", 54_999, processor="Dimensity 7025", ram="8GB", storage="256GB", battery="5100mAh"),
+            _product("Work Phone", "Phones", 64_999, processor="Snapdragon 7s Gen 2", ram="8GB", storage="256GB", battery="5000mAh"),
+            _product("Basic Phone", "Phones", 27_999, processor="Helio G81", ram="6GB", storage="128GB", battery="5000mAh"),
+            _product("Value Phone", "Phones", 49_999, processor="Snapdragon 695", ram="8GB", storage="128GB", battery="5000mAh"),
+        ]
+        for query in (
+            "mobile for daily use",
+            "basic phone for calls and whatsapp",
+            "student mobile",
+            "phone for work and study",
+            "phone for social media",
+            "affordable phone for everyday use",
+            "mobile for online classes and assignments",
+            "phone for youtube netflix and video calls",
+        ):
+            results = engine.recommend_products(query, products, top_n=5)
+            self.assertEqual(len(results), 5, query)
+            self.assertNotIn("Premium Flagship", {item["name"] for item in results}, query)
+            self.assertTrue(
+                all(engine._price_to_float(item["price"]) < 100_000 for item in results),
+                query,
+            )
 
     def test_unknown_chipset_with_more_ram_does_not_automatically_win(self):
         products = [
@@ -100,9 +247,16 @@ class RecommendationConstraintTests(unittest.TestCase):
         results = engine.recommend_products("cheapest phone under 50k", products)
         self.assertEqual(results[0]["name"], "Cheapest")
 
-    def test_impossible_hard_constraints_return_no_results(self):
+    def test_impossible_budget_returns_no_products(self):
+        products = [
+            _product("Premium Laptop", "Laptops", 250_000, ram="16 GB"),
+            _product("Lowest Laptop", "Laptops", 180_000, ram="8 GB"),
+        ]
+        results = engine.recommend_products("laptop under 100k", products)
+        self.assertEqual(results, [])
+
+    def test_impossible_non_budget_constraints_still_return_no_results(self):
         products = [_product("Premium Laptop", "Laptops", 250_000, ram="16 GB")]
-        self.assertEqual(engine.recommend_products("laptop under 100k", products), [])
         self.assertEqual(engine.recommend_products("laptop with 32gb ram", products), [])
 
     def test_storage_tb_is_compared_as_gigabytes(self):
@@ -336,6 +490,75 @@ class ChatContextTests(unittest.TestCase):
                 chat_routes.ChatMessage(message="is its battery good?", product_id="phone-a")
             ))
         self.assertEqual(response["products"][0]["name"], "Phone A")
+
+    def test_not_this_phone_excludes_the_current_focus(self):
+        with patch.object(chat_routes, "_load_products", return_value=self.products), patch.object(
+            chat_routes, "recommend_products", side_effect=self._recommend
+        ), patch.object(chat_routes, "build_verification_context", return_value={}), patch.object(
+            chat_routes, "generate_explanation", return_value="Here is another phone."
+        ):
+            first = asyncio.run(chat_routes.send_chat_message(
+                chat_routes.ChatMessage(
+                    message="recommend a phone",
+                    session_id="alternative-session",
+                )
+            ))
+            alternative = asyncio.run(chat_routes.send_chat_message(
+                chat_routes.ChatMessage(
+                    message="not this phone, show another",
+                    session_id="alternative-session",
+                )
+            ))
+
+        self.assertEqual(first["products"][0]["name"], "Phone A")
+        self.assertEqual(alternative["products"][0]["name"], "Phone B")
+        self.assertNotIn(
+            first["products"][0]["id"],
+            {product["id"] for product in alternative["products"]},
+        )
+
+    def test_related_alternative_phrases_are_refinements(self):
+        context = {"scope": "phones", "products": self.products}
+        for query in (
+            "show another",
+            "I want something else",
+            "koi aur phone dikhao",
+            "yeh nahi doosra dikhao",
+            "not this mobile",
+        ):
+            self.assertTrue(chat_routes._is_refinement(query, context), query)
+
+    def test_low_budget_returns_only_a_no_availability_reply(self):
+        with patch.object(chat_routes, "_load_products", return_value=self.products), patch.object(
+            chat_routes, "recommend_products", return_value=[]
+        ), patch.object(chat_routes, "build_verification_context") as web_check, patch.object(
+            chat_routes, "generate_explanation"
+        ) as llm:
+            response = asyncio.run(chat_routes.send_chat_message(
+                chat_routes.ChatMessage(message="phone under 1000")
+            ))
+
+        self.assertEqual(response["products"], [])
+        self.assertEqual(
+            response["reply"],
+            "No phones are available within PKR 1,000.",
+        )
+        web_check.assert_not_called()
+        llm.assert_not_called()
+
+
+class ProductRouteResponseTests(unittest.TestCase):
+    def test_empty_recommendation_response_has_count_and_query(self):
+        with patch.object(product_routes, "_get_all_products", return_value=[]):
+            response = asyncio.run(product_routes.get_recommendations(
+                query="phone",
+                top_n=5,
+                collection="invalid_collection",
+            ))
+
+        self.assertEqual(response["products"], [])
+        self.assertEqual(response["count"], 0)
+        self.assertEqual(response["query"], "phone")
 
 
 if __name__ == "__main__":

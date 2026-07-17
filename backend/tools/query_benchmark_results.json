@@ -1,0 +1,4152 @@
+{
+  "summary": {
+    "total": 100,
+    "mobile_queries": 50,
+    "laptop_queries": 50,
+    "server_ok": true,
+    "responses_ok": 98,
+    "scope_pass": 98,
+    "scope_pass_rate": 98.0,
+    "budget_cases": 65,
+    "budget_pass": 57,
+    "budget_pass_rate": 87.69,
+    "overall_pass": 91,
+    "overall_pass_rate": 91.0,
+    "avg_response_ms": 9667.3,
+    "p95_response_ms": 25382.3
+  },
+  "failed_scope": [],
+  "failed_budget": [
+    {
+      "index": 51,
+      "query": "best laptop under 100000",
+      "expected_scope": "laptops",
+      "expected_budget_max": 100000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5000.1,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6967,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.6633,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "HP ProBook 450 G9 15.6 Inches 12th Gen Core i5 Backlit Keyboard DOS",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "1235U processor",
+          "similarity_score": 0.6631,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 65,
+      "query": "cheap laptop for classes",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5088.2,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.7397,
+          "boosted_score": 0.1734
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.7284,
+          "boosted_score": 0.1214
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Ryzen 7 (8GB-512GB)",
+          "price": "Rs 150,999",
+          "category": "laptops",
+          "processor": "7730u PROCESSOR",
+          "similarity_score": 0.7163,
+          "boosted_score": 0.1098
+        }
+      ]
+    },
+    {
+      "index": 72,
+      "query": "best hp laptop budget",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 8675.6,
+      "top3": [
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.7118,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "HP 15-FD0499NIA Ci5-1334U (8GB 512GB SSD)",
+          "price": "Rs 162,999",
+          "category": "laptops",
+          "processor": "Core",
+          "similarity_score": 0.7014,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "HP 15s FQ5098TU 15.6 Inches 12th Gen Core i5 Win 11 (8GB - 512GB)",
+          "price": "Rs 145,999",
+          "category": "laptops",
+          "processor": "Intel Core i5-1235u Processor",
+          "similarity_score": 0.6911,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 79,
+      "query": "affordable laptop for work",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 7163.8,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6698,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.6593,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.6546,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 80,
+      "query": "low budget laptop",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5139.6,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6737,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.6623,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Ryzen 7 (8GB-512GB)",
+          "price": "Rs 150,999",
+          "category": "laptops",
+          "processor": "7730u PROCESSOR",
+          "similarity_score": 0.6613,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 81,
+      "query": "sasta laptop under 90k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 90000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5142.8,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6653,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "Lenovo ThinkBook 16 Ci3-1305U (8GB-512GB SSD)",
+          "price": "Rs 137,999",
+          "category": "laptops",
+          "processor": "R5 7530U Proceessor",
+          "similarity_score": 0.6405,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "Asus VivoBook 16 M1605YA Ryzen 7-7730U (8GB-512GB SSD)",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "AMD Ryzen",
+          "similarity_score": 0.6362,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 91,
+      "query": "budget laptop for teachers",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4192.4,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6636,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Ryzen 7 (8GB-512GB)",
+          "price": "Rs 150,999",
+          "category": "laptops",
+          "processor": "7730u PROCESSOR",
+          "similarity_score": 0.6532,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "Lenovo ThinkBook 16 Ci3-1305U (8GB-512GB SSD)",
+          "price": "Rs 137,999",
+          "category": "laptops",
+          "processor": "R5 7530U Proceessor",
+          "similarity_score": 0.6467,
+          "boosted_score": -0.09
+        }
+      ]
+    }
+  ],
+  "request_errors": [
+    {
+      "index": 15,
+      "query": "mobail under 30k",
+      "expected_scope": "phones",
+      "expected_budget_max": 30000.0,
+      "ok": false,
+      "scope_ok": false,
+      "budget_ok": null,
+      "status": "error",
+      "error": "HTTPConnectionPool(host='127.0.0.1', port=8000): Read timed out. (read timeout=45)",
+      "count": 0,
+      "response_ms": null,
+      "top3": []
+    },
+    {
+      "index": 21,
+      "query": "phone for reels and youtube",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": false,
+      "scope_ok": false,
+      "budget_ok": null,
+      "status": "error",
+      "error": "HTTPConnectionPool(host='127.0.0.1', port=8000): Read timed out. (read timeout=45)",
+      "count": 0,
+      "response_ms": null,
+      "top3": []
+    }
+  ],
+  "results": [
+    {
+      "index": 1,
+      "query": "best phone under 30000",
+      "expected_scope": "phones",
+      "expected_budget_max": 30000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 19654.3,
+      "top3": [
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8791,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Sparx Neo 15 Ultra",
+          "price": "Rs 26,999",
+          "category": "phones",
+          "processor": "Powerful Octa Core Processor",
+          "similarity_score": 0.876,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.8755,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "query": "best phone under 50000",
+      "expected_scope": "phones",
+      "expected_budget_max": 50000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 15394.6,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8927,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8853,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Dcode Cygnal Prime",
+          "price": "Rs 33,349",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.8787,
+          "boosted_score": 0.56
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "query": "gaming phone under 60k",
+      "expected_scope": "phones",
+      "expected_budget_max": 60000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 13167.1,
+      "top3": [
+        {
+          "name": "Vivo Y31d",
+          "price": "Rs 59,999",
+          "category": "phones",
+          "processor": "Snapdragon 6s Gen 2",
+          "similarity_score": 0.9463,
+          "boosted_score": 0.8675
+        },
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.9371,
+          "boosted_score": 0.8605
+        },
+        {
+          "name": "Dcode Cygnal Prime",
+          "price": "Rs 33,349",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.933,
+          "boosted_score": 0.9053
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "query": "camera phone under 70k",
+      "expected_scope": "phones",
+      "expected_budget_max": 70000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 18166.3,
+      "top3": [
+        {
+          "name": "VGO Tel New 16 Pro",
+          "price": "Rs 22,799",
+          "category": "phones",
+          "processor": "Mediatek Helio G50 4 2.2GHz Cortex-A53 4 1.6GHz Cortex-A53",
+          "similarity_score": 0.9032,
+          "boosted_score": 0.754
+        },
+        {
+          "name": "VGO TEL New 15 Pro",
+          "price": "Rs 20,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G36",
+          "similarity_score": 0.9011,
+          "boosted_score": 0.754
+        },
+        {
+          "name": "ZTE Nubia Focus Pro 5G",
+          "price": "Rs 49,999",
+          "category": "phones",
+          "processor": "Unisoc T760 (6 nm)",
+          "similarity_score": 0.9008,
+          "boosted_score": 0.714
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "query": "mobile for social media under 40k",
+      "expected_scope": "phones",
+      "expected_budget_max": 40000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 22362.3,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.9266,
+          "boosted_score": 0.7817
+        },
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.9222,
+          "boosted_score": 0.8341
+        },
+        {
+          "name": "ZTE Nubia V80 Max",
+          "price": "Rs 37,499",
+          "category": "phones",
+          "processor": "Octa Core 1.8GHZ",
+          "similarity_score": 0.9192,
+          "boosted_score": 0.8271
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "query": "i need battery phone under 35k",
+      "expected_scope": "phones",
+      "expected_budget_max": 35000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 19034.1,
+      "top3": [
+        {
+          "name": "Dcode Cygnal Prime",
+          "price": "Rs 33,349",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.9497,
+          "boosted_score": 1.0084
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.9492,
+          "boosted_score": 1.0376
+        },
+        {
+          "name": "VGO Tel New 16 Pro",
+          "price": "Rs 22,799",
+          "category": "phones",
+          "processor": "Mediatek Helio G50 4 2.2GHz Cortex-A53 4 1.6GHz Cortex-A53",
+          "similarity_score": 0.9451,
+          "boosted_score": 1.034
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "query": "cheapest 5g phone",
+      "expected_scope": "phones",
+      "expected_budget_max": 30000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 22047.9,
+      "top3": [
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.8755,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8746,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "VGO TEL New 15 Pro",
+          "price": "Rs 20,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G36",
+          "similarity_score": 0.8706,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "query": "budget phone for student",
+      "expected_scope": "phones",
+      "expected_budget_max": 120000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 15745.6,
+      "top3": [
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.9123,
+          "boosted_score": 0.7902
+        },
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.9081,
+          "boosted_score": 0.7916
+        },
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.9074,
+          "boosted_score": 0.7804
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "query": "phone for pubg under 50k",
+      "expected_scope": "phones",
+      "expected_budget_max": 50000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 25382.3,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.9386,
+          "boosted_score": 0.8605
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.9316,
+          "boosted_score": 0.9168
+        },
+        {
+          "name": "Dcode Cygnal Prime",
+          "price": "Rs 33,349",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.9314,
+          "boosted_score": 0.9053
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "query": "snapdragon phone under 80k",
+      "expected_scope": "phones",
+      "expected_budget_max": 80000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 20511.2,
+      "top3": [
+        {
+          "name": "Honor X8d",
+          "price": "Rs 68,499",
+          "category": "phones",
+          "processor": "Snapdragon 6s 4G Gen 2",
+          "similarity_score": 0.9121,
+          "boosted_score": 0.577
+        },
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.9094,
+          "boosted_score": 0.637
+        },
+        {
+          "name": "Vivo Y31d",
+          "price": "Rs 59,999",
+          "category": "phones",
+          "processor": "Snapdragon 6s Gen 2",
+          "similarity_score": 0.9031,
+          "boosted_score": 0.577
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "query": "12gb ram phone under 90k",
+      "expected_scope": "phones",
+      "expected_budget_max": 90000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 22255.1,
+      "top3": [
+        {
+          "name": "Xiaomi Redmi Note 14 Pro",
+          "price": "Rs 70,499",
+          "category": "phones",
+          "processor": "MediaTek Helio G100-Ultra, 6nm Octa-core",
+          "similarity_score": 0.8646,
+          "boosted_score": 0.5
+        },
+        {
+          "name": "Dcode Cygnal Prime",
+          "price": "Rs 33,349",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.8644,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Realme 14T 5G",
+          "price": "Rs 68,999",
+          "category": "phones",
+          "processor": "Dimensity 6300 5G",
+          "similarity_score": 0.8423,
+          "boosted_score": 0.5
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "query": "256gb storage mobile under 75k",
+      "expected_scope": "phones",
+      "expected_budget_max": 75000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 20159.9,
+      "top3": [
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.8832,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Vivo Y31d",
+          "price": "Rs 59,999",
+          "category": "phones",
+          "processor": "Snapdragon 6s Gen 2",
+          "similarity_score": 0.8808,
+          "boosted_score": 0.5
+        },
+        {
+          "name": "ZTE Nubia Focus Pro 5G",
+          "price": "Rs 49,999",
+          "category": "phones",
+          "processor": "Unisoc T760 (6 nm)",
+          "similarity_score": 0.8755,
+          "boosted_score": 0.56
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "query": "mobile 20 hazar sa km ka",
+      "expected_scope": "phones",
+      "expected_budget_max": 20000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 35800.4,
+      "top3": [
+        {
+          "name": "Sego Neo 20 Pro",
+          "price": "Rs 18,499",
+          "category": "phones",
+          "processor": "MediaTek 1.3GHz",
+          "similarity_score": 0.8571,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Digit 6",
+          "price": "Rs 16,999",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.8445,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Digit 8",
+          "price": "Rs 17,999",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.8425,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "query": "phone 25 hazar se kam",
+      "expected_scope": "phones",
+      "expected_budget_max": 25000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 17787.2,
+      "top3": [
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.8504,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Sego Note 80",
+          "price": "Rs 22,799",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.8459,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Sego Smart 10 Limited Edition",
+          "price": "Rs 21,199",
+          "category": "phones",
+          "processor": "1.6GHz Octa Core Processor",
+          "similarity_score": 0.8457,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "query": "mobail under 30k",
+      "expected_scope": "phones",
+      "expected_budget_max": 30000.0,
+      "ok": false,
+      "scope_ok": false,
+      "budget_ok": null,
+      "status": "error",
+      "error": "HTTPConnectionPool(host='127.0.0.1', port=8000): Read timed out. (read timeout=45)",
+      "count": 0,
+      "response_ms": null,
+      "top3": []
+    },
+    {
+      "index": 16,
+      "query": "fone for gaming under 45k",
+      "expected_scope": "phones",
+      "expected_budget_max": 45000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 44916.5,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.9339,
+          "boosted_score": 0.8605
+        },
+        {
+          "name": "Dcode Cygnal Prime",
+          "price": "Rs 33,349",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.9331,
+          "boosted_score": 0.9053
+        },
+        {
+          "name": "Sparx Neo 15 Ultra",
+          "price": "Rs 26,999",
+          "category": "phones",
+          "processor": "Powerful Octa Core Processor",
+          "similarity_score": 0.9243,
+          "boosted_score": 0.897
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "query": "best camera mobile",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 17976.9,
+      "top3": [
+        {
+          "name": "Samsung Galaxy S23 Ultra",
+          "price": "Rs 269,999",
+          "category": "phones",
+          "processor": "Qualcomm SM8550-AC Snapdragon 8 Gen 2 (4 nm)",
+          "similarity_score": 0.8788,
+          "boosted_score": 0.374
+        },
+        {
+          "name": "Samsung Galaxy S25 Ultra",
+          "price": "Rs 354,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 8 Elite (3nm)",
+          "similarity_score": 0.8739,
+          "boosted_score": 0.374
+        },
+        {
+          "name": "Nothing Phone 4a Pro",
+          "price": "Rs 228,299",
+          "category": "phones",
+          "processor": "SNAPDRAGON7 GEN4 (4NM,UP TO 2.8 GHZ)",
+          "similarity_score": 0.8739,
+          "boosted_score": 0.374
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "query": "long battery backup phone",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 22196.2,
+      "top3": [
+        {
+          "name": "Xiaomi 17 Ultra",
+          "price": "Rs 459,999",
+          "category": "phones",
+          "processor": "Snapdragon 8 Elite Gen 5 Mobile Platform",
+          "similarity_score": 0.9225,
+          "boosted_score": 0.708
+        },
+        {
+          "name": "Vivo V70",
+          "price": "Rs 144,999",
+          "category": "phones",
+          "processor": "Snapdragon 7 Gen 4",
+          "similarity_score": 0.9223,
+          "boosted_score": 0.7068
+        },
+        {
+          "name": "Xiaomi Redmi Note 15 Pro Plus",
+          "price": "Rs 159,999",
+          "category": "phones",
+          "processor": "Snapdragon 7s Gen 4",
+          "similarity_score": 0.922,
+          "boosted_score": 0.7092
+        }
+      ]
+    },
+    {
+      "index": 19,
+      "query": "all rounder phone under 55k",
+      "expected_scope": "phones",
+      "expected_budget_max": 55000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 16025.9,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8746,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8689,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Samsung Galaxy A07",
+          "price": "Rs 30,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G99",
+          "similarity_score": 0.8631,
+          "boosted_score": 0.56
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "query": "daily use phone under 35k",
+      "expected_scope": "phones",
+      "expected_budget_max": 35000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 12007.6,
+      "top3": [
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.9358,
+          "boosted_score": 0.926
+        },
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.9336,
+          "boosted_score": 0.915
+        },
+        {
+          "name": "Dcode Cygnal Prime",
+          "price": "Rs 33,349",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.9327,
+          "boosted_score": 0.9125
+        }
+      ]
+    },
+    {
+      "index": 21,
+      "query": "phone for reels and youtube",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": false,
+      "scope_ok": false,
+      "budget_ok": null,
+      "status": "error",
+      "error": "HTTPConnectionPool(host='127.0.0.1', port=8000): Read timed out. (read timeout=45)",
+      "count": 0,
+      "response_ms": null,
+      "top3": []
+    },
+    {
+      "index": 22,
+      "query": "best samsung phone under 60k",
+      "expected_scope": "phones",
+      "expected_budget_max": 60000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 40804.3,
+      "top3": [
+        {
+          "name": "Samsung Galaxy A07",
+          "price": "Rs 30,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G99",
+          "similarity_score": 0.8968,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.8856,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8828,
+          "boosted_score": 0.56
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "query": "best redmi phone budget",
+      "expected_scope": "phones",
+      "expected_budget_max": 30000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 11174.6,
+      "top3": [
+        {
+          "name": "Xiaomi Redmi 10A",
+          "price": "Rs 27,499",
+          "category": "phones",
+          "processor": "MediaTek MT6762G Helio G25",
+          "similarity_score": 0.8942,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Xiaomi Redmi A5",
+          "price": "Rs 29,299",
+          "category": "phones",
+          "processor": "UNISOC T7250",
+          "similarity_score": 0.8927,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.8734,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 24,
+      "query": "infinix gaming phone",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 14062.0,
+      "top3": [
+        {
+          "name": "Nothing Phone 2",
+          "price": "Rs 219,999",
+          "category": "phones",
+          "processor": "Octa-core Snapdragon 8+ Gen 1",
+          "similarity_score": 0.9421,
+          "boosted_score": 0.7628
+        },
+        {
+          "name": "Xiaomi 17 Ultra",
+          "price": "Rs 459,999",
+          "category": "phones",
+          "processor": "Snapdragon 8 Elite Gen 5 Mobile Platform",
+          "similarity_score": 0.9364,
+          "boosted_score": 0.7928
+        },
+        {
+          "name": "Xiaomi 15 Ultra",
+          "price": "Rs 383,999",
+          "category": "phones",
+          "processor": "Snapdragon 8 Elite Mobile Platform",
+          "similarity_score": 0.936,
+          "boosted_score": 0.7856
+        }
+      ]
+    },
+    {
+      "index": 25,
+      "query": "tecno cheap phone",
+      "expected_scope": "phones",
+      "expected_budget_max": 30000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 20452.3,
+      "top3": [
+        {
+          "name": "VGO TEL New 17",
+          "price": "Rs 23,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G81 Ultra",
+          "similarity_score": 0.8694,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "VGO Tel New 16 Pro",
+          "price": "Rs 22,799",
+          "category": "phones",
+          "processor": "Mediatek Helio G50 4 2.2GHz Cortex-A53 4 1.6GHz Cortex-A53",
+          "similarity_score": 0.8684,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "VGO TEL New 15 Pro",
+          "price": "Rs 20,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G36",
+          "similarity_score": 0.8682,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 26,
+      "query": "best vivo camera phone",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 26260.7,
+      "top3": [
+        {
+          "name": "Vivo V70",
+          "price": "Rs 144,999",
+          "category": "phones",
+          "processor": "Snapdragon 7 Gen 4",
+          "similarity_score": 0.8741,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "Vivo X300 Pro",
+          "price": "Rs 314,450",
+          "category": "phones",
+          "processor": "Dimensity 9500",
+          "similarity_score": 0.873,
+          "boosted_score": 0.374
+        },
+        {
+          "name": "Xiaomi Redmi Note 15 Pro Plus",
+          "price": "Rs 159,999",
+          "category": "phones",
+          "processor": "Snapdragon 7s Gen 4",
+          "similarity_score": 0.8716,
+          "boosted_score": 0.374
+        }
+      ]
+    },
+    {
+      "index": 27,
+      "query": "oppo phone for students",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 27610.4,
+      "top3": [
+        {
+          "name": "OPPO Reno 15",
+          "price": "Rs 154,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 7",
+          "similarity_score": 0.9036,
+          "boosted_score": 0.481
+        },
+        {
+          "name": "Honor X9d",
+          "price": "Rs 129,499",
+          "category": "phones",
+          "processor": "Snapdragon 6 Gen 4",
+          "similarity_score": 0.884,
+          "boosted_score": 0.486
+        },
+        {
+          "name": "Vivo V70",
+          "price": "Rs 144,999",
+          "category": "phones",
+          "processor": "Snapdragon 7 Gen 4",
+          "similarity_score": 0.8813,
+          "boosted_score": 0.489
+        }
+      ]
+    },
+    {
+      "index": 28,
+      "query": "iphone alternative under 100k",
+      "expected_scope": "phones",
+      "expected_budget_max": 100000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 19005.1,
+      "top3": [
+        {
+          "name": "Honor X8d",
+          "price": "Rs 68,499",
+          "category": "phones",
+          "processor": "Snapdragon 6s 4G Gen 2",
+          "similarity_score": 0.8174,
+          "boosted_score": 0.28
+        },
+        {
+          "name": "Vivo Y31d",
+          "price": "Rs 59,999",
+          "category": "phones",
+          "processor": "Snapdragon 6s Gen 2",
+          "similarity_score": 0.8135,
+          "boosted_score": 0.28
+        },
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8096,
+          "boosted_score": 0.34
+        }
+      ]
+    },
+    {
+      "index": 29,
+      "query": "phone with good processor under 70k",
+      "expected_scope": "phones",
+      "expected_budget_max": 70000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 13329.3,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.909,
+          "boosted_score": 0.637
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.9079,
+          "boosted_score": 0.699
+        },
+        {
+          "name": "Honor X8d",
+          "price": "Rs 68,499",
+          "category": "phones",
+          "processor": "Snapdragon 6s 4G Gen 2",
+          "similarity_score": 0.907,
+          "boosted_score": 0.577
+        }
+      ]
+    },
+    {
+      "index": 30,
+      "query": "best value for money phone",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5232.0,
+      "top3": [
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8817,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.8753,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.8733,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 31,
+      "query": "sasta mobile under 25k",
+      "expected_scope": "phones",
+      "expected_budget_max": 25000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4637.2,
+      "top3": [
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.8768,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "ZTE Nubia A36",
+          "price": "Rs 23,399",
+          "category": "phones",
+          "processor": "Mali-G57 MP1",
+          "similarity_score": 0.8702,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Sego Note 80",
+          "price": "Rs 22,799",
+          "category": "phones",
+          "processor": "Unknown",
+          "similarity_score": 0.8671,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 32,
+      "query": "best phone below 45000",
+      "expected_scope": "phones",
+      "expected_budget_max": 45000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4549.3,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8918,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8809,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Samsung Galaxy A07",
+          "price": "Rs 30,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G99",
+          "similarity_score": 0.878,
+          "boosted_score": 0.56
+        }
+      ]
+    },
+    {
+      "index": 33,
+      "query": "mobile within 50000",
+      "expected_scope": "phones",
+      "expected_budget_max": 50000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4820.8,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8874,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.872,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Samsung Galaxy A07",
+          "price": "Rs 30,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G99",
+          "similarity_score": 0.8718,
+          "boosted_score": 0.56
+        }
+      ]
+    },
+    {
+      "index": 34,
+      "query": "phone under rs 65000",
+      "expected_scope": "phones",
+      "expected_budget_max": 65000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4529.8,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8865,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.875,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Samsung Galaxy A07",
+          "price": "Rs 30,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G99",
+          "similarity_score": 0.8747,
+          "boosted_score": 0.56
+        }
+      ]
+    },
+    {
+      "index": 35,
+      "query": "phone upto 80k",
+      "expected_scope": "phones",
+      "expected_budget_max": 80000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4184.0,
+      "top3": [
+        {
+          "name": "Honor X8d",
+          "price": "Rs 68,499",
+          "category": "phones",
+          "processor": "Snapdragon 6s 4G Gen 2",
+          "similarity_score": 0.8777,
+          "boosted_score": 0.5
+        },
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8728,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8607,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 36,
+      "query": "best phone for battery and gaming",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4394.8,
+      "top3": [
+        {
+          "name": "Xiaomi 17 Ultra",
+          "price": "Rs 459,999",
+          "category": "phones",
+          "processor": "Snapdragon 8 Elite Gen 5 Mobile Platform",
+          "similarity_score": 0.982,
+          "boosted_score": 1.2808
+        },
+        {
+          "name": "Xiaomi 15 Ultra",
+          "price": "Rs 383,999",
+          "category": "phones",
+          "processor": "Snapdragon 8 Elite Mobile Platform",
+          "similarity_score": 0.9801,
+          "boosted_score": 1.2409
+        },
+        {
+          "name": "Vivo V70",
+          "price": "Rs 144,999",
+          "category": "phones",
+          "processor": "Snapdragon 7 Gen 4",
+          "similarity_score": 0.9796,
+          "boosted_score": 1.1868
+        }
+      ]
+    },
+    {
+      "index": 37,
+      "query": "phone for tiktok and instagram under 50k",
+      "expected_scope": "phones",
+      "expected_budget_max": 50000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4779.3,
+      "top3": [
+        {
+          "name": "Xiaomi Redmi 15",
+          "price": "Rs 44,999",
+          "category": "phones",
+          "processor": "Snapdragon 685 Mobile Platform",
+          "similarity_score": 0.9246,
+          "boosted_score": 0.8385
+        },
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.9209,
+          "boosted_score": 0.7817
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.919,
+          "boosted_score": 0.8458
+        }
+      ]
+    },
+    {
+      "index": 38,
+      "query": "budget flagship killer phone",
+      "expected_scope": "phones",
+      "expected_budget_max": 30000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5844.7,
+      "top3": [
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.9071,
+          "boosted_score": 0.699
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.9049,
+          "boosted_score": 0.699
+        },
+        {
+          "name": "Sparx Neo 15 Ultra",
+          "price": "Rs 26,999",
+          "category": "phones",
+          "processor": "Powerful Octa Core Processor",
+          "similarity_score": 0.899,
+          "boosted_score": 0.699
+        }
+      ]
+    },
+    {
+      "index": 39,
+      "query": "best mobile for classes",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4709.9,
+      "top3": [
+        {
+          "name": "Vivo V70",
+          "price": "Rs 144,999",
+          "category": "phones",
+          "processor": "Snapdragon 7 Gen 4",
+          "similarity_score": 0.8881,
+          "boosted_score": 0.489
+        },
+        {
+          "name": "Nothing Phone 4a Pro",
+          "price": "Rs 228,299",
+          "category": "phones",
+          "processor": "SNAPDRAGON7 GEN4 (4NM,UP TO 2.8 GHZ)",
+          "similarity_score": 0.8857,
+          "boosted_score": 0.4634
+        },
+        {
+          "name": "Xiaomi Redmi Note 15 Pro Plus",
+          "price": "Rs 159,999",
+          "category": "phones",
+          "processor": "Snapdragon 7s Gen 4",
+          "similarity_score": 0.8847,
+          "boosted_score": 0.491
+        }
+      ]
+    },
+    {
+      "index": 40,
+      "query": "phone for online class and notes",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4482.5,
+      "top3": [
+        {
+          "name": "Xiaomi Redmi Note 15 Pro Plus",
+          "price": "Rs 159,999",
+          "category": "phones",
+          "processor": "Snapdragon 7s Gen 4",
+          "similarity_score": 0.8842,
+          "boosted_score": 0.491
+        },
+        {
+          "name": "Vivo V70",
+          "price": "Rs 144,999",
+          "category": "phones",
+          "processor": "Snapdragon 7 Gen 4",
+          "similarity_score": 0.875,
+          "boosted_score": 0.489
+        },
+        {
+          "name": "Honor X9d",
+          "price": "Rs 129,499",
+          "category": "phones",
+          "processor": "Snapdragon 6 Gen 4",
+          "similarity_score": 0.8734,
+          "boosted_score": 0.486
+        }
+      ]
+    },
+    {
+      "index": 41,
+      "query": "best compact phone under 70k",
+      "expected_scope": "phones",
+      "expected_budget_max": 70000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4142.0,
+      "top3": [
+        {
+          "name": "Samsung Galaxy A07",
+          "price": "Rs 30,999",
+          "category": "phones",
+          "processor": "Mediatek Helio G99",
+          "similarity_score": 0.889,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8881,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.887,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 42,
+      "query": "phone for normal use",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5819.3,
+      "top3": [
+        {
+          "name": "Nothing Phone 3A",
+          "price": "Rs 137,749",
+          "category": "phones",
+          "processor": "Qualcomm SM7635 Snapdragon 7s Gen 3",
+          "similarity_score": 0.9024,
+          "boosted_score": 0.479
+        },
+        {
+          "name": "Honor X8d",
+          "price": "Rs 68,499",
+          "category": "phones",
+          "processor": "Snapdragon 6s 4G Gen 2",
+          "similarity_score": 0.8988,
+          "boosted_score": 0.5625
+        },
+        {
+          "name": "Vivo Y31d",
+          "price": "Rs 59,999",
+          "category": "phones",
+          "processor": "Snapdragon 6s Gen 2",
+          "similarity_score": 0.8982,
+          "boosted_score": 0.5625
+        }
+      ]
+    },
+    {
+      "index": 43,
+      "query": "phone for parents under 40k",
+      "expected_scope": "phones",
+      "expected_budget_max": 40000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4388.3,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8782,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8675,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.8595,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 44,
+      "query": "best display phone under 55k",
+      "expected_scope": "phones",
+      "expected_budget_max": 55000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 3889.1,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.885,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Xiaomi Redmi 15",
+          "price": "Rs 44,999",
+          "category": "phones",
+          "processor": "Snapdragon 685 Mobile Platform",
+          "similarity_score": 0.8795,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8773,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 45,
+      "query": "mobile for call and whatsapp",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4167.2,
+      "top3": [
+        {
+          "name": "Nothing Phone 4a Pro",
+          "price": "Rs 228,299",
+          "category": "phones",
+          "processor": "SNAPDRAGON7 GEN4 (4NM,UP TO 2.8 GHZ)",
+          "similarity_score": 0.8224,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "Samsung Galaxy Z Flip 6",
+          "price": "Rs 304,999",
+          "category": "phones",
+          "processor": "Qualcomm SM8650-AB Snapdragon 8 Gen 3 (4 nm)",
+          "similarity_score": 0.8149,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "Nothing Phone 3A",
+          "price": "Rs 137,749",
+          "category": "phones",
+          "processor": "Qualcomm SM7635 Snapdragon 7s Gen 3",
+          "similarity_score": 0.8142,
+          "boosted_score": 0.22
+        }
+      ]
+    },
+    {
+      "index": 46,
+      "query": "budget android phone",
+      "expected_scope": "phones",
+      "expected_budget_max": 30000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4715.5,
+      "top3": [
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8948,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.8921,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Itel A100",
+          "price": "Rs 28,499",
+          "category": "phones",
+          "processor": "Unisoc T7250",
+          "similarity_score": 0.8864,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 47,
+      "query": "phone with fast charging under 60k",
+      "expected_scope": "phones",
+      "expected_budget_max": 60000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4156.7,
+      "top3": [
+        {
+          "name": "Vivo Y31d",
+          "price": "Rs 59,999",
+          "category": "phones",
+          "processor": "Snapdragon 6s Gen 2",
+          "similarity_score": 0.8632,
+          "boosted_score": 0.5
+        },
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.8626,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8626,
+          "boosted_score": 0.56
+        }
+      ]
+    },
+    {
+      "index": 48,
+      "query": "best phone for camera and battery under 75k",
+      "expected_scope": "phones",
+      "expected_budget_max": 75000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4340.8,
+      "top3": [
+        {
+          "name": "VGO Tel New 16 Pro",
+          "price": "Rs 22,799",
+          "category": "phones",
+          "processor": "Mediatek Helio G50 4 2.2GHz Cortex-A53 4 1.6GHz Cortex-A53",
+          "similarity_score": 0.9641,
+          "boosted_score": 1.188
+        },
+        {
+          "name": "Xiaomi Redmi Note 14 Pro",
+          "price": "Rs 70,499",
+          "category": "phones",
+          "processor": "MediaTek Helio G100-Ultra, 6nm Octa-core",
+          "similarity_score": 0.9633,
+          "boosted_score": 1.0944
+        },
+        {
+          "name": "Xiaomi Redmi A7 Pro",
+          "price": "Rs 31,999",
+          "category": "phones",
+          "processor": "Powerful octa-core processor",
+          "similarity_score": 0.9612,
+          "boosted_score": 1.1492
+        }
+      ]
+    },
+    {
+      "index": 49,
+      "query": "low price phone with 8gb ram",
+      "expected_scope": "phones",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 7759.3,
+      "top3": [
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8809,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "ZTE Nubia V60 Design (8GB-256GB)",
+          "price": "Rs 29,499",
+          "category": "phones",
+          "processor": "Unisoc T606",
+          "similarity_score": 0.8806,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.8701,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 50,
+      "query": "best phone in pakistan under 50k",
+      "expected_scope": "phones",
+      "expected_budget_max": 50000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4324.1,
+      "top3": [
+        {
+          "name": "Oppo A5i",
+          "price": "Rs 35,999",
+          "category": "phones",
+          "processor": "Qualcomm Snapdragon 6s 4G Gen1",
+          "similarity_score": 0.8826,
+          "boosted_score": 0.56
+        },
+        {
+          "name": "Itel A200 Plus",
+          "price": "Rs 28,299",
+          "category": "phones",
+          "processor": "Unisoc T7250 Octa-core",
+          "similarity_score": 0.8768,
+          "boosted_score": 0.6
+        },
+        {
+          "name": "Sego Note 60",
+          "price": "Rs 21,949",
+          "category": "phones",
+          "processor": "MediaTek Helio G36 2.0Hz Octa Core Processor",
+          "similarity_score": 0.8733,
+          "boosted_score": 0.6
+        }
+      ]
+    },
+    {
+      "index": 51,
+      "query": "best laptop under 100000",
+      "expected_scope": "laptops",
+      "expected_budget_max": 100000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5000.1,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6967,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.6633,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "HP ProBook 450 G9 15.6 Inches 12th Gen Core i5 Backlit Keyboard DOS",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "1235U processor",
+          "similarity_score": 0.6631,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 52,
+      "query": "best laptop under 150000",
+      "expected_scope": "laptops",
+      "expected_budget_max": 150000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 6157.8,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.879,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "HP 15s FQ5098TU 15.6 Inches 12th Gen Core i5 Win 11 (8GB - 512GB)",
+          "price": "Rs 145,999",
+          "category": "laptops",
+          "processor": "Intel Core i5-1235u Processor",
+          "similarity_score": 0.8685,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8681,
+          "boosted_score": 0.52
+        }
+      ]
+    },
+    {
+      "index": 53,
+      "query": "student laptop",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 4138.2,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9118,
+          "boosted_score": 0.7234
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8848,
+          "boosted_score": 0.6854
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.88,
+          "boosted_score": 0.6374
+        }
+      ]
+    },
+    {
+      "index": 54,
+      "query": "laptops for students",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 4274.6,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9135,
+          "boosted_score": 0.7234
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8869,
+          "boosted_score": 0.6854
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8844,
+          "boosted_score": 0.6374
+        }
+      ]
+    },
+    {
+      "index": 55,
+      "query": "best laptop for university student",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 3953.3,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9193,
+          "boosted_score": 0.7234
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8953,
+          "boosted_score": 0.6854
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8839,
+          "boosted_score": 0.6374
+        }
+      ]
+    },
+    {
+      "index": 56,
+      "query": "labtop for study",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 3761.4,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8763,
+          "boosted_score": 0.7234
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8376,
+          "boosted_score": 0.6854
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8301,
+          "boosted_score": 0.6374
+        }
+      ]
+    },
+    {
+      "index": 57,
+      "query": "laptos for students",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 3993.6,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8849,
+          "boosted_score": 0.7234
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8482,
+          "boosted_score": 0.6854
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8404,
+          "boosted_score": 0.6374
+        }
+      ]
+    },
+    {
+      "index": 58,
+      "query": "gaming laptop under 200k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 200000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 8950.5,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9275,
+          "boosted_score": 0.751
+        },
+        {
+          "name": "HP Probook 450 G10 Raptor Lake 13th Gen Core i5 1334U 8GB-512GB SSD",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "13th Gen Core i5 1334u Raptor Lake Processor (12 MB Intel Smart Cache)",
+          "similarity_score": 0.9138,
+          "boosted_score": 0.718
+        },
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.9138,
+          "boosted_score": 0.7015
+        }
+      ]
+    },
+    {
+      "index": 59,
+      "query": "gaming laptop with rtx 4060",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4092.5,
+      "top3": [
+        {
+          "name": "HP VICTUS 16-R0003NIA Ci7-13700H (32GB -1TB SSD) RTX 4060 8GB",
+          "price": "Rs 349,999",
+          "category": "laptops",
+          "processor": "Intel Core i7-13700HX 13th Generation",
+          "similarity_score": 0.9714,
+          "boosted_score": 1.0555
+        },
+        {
+          "name": "HP OMEN 16-AP0167AX R9-8940HX (16GB - 512GB) RTX-5060-8GB",
+          "price": "Rs 419,999",
+          "category": "laptops",
+          "processor": "13th Gen Core i9 13900HX Raptor Lake Processor (36 MB Intel Smart Cache)",
+          "similarity_score": 0.9683,
+          "boosted_score": 1.0555
+        },
+        {
+          "name": "ASUS TUF FX507VV-Ci7-13620H (16GB-512GB) RTX 4060 8GB",
+          "price": "Rs 369,000",
+          "category": "laptops",
+          "processor": "13th Gen Intel Core i7-13700H Processor 2.4 GHz, 24M Cache, up to 5 GHz",
+          "similarity_score": 0.968,
+          "boosted_score": 0.9985
+        }
+      ]
+    },
+    {
+      "index": 60,
+      "query": "laptop for coding and battery",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 3706.0,
+      "top3": [
+        {
+          "name": "ASUS ROG STRIX G16 G615JMR Ci7 14650HX (16GB-1TB SSD) RTX 5060 8GB",
+          "price": "Rs 527,999",
+          "category": "laptops",
+          "processor": "Intel 14th Gen Core i7-14650HX Processor",
+          "similarity_score": 0.9277,
+          "boosted_score": 0.6805
+        },
+        {
+          "name": "HP VICTUS 16-R0003NIA Ci7-13700H (32GB -1TB SSD) RTX 4060 8GB",
+          "price": "Rs 349,999",
+          "category": "laptops",
+          "processor": "Intel Core i7-13700HX 13th Generation",
+          "similarity_score": 0.9245,
+          "boosted_score": 0.6655
+        },
+        {
+          "name": "HP OMEN 16-AP0167AX R9-8940HX (16GB - 512GB) RTX-5060-8GB",
+          "price": "Rs 419,999",
+          "category": "laptops",
+          "processor": "13th Gen Core i9 13900HX Raptor Lake Processor (36 MB Intel Smart Cache)",
+          "similarity_score": 0.9238,
+          "boosted_score": 0.6655
+        }
+      ]
+    },
+    {
+      "index": 61,
+      "query": "lightweight laptop for office",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 3588.5,
+      "top3": [
+        {
+          "name": "Lenovo Ideapad Slim 3 13th Gen Core i7 DOS(16GB-512GB)",
+          "price": "Rs 214,999",
+          "category": "laptops",
+          "processor": "13620H processor",
+          "similarity_score": 0.8373,
+          "boosted_score": 0.34
+        },
+        {
+          "name": "HP ProBook 460 G11 Ultra 7 155U",
+          "price": "Rs 247,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.8372,
+          "boosted_score": 0.34
+        },
+        {
+          "name": "Lenovo Thinkbook 15 G2 1135G7 15.6 Inches 11th Gen Core i5 DOS (8GB - 1TB)",
+          "price": "Rs 204,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.8335,
+          "boosted_score": 0.34
+        }
+      ]
+    },
+    {
+      "index": 62,
+      "query": "best budget laptop under 120k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 6299.5,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8812,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8618,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.855,
+          "boosted_score": 0.52
+        }
+      ]
+    },
+    {
+      "index": 63,
+      "query": "core i7 laptop under 180k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 180000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 2,
+      "response_ms": 3814.6,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8866,
+          "boosted_score": 0.586
+        },
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.8704,
+          "boosted_score": 0.526
+        }
+      ]
+    },
+    {
+      "index": 64,
+      "query": "ryzen 7 laptop under 160k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 160000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 1,
+      "response_ms": 4446.3,
+      "top3": [
+        {
+          "name": "Lenovo IdeaPad Slim 3 Ryzen 7 (8GB-512GB)",
+          "price": "Rs 150,999",
+          "category": "laptops",
+          "processor": "7730u PROCESSOR",
+          "similarity_score": 0.8953,
+          "boosted_score": 0.526
+        }
+      ]
+    },
+    {
+      "index": 65,
+      "query": "cheap laptop for classes",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5088.2,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.7397,
+          "boosted_score": 0.1734
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.7284,
+          "boosted_score": 0.1214
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Ryzen 7 (8GB-512GB)",
+          "price": "Rs 150,999",
+          "category": "laptops",
+          "processor": "7730u PROCESSOR",
+          "similarity_score": 0.7163,
+          "boosted_score": 0.1098
+        }
+      ]
+    },
+    {
+      "index": 66,
+      "query": "laptop for online class and notes",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 4633.7,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9088,
+          "boosted_score": 0.7234
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8787,
+          "boosted_score": 0.6854
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.877,
+          "boosted_score": 0.6374
+        }
+      ]
+    },
+    {
+      "index": 67,
+      "query": "best laptop for programming",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5801.4,
+      "top3": [
+        {
+          "name": "Lenovo Legion Pro 7 Ultra 9-275HX (32GB-2TB SSD) RTX 5070Ti 12GB 240Hz",
+          "price": "Rs 992,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 275HX Processor (36M Cache)",
+          "similarity_score": 0.833,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "Lenovo Legion Pro 7 Ultra 9 275HX (64GB-2TB SSD) RTX 5080 16GB 240Hz",
+          "price": "Rs 1,451,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 275HX Processor (36M Cache)",
+          "similarity_score": 0.8292,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "HP OMNIBOOK ULTRA FLIP 14-FH0033DX ULTRA 9-288V (32GB-2TB SSD)",
+          "price": "Rs 517,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 288V Processor (8C",
+          "similarity_score": 0.8259,
+          "boosted_score": 0.22
+        }
+      ]
+    },
+    {
+      "index": 68,
+      "query": "ultrabook under 170k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 170000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 15522.2,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8793,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Asus VivoBook 15 x1504VA Ci5 1335U (8GB-512GB SSD)",
+          "price": "Rs 149,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.859,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "ASUS ExpertBook B1502CV 13th Gen Core i5 1355U (8GB-512GB SSD)",
+          "price": "Rs 151,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.8585,
+          "boosted_score": 0.46
+        }
+      ]
+    },
+    {
+      "index": 69,
+      "query": "business laptop under 200k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 200000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 7504.4,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8728,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "HP ProBook 450 G9 15.6 Inches 12th Gen Core i5 Backlit Keyboard DOS",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "1235U processor",
+          "similarity_score": 0.861,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.8588,
+          "boosted_score": 0.46
+        }
+      ]
+    },
+    {
+      "index": 70,
+      "query": "laptop with 16gb ram under 150k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 150000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5022.8,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8702,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Lenovo ThinkBook 16 Ci3-1305U (8GB-512GB SSD)",
+          "price": "Rs 137,999",
+          "category": "laptops",
+          "processor": "R5 7530U Proceessor",
+          "similarity_score": 0.8557,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.854,
+          "boosted_score": 0.52
+        }
+      ]
+    },
+    {
+      "index": 71,
+      "query": "laptop with 512gb ssd under 180k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 180000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 7543.4,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8567,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Asus VivoBook 16 M1605YA Ryzen 7-7730U (8GB-512GB SSD)",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "AMD Ryzen",
+          "similarity_score": 0.8531,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "ASUS ExpertBook B1502CV 13th Gen Core i5 1355U (8GB-512GB SSD)",
+          "price": "Rs 151,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.8507,
+          "boosted_score": 0.46
+        }
+      ]
+    },
+    {
+      "index": 72,
+      "query": "best hp laptop budget",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 8675.6,
+      "top3": [
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.7118,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "HP 15-FD0499NIA Ci5-1334U (8GB 512GB SSD)",
+          "price": "Rs 162,999",
+          "category": "laptops",
+          "processor": "Core",
+          "similarity_score": 0.7014,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "HP 15s FQ5098TU 15.6 Inches 12th Gen Core i5 Win 11 (8GB - 512GB)",
+          "price": "Rs 145,999",
+          "category": "laptops",
+          "processor": "Intel Core i5-1235u Processor",
+          "similarity_score": 0.6911,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 73,
+      "query": "best dell laptop under 180k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 180000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 10228.1,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8815,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Dell Latitude 3540 Ci5-1335U (8GB-256GB SSD) 15.6 FHD",
+          "price": "Rs 169,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.8791,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "Dell Inspiron 3515 15.6 inches AMD Ryzen 5 3450U (8GB - 256GB)",
+          "price": "Rs 134,499",
+          "category": "laptops",
+          "processor": "AMD Ryzen",
+          "similarity_score": 0.8774,
+          "boosted_score": 0.46
+        }
+      ]
+    },
+    {
+      "index": 74,
+      "query": "lenovo laptop for student",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 6559.7,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9103,
+          "boosted_score": 0.7234
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.883,
+          "boosted_score": 0.6374
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8819,
+          "boosted_score": 0.6854
+        }
+      ]
+    },
+    {
+      "index": 75,
+      "query": "asus laptop under 160k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 160000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5451.4,
+      "top3": [
+        {
+          "name": "Asus VivoBook 15 x1504VA Ci5 1335U (8GB-512GB SSD)",
+          "price": "Rs 149,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.881,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "ASUS ExpertBook B1502CV 13th Gen Core i5 1355U (8GB-512GB SSD)",
+          "price": "Rs 151,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.8795,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8788,
+          "boosted_score": 0.52
+        }
+      ]
+    },
+    {
+      "index": 76,
+      "query": "macbook style laptop under 200k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 200000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5931.6,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8765,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.8556,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Ryzen 7 (8GB-512GB)",
+          "price": "Rs 150,999",
+          "category": "laptops",
+          "processor": "7730u PROCESSOR",
+          "similarity_score": 0.8535,
+          "boosted_score": 0.46
+        }
+      ]
+    },
+    {
+      "index": 77,
+      "query": "premium laptop for office",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5586.9,
+      "top3": [
+        {
+          "name": "HP ProBook 460 G11 Ultra 7 155U",
+          "price": "Rs 247,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.8371,
+          "boosted_score": 0.34
+        },
+        {
+          "name": "HP Probook 440 G10 13th Gen Core i7 DOS",
+          "price": "Rs 221,999",
+          "category": "laptops",
+          "processor": "Raptor Lake Processor",
+          "similarity_score": 0.8336,
+          "boosted_score": 0.34
+        },
+        {
+          "name": "HP ProBook 450 G9 15.6 Inches 12th Gen Core i7 DOS (8GB - 512GB) International",
+          "price": "Rs 186,999",
+          "category": "laptops",
+          "processor": "1255u processor",
+          "similarity_score": 0.8319,
+          "boosted_score": 0.34
+        }
+      ]
+    },
+    {
+      "index": 78,
+      "query": "laptop for daily use",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 6070.8,
+      "top3": [
+        {
+          "name": "LENOVO LOQ 15 Core i7 14650HX",
+          "price": "Rs 375,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.8879,
+          "boosted_score": 0.4361
+        },
+        {
+          "name": "Acer Nitro V15 13th Gen Core i9 13900H (16GB-512GB SSD)",
+          "price": "Rs 312,999",
+          "category": "laptops",
+          "processor": "13th Gen Core i9 13900H Raptor Lake Processor (24 MB Intel Smart Cache)",
+          "similarity_score": 0.8752,
+          "boosted_score": 0.4311
+        },
+        {
+          "name": "Lenovo ThinkPad X1 Carbon G13 Ultra 7 256V (32GB-512GB SSD)",
+          "price": "Rs 659,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.871,
+          "boosted_score": 0.4221
+        }
+      ]
+    },
+    {
+      "index": 79,
+      "query": "affordable laptop for work",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 7163.8,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6698,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.6593,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.6546,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 80,
+      "query": "low budget laptop",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5139.6,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6737,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.6623,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Ryzen 7 (8GB-512GB)",
+          "price": "Rs 150,999",
+          "category": "laptops",
+          "processor": "7730u PROCESSOR",
+          "similarity_score": 0.6613,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 81,
+      "query": "sasta laptop under 90k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 90000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5142.8,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6653,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "Lenovo ThinkBook 16 Ci3-1305U (8GB-512GB SSD)",
+          "price": "Rs 137,999",
+          "category": "laptops",
+          "processor": "R5 7530U Proceessor",
+          "similarity_score": 0.6405,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "Asus VivoBook 16 M1605YA Ryzen 7-7730U (8GB-512GB SSD)",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "AMD Ryzen",
+          "similarity_score": 0.6362,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 82,
+      "query": "laptop 120 hazar se kam",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 7623.2,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8469,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8442,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "HP 15 FD0336nia 13th Gen Core i3 (4GB-256GB)",
+          "price": "Rs 107,999",
+          "category": "laptops",
+          "processor": "1315u PROCESSOR",
+          "similarity_score": 0.8402,
+          "boosted_score": 0.52
+        }
+      ]
+    },
+    {
+      "index": 83,
+      "query": "laptop 150 hazar sa km ka",
+      "expected_scope": "laptops",
+      "expected_budget_max": 150000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 6989.1,
+      "top3": [
+        {
+          "name": "HP 15s FQ5098TU 15.6 Inches 12th Gen Core i5 Win 11 (8GB - 512GB)",
+          "price": "Rs 145,999",
+          "category": "laptops",
+          "processor": "Intel Core i5-1235u Processor",
+          "similarity_score": 0.8542,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.853,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Lenovo V15 G3-Ci5 12th (8GB 512GB SSD)",
+          "price": "Rs 137,499",
+          "category": "laptops",
+          "processor": "1235u PROCEESOR",
+          "similarity_score": 0.8486,
+          "boosted_score": 0.46
+        }
+      ]
+    },
+    {
+      "index": 84,
+      "query": "best notebook under 130k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 130000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5959.3,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8918,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8662,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8645,
+          "boosted_score": 0.52
+        }
+      ]
+    },
+    {
+      "index": 85,
+      "query": "portable laptop under 140k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 140000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4466.8,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9005,
+          "boosted_score": 0.64
+        },
+        {
+          "name": "Lenovo ThinkBook 16 Ci3-1305U (8GB-512GB SSD)",
+          "price": "Rs 137,999",
+          "category": "laptops",
+          "processor": "R5 7530U Proceessor",
+          "similarity_score": 0.8909,
+          "boosted_score": 0.58
+        },
+        {
+          "name": "Lenovo V15 G3-Ci5 12th (8GB 512GB SSD)",
+          "price": "Rs 137,499",
+          "category": "laptops",
+          "processor": "1235u PROCEESOR",
+          "similarity_score": 0.8831,
+          "boosted_score": 0.58
+        }
+      ]
+    },
+    {
+      "index": 86,
+      "query": "coding laptop under 170k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 170000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4053.5,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9385,
+          "boosted_score": 0.871
+        },
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.9337,
+          "boosted_score": 0.8215
+        },
+        {
+          "name": "Lenovo V15 G4 Core i5 13th Generation",
+          "price": "Rs 162,999",
+          "category": "laptops",
+          "processor": "13420H processor",
+          "similarity_score": 0.9327,
+          "boosted_score": 0.817
+        }
+      ]
+    },
+    {
+      "index": 87,
+      "query": "best laptop for software engineering student",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 4028.5,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9173,
+          "boosted_score": 0.7234
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8912,
+          "boosted_score": 0.6854
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8774,
+          "boosted_score": 0.6374
+        }
+      ]
+    },
+    {
+      "index": 88,
+      "query": "good battery backup laptop",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5192.6,
+      "top3": [
+        {
+          "name": "Lenovo Legion Pro 7 Ultra 9-275HX (32GB-2TB SSD) RTX 5070Ti 12GB 240Hz",
+          "price": "Rs 992,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 275HX Processor (36M Cache)",
+          "similarity_score": 0.8284,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "Lenovo Legion Pro 7 Ultra 9 275HX (64GB-2TB SSD) RTX 5080 16GB 240Hz",
+          "price": "Rs 1,451,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 275HX Processor (36M Cache)",
+          "similarity_score": 0.8262,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "ASUS ROG STRIX G16 G615JMR Ci7 14650HX (16GB-1TB SSD) RTX 5060 8GB",
+          "price": "Rs 527,999",
+          "category": "laptops",
+          "processor": "Intel 14th Gen Core i7-14650HX Processor",
+          "similarity_score": 0.8212,
+          "boosted_score": 0.22
+        }
+      ]
+    },
+    {
+      "index": 89,
+      "query": "laptop for freelancing",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 3978.7,
+      "top3": [
+        {
+          "name": "HP OMNIBOOK ULTRA FLIP 14-FH0033DX ULTRA 9-288V (32GB-2TB SSD)",
+          "price": "Rs 517,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 288V Processor (8C",
+          "similarity_score": 0.8277,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "Lenovo Legion Pro 7 Ultra 9-275HX (32GB-2TB SSD) RTX 5070Ti 12GB 240Hz",
+          "price": "Rs 992,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 275HX Processor (36M Cache)",
+          "similarity_score": 0.8235,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "Lenovo Legion Pro 7 Ultra 9 275HX (64GB-2TB SSD) RTX 5080 16GB 240Hz",
+          "price": "Rs 1,451,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 275HX Processor (36M Cache)",
+          "similarity_score": 0.8207,
+          "boosted_score": 0.22
+        }
+      ]
+    },
+    {
+      "index": 90,
+      "query": "laptop for excel and office",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4326.6,
+      "top3": [
+        {
+          "name": "HP ProBook 460 G11 Ultra 7 155U",
+          "price": "Rs 247,999",
+          "category": "laptops",
+          "processor": "Intel",
+          "similarity_score": 0.8394,
+          "boosted_score": 0.34
+        },
+        {
+          "name": "HP Probook 440 G10 13th Gen Core i7 DOS",
+          "price": "Rs 221,999",
+          "category": "laptops",
+          "processor": "Raptor Lake Processor",
+          "similarity_score": 0.8343,
+          "boosted_score": 0.34
+        },
+        {
+          "name": "HP Probook 440 G11 Ultra 7 155u",
+          "price": "Rs 247,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 7 155u Processor",
+          "similarity_score": 0.832,
+          "boosted_score": 0.34
+        }
+      ]
+    },
+    {
+      "index": 91,
+      "query": "budget laptop for teachers",
+      "expected_scope": "laptops",
+      "expected_budget_max": 120000.0,
+      "ok": false,
+      "scope_ok": true,
+      "budget_ok": false,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4192.4,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6636,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Ryzen 7 (8GB-512GB)",
+          "price": "Rs 150,999",
+          "category": "laptops",
+          "processor": "7730u PROCESSOR",
+          "similarity_score": 0.6532,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "Lenovo ThinkBook 16 Ci3-1305U (8GB-512GB SSD)",
+          "price": "Rs 137,999",
+          "category": "laptops",
+          "processor": "R5 7530U Proceessor",
+          "similarity_score": 0.6467,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 92,
+      "query": "laptop for web development",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4763.4,
+      "top3": [
+        {
+          "name": "HP OMNIBOOK ULTRA FLIP 14-FH0033DX ULTRA 9-288V (32GB-2TB SSD)",
+          "price": "Rs 517,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 288V Processor (8C",
+          "similarity_score": 0.8372,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "Lenovo Legion Pro 7 Ultra 9-275HX (32GB-2TB SSD) RTX 5070Ti 12GB 240Hz",
+          "price": "Rs 992,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 275HX Processor (36M Cache)",
+          "similarity_score": 0.8354,
+          "boosted_score": 0.22
+        },
+        {
+          "name": "Lenovo Legion Pro 7 Ultra 9 275HX (64GB-2TB SSD) RTX 5080 16GB 240Hz",
+          "price": "Rs 1,451,999",
+          "category": "laptops",
+          "processor": "Intel Core Ultra 9 275HX Processor (36M Cache)",
+          "similarity_score": 0.832,
+          "boosted_score": 0.22
+        }
+      ]
+    },
+    {
+      "index": 93,
+      "query": "best laptop with good processor",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5451.4,
+      "top3": [
+        {
+          "name": "Lenovo loq 15 13th Core i7 13650hx (24GB-512GB) DOS",
+          "price": "Rs 327,999",
+          "category": "laptops",
+          "processor": "13th Generation Core i7 13650HX Processor",
+          "similarity_score": 0.9009,
+          "boosted_score": 0.44
+        },
+        {
+          "name": "Acer Nitro V15 13th Gen Core i9 13900H (16GB-512GB SSD)",
+          "price": "Rs 312,999",
+          "category": "laptops",
+          "processor": "13th Gen Core i9 13900H Raptor Lake Processor (24 MB Intel Smart Cache)",
+          "similarity_score": 0.9009,
+          "boosted_score": 0.44
+        },
+        {
+          "name": "ASUS ROG STRIX G16 G615JMR Ci7 14650HX (16GB-1TB SSD) RTX 5060 8GB",
+          "price": "Rs 527,999",
+          "category": "laptops",
+          "processor": "Intel 14th Gen Core i7-14650HX Processor",
+          "similarity_score": 0.9006,
+          "boosted_score": 0.44
+        }
+      ]
+    },
+    {
+      "index": 94,
+      "query": "best laptop with dedicated gpu under 250k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 250000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 5859.4,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9004,
+          "boosted_score": 0.592
+        },
+        {
+          "name": "Lenovo V15 G4 Core i5 13th Generation",
+          "price": "Rs 162,999",
+          "category": "laptops",
+          "processor": "13420H processor",
+          "similarity_score": 0.8871,
+          "boosted_score": 0.544
+        },
+        {
+          "name": "Asus VivoBook 16 M1605YA Ryzen 7-7730U (8GB-512GB SSD)",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "AMD Ryzen",
+          "similarity_score": 0.8869,
+          "boosted_score": 0.544
+        }
+      ]
+    },
+    {
+      "index": 95,
+      "query": "rtx laptop for gaming",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4296.1,
+      "top3": [
+        {
+          "name": "ASUS ROG STRIX G16 G615JMR Ci7 14650HX (16GB-1TB SSD) RTX 5060 8GB",
+          "price": "Rs 527,999",
+          "category": "laptops",
+          "processor": "Intel 14th Gen Core i7-14650HX Processor",
+          "similarity_score": 0.9777,
+          "boosted_score": 1.0705
+        },
+        {
+          "name": "HP VICTUS 16-R0003NIA Ci7-13700H (32GB -1TB SSD) RTX 4060 8GB",
+          "price": "Rs 349,999",
+          "category": "laptops",
+          "processor": "Intel Core i7-13700HX 13th Generation",
+          "similarity_score": 0.9719,
+          "boosted_score": 1.0555
+        },
+        {
+          "name": "HP OMEN 16-AP0167AX R9-8940HX (16GB - 512GB) RTX-5060-8GB",
+          "price": "Rs 419,999",
+          "category": "laptops",
+          "processor": "13th Gen Core i9 13900HX Raptor Lake Processor (36 MB Intel Smart Cache)",
+          "similarity_score": 0.9712,
+          "boosted_score": 1.0555
+        }
+      ]
+    },
+    {
+      "index": 96,
+      "query": "laptop for video editing under 220k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 220000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4238.0,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8691,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Lenovo V15 G4 Core i5 13th Generation",
+          "price": "Rs 162,999",
+          "category": "laptops",
+          "processor": "13420H processor",
+          "similarity_score": 0.8539,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "HP 15s FQ2653TU 11th Gen Core i7 (8GB-512GB)",
+          "price": "Rs 160,999",
+          "category": "laptops",
+          "processor": "1335U PROCESSOR",
+          "similarity_score": 0.8535,
+          "boosted_score": 0.46
+        }
+      ]
+    },
+    {
+      "index": 97,
+      "query": "laptop for university projects",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 4,
+      "response_ms": 3747.7,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.9113,
+          "boosted_score": 0.7234
+        },
+        {
+          "name": "Infinix INBOOK Air (XL442) Core i3 1215U (8GB - 256GB)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Intel Core i3-1215U",
+          "similarity_score": 0.8841,
+          "boosted_score": 0.6854
+        },
+        {
+          "name": "HP Laptop 15-FD0532NIA Intel Core i3-1315U 13th Gen (4GB-256GB)",
+          "price": "Rs 114,999",
+          "category": "laptops",
+          "processor": "13th Generation Intel",
+          "similarity_score": 0.8803,
+          "boosted_score": 0.6374
+        }
+      ]
+    },
+    {
+      "index": 98,
+      "query": "best value for money laptop",
+      "expected_scope": "laptops",
+      "expected_budget_max": null,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": null,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 4405.9,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.6857,
+          "boosted_score": -0.03
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.6575,
+          "boosted_score": -0.09
+        },
+        {
+          "name": "Lenovo ThinkBook 16 Ci3-1305U (8GB-512GB SSD)",
+          "price": "Rs 137,999",
+          "category": "laptops",
+          "processor": "R5 7530U Proceessor",
+          "similarity_score": 0.6567,
+          "boosted_score": -0.09
+        }
+      ]
+    },
+    {
+      "index": 99,
+      "query": "laptop under rs 200000",
+      "expected_scope": "laptops",
+      "expected_budget_max": 200000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 3716.1,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.861,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Asus VivoBook 16 M1605YA Ryzen 7-7730U (8GB-512GB SSD)",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "AMD Ryzen",
+          "similarity_score": 0.8539,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Core i5 13th Gen",
+          "price": "Rs 152,999",
+          "category": "laptops",
+          "processor": "13420H processr",
+          "similarity_score": 0.8515,
+          "boosted_score": 0.46
+        }
+      ]
+    },
+    {
+      "index": 100,
+      "query": "laptop within 180k",
+      "expected_scope": "laptops",
+      "expected_budget_max": 180000.0,
+      "ok": true,
+      "scope_ok": true,
+      "budget_ok": true,
+      "status": "ok",
+      "error": null,
+      "count": 5,
+      "response_ms": 3706.3,
+      "top3": [
+        {
+          "name": "Infinix INBook X2 1065G7 14 Inches Core i7 (8GB RAM - 512GB SSD)",
+          "price": "Rs 119,999",
+          "category": "laptops",
+          "processor": "Quad Core",
+          "similarity_score": 0.8736,
+          "boosted_score": 0.52
+        },
+        {
+          "name": "Asus VivoBook 16 M1605YA Ryzen 7-7730U (8GB-512GB SSD)",
+          "price": "Rs 179,999",
+          "category": "laptops",
+          "processor": "AMD Ryzen",
+          "similarity_score": 0.8607,
+          "boosted_score": 0.46
+        },
+        {
+          "name": "Lenovo IdeaPad Slim 3 Ryzen 7 (8GB-512GB)",
+          "price": "Rs 150,999",
+          "category": "laptops",
+          "processor": "7730u PROCESSOR",
+          "similarity_score": 0.8584,
+          "boosted_score": 0.46
+        }
+      ]
+    }
+  ]
+}

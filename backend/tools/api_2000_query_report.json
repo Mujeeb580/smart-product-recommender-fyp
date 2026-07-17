@@ -1,0 +1,41 @@
+{
+  "summary": {
+    "seed": 20260717,
+    "total_requests": 3070,
+    "passed": 3070,
+    "failed": 0,
+    "pass_rate": 100.0,
+    "avg_ms": 82.8,
+    "median_ms": 31.5,
+    "p95_ms": 223.0,
+    "p99_ms": 345.1,
+    "max_ms": 3836.9,
+    "elapsed_seconds": 265.8,
+    "catalog_counts": {
+      "phones": 157,
+      "laptops": 216,
+      "products": 0
+    },
+    "recommendation_requests": 2720,
+    "chat_requests": 200,
+    "misc_requests": 150
+  },
+  "sections": {
+    "recommendations": {
+      "passed": 2720
+    },
+    "chat": {
+      "passed": 200
+    },
+    "misc": {
+      "passed": 150
+    }
+  },
+  "failure_categories": {},
+  "sampled_failures": [],
+  "methodology": {
+    "api_layer": "FastAPI TestClient against the real routes",
+    "catalog": "one real Firestore snapshot reused for the large run",
+    "chat_external_calls": "live web verification and OpenRouter replaced with deterministic local functions"
+  }
+}

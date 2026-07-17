@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional, List
 from app.recommendation.firestore import fetch_products
-from app.recommendation.engine import recommend_products
+from app.recommendation.engine import _format_price_pkr, recommend_products
 from app.recommendation.processor_engine import score_product
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -30,7 +30,8 @@ def _add_device_score(product: dict) -> dict:
         item["device_tier"] = "Unknown"
         item["normalized_processor"] = item.get("processor", "Unknown")
         item["performance_breakdown"] = {}
-    
+
+    item["price"] = _format_price_pkr(item.get("price"))
     return item
 
 
@@ -91,7 +92,12 @@ async def get_recommendations(
         products = _get_all_products(collection=collection)
         
         if not products:
-            return {"products": [], "message": "No products available"}
+            return {
+                "products": [],
+                "count": 0,
+                "query": query,
+                "message": "No products available",
+            }
         
         # If query provided, use recommendation engine
         if query:
@@ -107,7 +113,12 @@ async def get_recommendations(
         return {
             "products": recommended,
             "count": len(recommended),
-            "query": query
+            "query": query,
+            "fallback": (
+                recommended[0].get("fallback_reason")
+                if recommended
+                else None
+            ),
         }
     
     except Exception as e:
@@ -126,7 +137,12 @@ async def search_products(
         products = _get_all_products(collection=collection)
         
         if not products:
-            return {"products": [], "message": "No products available"}
+            return {
+                "products": [],
+                "count": 0,
+                "query": q,
+                "message": "No products available",
+            }
         
         # Use recommendation engine for semantic search
         results = recommend_products(q, products, top_n=20)
@@ -157,7 +173,19 @@ async def filter_products(
         products = _get_all_products(collection=collection)
         
         if not products:
-            return {"products": [], "message": "No products available"}
+            return {
+                "products": [],
+                "count": 0,
+                "filters": {
+                    "category": category,
+                    "brand": brand,
+                    "min_price": min_price,
+                    "max_price": max_price,
+                    "collection": collection,
+                    "limit": limit,
+                },
+                "message": "No products available",
+            }
         
         filtered_products = products
         
@@ -216,7 +244,7 @@ async def get_trending_products(
         products = _get_all_products()
         
         if not products:
-            return {"products": [], "message": "No products available"}
+            return {"products": [], "count": 0, "message": "No products available"}
         
         # Sort by price descending (simulating popularity) or any other metric
         trending = sorted(
