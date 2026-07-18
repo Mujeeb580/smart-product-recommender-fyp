@@ -1,3 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
 import '../models/product_model.dart';
 import '../models/chat_message_model.dart';
 import 'api_service.dart';
@@ -6,8 +11,15 @@ import '../core/api_config.dart';
 
 class ChatService {
   final ApiService _apiService = ApiService();
-  final AuthService _authService = AuthService();
+  final Future<String?> Function() _tokenProvider;
+  final http.Client _httpClient;
   static String? _sessionId;
+
+  ChatService({
+    Future<String?> Function()? tokenProvider,
+    http.Client? httpClient,
+  })  : _tokenProvider = tokenProvider ?? AuthService().getIdToken,
+        _httpClient = httpClient ?? http.Client();
 
   String _getSessionId() {
     _sessionId ??=
@@ -25,7 +37,7 @@ class ChatService {
   Future<Map<String, dynamic>> sendMessage(String userMessage,
       {ProductModel? product}) async {
     try {
-      final token = await _authService.getIdToken();
+      final token = await _tokenProvider();
       final headers =
           token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
@@ -64,10 +76,52 @@ class ChatService {
     }
   }
 
+  /// Uploads a voice recording to the backend and returns its transcript.
+  Future<String> transcribeAudio(String audioPath) async {
+    try {
+      final token = await _tokenProvider();
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiConfig.chatTranscribe),
+      );
+      request.headers['Accept'] = 'application/json';
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.files.add(await http.MultipartFile.fromPath('file', audioPath));
+
+      final streamedResponse =
+          await _httpClient.send(request).timeout(ApiConfig.receiveTimeout);
+      final response = await http.Response.fromStream(streamedResponse);
+      Map<String, dynamic> body = {};
+      if (response.body.isNotEmpty) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) body = decoded;
+      }
+      if (response.statusCode != 200) {
+        throw ApiException(
+          body['detail']?.toString() ?? 'Voice transcription failed.',
+        );
+      }
+
+      final transcript = body['text']?.toString().trim() ?? '';
+      if (transcript.isEmpty) {
+        throw ApiException('No speech was detected. Please try again.');
+      }
+      return transcript;
+    } on TimeoutException {
+      throw ApiException('Voice transcription timed out. Please try again.');
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Could not transcribe the recording: $e');
+    }
+  }
+
   /// Get chat history
   Future<List<ChatMessageModel>> getChatHistory() async {
     try {
-      final token = await _authService.getIdToken();
+      final token = await _tokenProvider();
       final headers =
           token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 
@@ -93,7 +147,7 @@ class ChatService {
   /// Save chat message
   Future<bool> saveChatMessage(ChatMessageModel message) async {
     try {
-      final token = await _authService.getIdToken();
+      final token = await _tokenProvider();
       final headers =
           token != null ? ApiConfig.authHeaders(token) : ApiConfig.headers;
 

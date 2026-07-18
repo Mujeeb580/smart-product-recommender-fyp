@@ -13,6 +13,7 @@ import 'laptops_screen.dart';
 import 'chat_screen.dart';
 import '../products/product_detail_screen.dart';
 import '../../models/product_model.dart';
+import '../../core/price_formatter.dart';
 import 'search_results_screen.dart';
 import '../products/product_list_screen.dart';
 
@@ -1203,7 +1204,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Rs ${product.price.toStringAsFixed(0)}',
+                        formatPkr(product.price),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: Colors.white,

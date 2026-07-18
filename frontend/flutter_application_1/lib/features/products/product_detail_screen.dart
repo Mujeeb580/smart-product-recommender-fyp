@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/product_model.dart';
+import '../../core/price_formatter.dart';
 import '../../core/theme.dart';
 
 class ProductDetailScreen extends StatelessWidget {
@@ -334,7 +335,7 @@ class ProductDetailScreen extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'PKR ${product.price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                                            formatPkr(product.price),
                                             style: TextStyle(
                                               fontSize: isDesktop
                                                   ? 36

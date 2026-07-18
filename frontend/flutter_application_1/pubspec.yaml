@@ -50,6 +50,8 @@ dependencies:
   
   # Icons
   font_awesome_flutter: ^11.0.0
+  record: ^6.2.1
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

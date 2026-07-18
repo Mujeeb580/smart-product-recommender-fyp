@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
+import '../../core/price_formatter.dart';
 import '../../services/product_service.dart';
 import '../../services/theme_provider.dart';
 import '../../widgets/product_card.dart';
@@ -167,7 +168,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Price Range: Rs ${tempPriceRange.start.toStringAsFixed(0)} - Rs ${tempPriceRange.end.toStringAsFixed(0)}',
+                            'Price Range: ${formatPkr(tempPriceRange.start)} - ${formatPkr(tempPriceRange.end)}',
                             style: const TextStyle(color: Colors.white70),
                           ),
                           if (maxPrice > minPrice)

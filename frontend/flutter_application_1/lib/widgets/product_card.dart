@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/price_formatter.dart';
 
 import '../core/theme.dart';
 import '../models/product_model.dart';
@@ -17,15 +18,6 @@ class ProductCard extends StatelessWidget {
 
   bool _isNetworkImage(String path) =>
       path.startsWith('http://') || path.startsWith('https://');
-
-  String _priceLabel(double price) {
-    final value = price.toStringAsFixed(0);
-    final formatted = value.replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (match) => '${match[1]},',
-    );
-    return 'Rs $formatted';
-  }
 
   String? _specSummary() {
     final values = <String>[
@@ -124,7 +116,7 @@ class ProductCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          _priceLabel(product.price),
+                          formatPkr(product.price),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

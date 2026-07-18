@@ -3,10 +3,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../core/routes.dart';
+import '../../core/price_formatter.dart';
 import '../../models/product_model.dart';
 import '../../services/admin_service.dart';
 
-enum _AdminView { products, users }
+enum _AdminView { products, users, health }
 
 class AdminPortalScreen extends StatefulWidget {
   final AdminService? adminService;
@@ -32,6 +33,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
   List<Map<String, dynamic>> _collections = [];
   List<ProductModel> _products = [];
   List<Map<String, dynamic>> _users = [];
+  Map<String, dynamic> _health = {};
   _AdminView _selectedView = _AdminView.products;
 
   @override
@@ -63,6 +65,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           limit: 250,
         ),
         _adminService.getUsers(),
+        _adminService.getHealth(),
       ]);
 
       setState(() {
@@ -70,6 +73,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
         _collections = results[1] as List<Map<String, dynamic>>;
         _products = results[2] as List<ProductModel>;
         _users = results[3] as List<Map<String, dynamic>>;
+        _health = results[4] as Map<String, dynamic>;
         _isLoading = false;
       });
     } catch (e) {
@@ -332,6 +336,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                     builder: (context, constraints) {
                       final showingProducts =
                           _selectedView == _AdminView.products;
+                      final showingHealth = _selectedView == _AdminView.health;
                       final preferredHeight = showingProducts ? 330.0 : 145.0;
                       final compactHeight = constraints.maxHeight *
                           (showingProducts ? 0.62 : 0.35);
@@ -405,10 +410,12 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                                     ),
                                     onDelete: _deleteProduct,
                                   )
-                                : _UserTable(
-                                    users: _users,
-                                    onDelete: _deleteUser,
-                                  ),
+                                : showingHealth
+                                    ? _CatalogHealthPanel(health: _health)
+                                    : _UserTable(
+                                        users: _users,
+                                        onDelete: _deleteUser,
+                                      ),
                           ),
                         ],
                       );
@@ -875,6 +882,11 @@ class _AdminViewSelector extends StatelessWidget {
             icon: Icon(Icons.people_outline),
             label: Text('Users'),
           ),
+          ButtonSegment(
+            value: _AdminView.health,
+            icon: Icon(Icons.monitor_heart_outlined),
+            label: Text('Health'),
+          ),
         ],
         selected: {selected},
         onSelectionChanged: (selection) => onChanged(selection.first),
@@ -891,6 +903,181 @@ class _AdminViewSelector extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CatalogHealthPanel extends StatelessWidget {
+  final Map<String, dynamic> health;
+
+  const _CatalogHealthPanel({required this.health});
+
+  @override
+  Widget build(BuildContext context) {
+    final score = (health['quality_score'] as num?)?.toInt() ?? 0;
+    final collections = health['collections'] is List
+        ? (health['collections'] as List)
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList()
+        : <Map<String, dynamic>>[];
+    final issueCards = [
+      ('Missing prices', health['missing_price'] ?? 0, Icons.payments_outlined),
+      (
+        'Missing images',
+        health['missing_image'] ?? 0,
+        Icons.image_not_supported_outlined
+      ),
+      (
+        'Missing details',
+        health['missing_details'] ?? 0,
+        Icons.description_outlined
+      ),
+      ('Duplicates', health['duplicates'] ?? 0, Icons.copy_all_outlined),
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 72,
+                height: 72,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: score.clamp(0, 100) / 100,
+                      strokeWidth: 8,
+                      backgroundColor: Colors.white24,
+                      color: score >= 80
+                          ? const Color(0xFF86EFAC)
+                          : const Color(0xFFFDE68A),
+                    ),
+                    Text(
+                      '$score%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Catalog quality',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Firestore ${health['firestore'] ?? 'unknown'} • ${health['items'] ?? 0} items checked',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.78),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: issueCards
+              .map(
+                (item) => Container(
+                  width: 170,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(item.$3, color: Colors.white70),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.$2.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              item.$1,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+        if (collections.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          const Text(
+            'Collections',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...collections.map(
+            (item) => Card(
+              color: Colors.white.withValues(alpha: 0.12),
+              child: ListTile(
+                title: Text(
+                  item['name']?.toString() ?? 'Collection',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  '${item['items'] ?? 0} items • ${item['duplicates'] ?? 0} duplicates',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                trailing: Text(
+                  '${(item['missing_price'] as num? ?? 0).toInt() + (item['missing_image'] as num? ?? 0).toInt() + (item['missing_details'] as num? ?? 0).toInt()} issues',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -1046,7 +1233,7 @@ class _ProductTable extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Rs ${p.price.toStringAsFixed(0)}',
+                        formatPkr(p.price),
                         style: const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.bold),
                       ),

@@ -47,8 +47,10 @@ class ApiConfig {
       '$baseUrl/products/phones/score-details';
 
   static String get chatSendMessage => '$baseUrl/chat/send-message';
+  static String get chatTranscribe => '$baseUrl/chat/transcribe';
 
   static String get adminOverview => '$baseUrl/admin/overview';
+  static String get adminHealth => '$baseUrl/admin/health';
   static String get adminLogin => '$baseUrl/admin/login';
   static String get adminLogout => '$baseUrl/admin/logout';
   static String get adminSession => '$baseUrl/admin/session';

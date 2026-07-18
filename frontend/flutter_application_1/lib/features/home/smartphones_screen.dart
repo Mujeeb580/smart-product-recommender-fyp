@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../models/product_model.dart';
+import '../../core/price_formatter.dart';
 import '../../services/product_service.dart';
 import '../../widgets/loading_widget.dart' as loading_widgets;
 import '../../widgets/product_card.dart';
@@ -265,7 +266,7 @@ class _CompactProductTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Rs ${product.price.toStringAsFixed(0)}',
+                  formatPkr(product.price),
                   style: const TextStyle(
                       color: Colors.white, fontWeight: FontWeight.bold),
                 ),

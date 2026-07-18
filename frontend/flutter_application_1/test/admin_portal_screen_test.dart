@@ -35,6 +35,19 @@ class _FakeAdminService extends AdminService {
   Future<List<Map<String, dynamic>>> getUsers() async => [];
 
   @override
+  Future<Map<String, dynamic>> getHealth() async => {
+        'ok': true,
+        'firestore': 'connected',
+        'items': 0,
+        'quality_score': 100,
+        'missing_price': 0,
+        'missing_image': 0,
+        'missing_details': 0,
+        'duplicates': 0,
+        'collections': <Map<String, dynamic>>[],
+      };
+
+  @override
   Future<Map<String, dynamic>> verifyFirestoreConnection() async =>
       {'ok': true};
 
@@ -97,6 +110,14 @@ void main() {
     await tester.tap(usersTab);
     await tester.pumpAndSettle();
     expect(find.text('No Users'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    final healthTab = find.text('Health');
+    await tester.ensureVisible(healthTab);
+    await tester.tap(healthTab);
+    await tester.pumpAndSettle();
+    expect(find.text('Catalog quality'), findsOneWidget);
+    expect(find.textContaining('Firestore connected'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -85,7 +85,9 @@ class ProductModel {
   static double _toDouble(dynamic value, {double fallback = 0.0}) {
     if (value is num) return value.toDouble();
     if (value is String) {
-      final cleaned = value.replaceAll('Rs', '').replaceAll(',', '').trim();
+      final match = RegExp(r'-?\d[\d,]*(?:\.\d+)?').firstMatch(value);
+      if (match == null) return fallback;
+      final cleaned = match.group(0)!.replaceAll(',', '');
       return double.tryParse(cleaned) ?? fallback;
     }
     return fallback;

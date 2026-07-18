@@ -73,6 +73,11 @@ class AdminService {
     return _apiService.get(ApiConfig.adminOverview, headers: headers);
   }
 
+  Future<Map<String, dynamic>> getHealth() async {
+    final headers = await _headers();
+    return _apiService.get(ApiConfig.adminHealth, headers: headers);
+  }
+
   Future<List<Map<String, dynamic>>> getCollections() async {
     final headers = await _headers();
     final response =

@@ -1,0 +1,55 @@
+import 'package:flutter_application_1/services/recommendation_preferences_service.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  test('defaults preserve existing voice auto-send behavior', () async {
+    final value = await RecommendationPreferencesService().load();
+
+    expect(value.category, 'any');
+    expect(value.budget, isNull);
+    expect(value.voiceAutoSend, isTrue);
+    expect(value.hasRecommendationDetails, isFalse);
+  });
+
+  test('saved preferences produce a constrained recommendation query',
+      () async {
+    final service = RecommendationPreferencesService();
+    await service.save(
+      const RecommendationPreferences(
+        category: 'phones',
+        priority: 'battery',
+        budget: 50000,
+        seniorFriendly: true,
+        voiceAutoSend: false,
+      ),
+    );
+
+    final value = await service.load();
+    final query = value.toRecommendationQuery();
+    expect(value.voiceAutoSend, isFalse);
+    expect(value.summary, contains('Under PKR 50,000'));
+    expect(query, contains('phone'));
+    expect(query, contains('under PKR 50000'));
+    expect(query, contains('battery life'));
+    expect(query, contains('elderly'));
+  });
+
+  test('reset removes custom recommendation details', () async {
+    final service = RecommendationPreferencesService();
+    await service.save(
+      const RecommendationPreferences(category: 'laptops', budget: 120000),
+    );
+    await service.reset();
+
+    final value = await service.load();
+    expect(value.hasRecommendationDetails, isFalse);
+    expect(value.voiceAutoSend, isTrue);
+  });
+}

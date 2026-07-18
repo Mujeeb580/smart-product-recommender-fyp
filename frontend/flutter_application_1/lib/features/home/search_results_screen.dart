@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
+import '../../core/price_formatter.dart';
 import '../../services/product_service.dart';
 import '../products/product_detail_screen.dart';
 
@@ -332,7 +333,7 @@ class _SearchResultCard extends StatelessWidget {
                 ),
               ),
               trailing: Text(
-                'Rs ${product.price.toStringAsFixed(0)}',
+                formatPkr(product.price),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

@@ -1,10 +1,16 @@
 import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:record/record.dart';
 import '../../models/chat_message_model.dart';
 import '../../models/product_model.dart';
+import '../../core/price_formatter.dart';
 import '../../services/chat_service.dart';
 import '../../services/theme_provider.dart';
+import '../../services/recommendation_preferences_service.dart';
 import '../../widgets/chat_bubble.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/glassy_shine.dart';
@@ -22,16 +28,29 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChatService _chatService = ChatService();
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  final RecommendationPreferencesService _preferencesService =
+      RecommendationPreferencesService();
 
   List<ChatMessageModel> _messages = [];
   bool _isLoading = false;
+  bool _isRecording = false;
+  bool _isTranscribing = false;
   List<ProductModel>? _recommendedProducts;
   String? _lastSentMessage;
+  RecommendationPreferences _preferences = const RecommendationPreferences();
 
   @override
   void initState() {
     super.initState();
     _initializeChat();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final value = await _preferencesService.load();
+    if (!mounted) return;
+    setState(() => _preferences = value);
   }
 
   void _initializeChat() {
@@ -54,9 +73,83 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _audioRecorder.dispose();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleVoiceInput() async {
+    if (_isLoading || _isTranscribing) return;
+    if (kIsWeb) {
+      _showVoiceMessage(
+          'Voice input is currently available in the mobile app.');
+      return;
+    }
+
+    try {
+      if (_isRecording) {
+        final path = await _audioRecorder.stop();
+        if (!mounted) return;
+        setState(() {
+          _isRecording = false;
+          _isTranscribing = path != null;
+        });
+        if (path == null) {
+          _showVoiceMessage('No recording was captured. Please try again.');
+          return;
+        }
+
+        final transcript = await _chatService.transcribeAudio(path);
+        if (!mounted) return;
+        setState(() {
+          _isTranscribing = false;
+          _messageController.text = transcript;
+        });
+        if (_preferences.voiceAutoSend) {
+          await _sendMessage();
+        } else {
+          _showVoiceMessage('Transcript ready. Review it, then tap send.');
+        }
+        return;
+      }
+
+      if (!await _audioRecorder.hasPermission()) {
+        _showVoiceMessage('Microphone permission is required for voice input.');
+        return;
+      }
+      final directory = await getTemporaryDirectory();
+      final path =
+          '${directory.path}/chat_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _audioRecorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: 128000,
+          sampleRate: 16000,
+        ),
+        path: path,
+      );
+      if (!mounted) return;
+      setState(() => _isRecording = true);
+      _showVoiceMessage('Listening… Tap the red microphone to stop and send.');
+    } catch (e) {
+      if (!mounted) return;
+      try {
+        await _audioRecorder.stop();
+      } catch (_) {}
+      setState(() {
+        _isRecording = false;
+        _isTranscribing = false;
+      });
+      _showVoiceMessage(e.toString());
+    }
+  }
+
+  void _showVoiceMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<void> _sendMessage() async {
@@ -614,6 +707,17 @@ class _ChatScreenState extends State<ChatScreen> {
                                           _sendMessage();
                                         },
                                       ),
+                                      if (_preferences.hasRecommendationDetails)
+                                        _GlassQuickActionButton(
+                                          label: 'Use my preferences',
+                                          isDesktop: isDesktop,
+                                          onTap: () {
+                                            _messageController.text =
+                                                _preferences
+                                                    .toRecommendationQuery();
+                                            _sendMessage();
+                                          },
+                                        ),
                                       _GlassQuickActionButton(
                                         label: 'Work laptop',
                                         isDesktop: isDesktop,
@@ -653,7 +757,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                 Expanded(
                                   child: TextField(
                                     controller: _messageController,
-                                    enabled: !_isLoading,
+                                    enabled: !_isLoading &&
+                                        !_isRecording &&
+                                        !_isTranscribing,
                                     style: TextStyle(
                                       color:
                                           isDark ? Colors.white : Colors.black,
@@ -707,6 +813,51 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                 ),
                                 SizedBox(width: isDesktop ? 12 : 8),
+                                if (!kIsWeb) ...[
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: _isRecording
+                                          ? const Color(0xFFDC2626)
+                                          : Colors.white
+                                              .withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: _isRecording
+                                            ? const Color(0xFFFCA5A5)
+                                            : Colors.white
+                                                .withValues(alpha: 0.28),
+                                      ),
+                                    ),
+                                    child: IconButton(
+                                      tooltip: _isRecording
+                                          ? 'Stop and send voice message'
+                                          : 'Start voice input',
+                                      onPressed: (_isLoading || _isTranscribing)
+                                          ? null
+                                          : _toggleVoiceInput,
+                                      icon: _isTranscribing
+                                          ? const SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : Icon(
+                                              _isRecording
+                                                  ? Icons.stop_rounded
+                                                  : Icons.mic_rounded,
+                                              color: Colors.white,
+                                              size: isDesktop ? 24 : 20,
+                                            ),
+                                      padding: EdgeInsets.all(
+                                        isDesktop ? 14 : 12,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: isDesktop ? 12 : 8),
+                                ],
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
                                   child: BackdropFilter(
@@ -728,8 +879,11 @@ class _ChatScreenState extends State<ChatScreen> {
                                         ),
                                       ),
                                       child: IconButton(
-                                        onPressed:
-                                            _isLoading ? null : _sendMessage,
+                                        onPressed: (_isLoading ||
+                                                _isRecording ||
+                                                _isTranscribing)
+                                            ? null
+                                            : _sendMessage,
                                         icon: Icon(
                                           Icons.send_rounded,
                                           color: Colors.white,
@@ -1024,7 +1178,7 @@ class _GlassProductCard extends StatelessWidget {
                         ),
                         SizedBox(height: isDesktop ? 3 : 2),
                         Text(
-                          'PKR ${product.price.toStringAsFixed(0)}',
+                          formatPkr(product.price),
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: isDesktop ? 11 : 10,

@@ -9,6 +9,7 @@ import 'help_support_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'language_settings_screen.dart';
 import 'change_password_screen.dart';
+import 'recommendation_preferences_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -87,6 +88,21 @@ class SettingsScreen extends StatelessWidget {
                             value: isDark,
                             onChanged: (value) {
                               themeProvider.setDarkMode(value);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _GlassSettingItem(
+                            icon: Icons.tune_rounded,
+                            title: 'Shopping Preferences',
+                            subtitle: 'Budget, priorities and voice behavior',
+                            showArrow: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const RecommendationPreferencesScreen(),
+                                ),
+                              );
                             },
                           ),
                           if (canChangePassword) ...[
