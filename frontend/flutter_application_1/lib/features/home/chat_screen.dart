@@ -81,11 +81,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _toggleVoiceInput() async {
     if (_isLoading || _isTranscribing) return;
-    if (kIsWeb) {
-      _showVoiceMessage(
-          'Voice input is currently available in the mobile app.');
-      return;
-    }
 
     try {
       if (_isRecording) {
@@ -100,13 +95,17 @@ class _ChatScreenState extends State<ChatScreen> {
           return;
         }
 
-        final transcript = await _chatService.transcribeAudio(path);
+        final transcript = await _chatService.transcribeAudio(
+          path,
+          uploadFilename: kIsWeb ? 'voice.webm' : null,
+        );
         if (!mounted) return;
         setState(() {
           _isTranscribing = false;
           _messageController.text = transcript;
         });
-        if (_preferences.voiceAutoSend) {
+        if (_preferences.voiceAutoSend &&
+            _canAutoSendVoiceTranscript(transcript)) {
           await _sendMessage();
         } else {
           _showVoiceMessage('Transcript ready. Review it, then tap send.');
@@ -118,14 +117,18 @@ class _ChatScreenState extends State<ChatScreen> {
         _showVoiceMessage('Microphone permission is required for voice input.');
         return;
       }
-      final directory = await getTemporaryDirectory();
-      final path =
-          '${directory.path}/chat_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final path = kIsWeb
+          ? 'voice.webm'
+          : '${(await getTemporaryDirectory()).path}/chat_voice_${DateTime.now().millisecondsSinceEpoch}.wav';
       await _audioRecorder.start(
-        const RecordConfig(
-          encoder: AudioEncoder.aacLc,
+        RecordConfig(
+          encoder: kIsWeb ? AudioEncoder.opus : AudioEncoder.wav,
           bitRate: 128000,
-          sampleRate: 16000,
+          sampleRate: kIsWeb ? 48000 : 44100,
+          numChannels: 1,
+          autoGain: true,
+          echoCancel: true,
+          noiseSuppress: true,
         ),
         path: path,
       );
@@ -143,6 +146,21 @@ class _ChatScreenState extends State<ChatScreen> {
       });
       _showVoiceMessage(e.toString());
     }
+  }
+
+  bool _canAutoSendVoiceTranscript(String transcript) {
+    final normalized = transcript.toLowerCase().trim();
+    final words = normalized
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    if (words.length < 4) return false;
+    return RegExp(
+      r'\b(phone|mobile|laptop|notebook|budget|price|battery|camera|gaming|'
+      r'calling|social media|ram|storage|processor|student|study|office|'
+      r'college|university|chahiye|mujhe|buzurg|sasta|behtar)\b',
+      caseSensitive: false,
+    ).hasMatch(normalized);
   }
 
   void _showVoiceMessage(String message) {
@@ -813,51 +831,48 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                 ),
                                 SizedBox(width: isDesktop ? 12 : 8),
-                                if (!kIsWeb) ...[
-                                  Container(
-                                    decoration: BoxDecoration(
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: _isRecording
+                                        ? const Color(0xFFDC2626)
+                                        : Colors.white.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
                                       color: _isRecording
-                                          ? const Color(0xFFDC2626)
+                                          ? const Color(0xFFFCA5A5)
                                           : Colors.white
-                                              .withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: _isRecording
-                                            ? const Color(0xFFFCA5A5)
-                                            : Colors.white
-                                                .withValues(alpha: 0.28),
-                                      ),
-                                    ),
-                                    child: IconButton(
-                                      tooltip: _isRecording
-                                          ? 'Stop and send voice message'
-                                          : 'Start voice input',
-                                      onPressed: (_isLoading || _isTranscribing)
-                                          ? null
-                                          : _toggleVoiceInput,
-                                      icon: _isTranscribing
-                                          ? const SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : Icon(
-                                              _isRecording
-                                                  ? Icons.stop_rounded
-                                                  : Icons.mic_rounded,
-                                              color: Colors.white,
-                                              size: isDesktop ? 24 : 20,
-                                            ),
-                                      padding: EdgeInsets.all(
-                                        isDesktop ? 14 : 12,
-                                      ),
+                                              .withValues(alpha: 0.28),
                                     ),
                                   ),
-                                  SizedBox(width: isDesktop ? 12 : 8),
-                                ],
+                                  child: IconButton(
+                                    tooltip: _isRecording
+                                        ? 'Stop and send voice message'
+                                        : 'Start voice input',
+                                    onPressed: (_isLoading || _isTranscribing)
+                                        ? null
+                                        : _toggleVoiceInput,
+                                    icon: _isTranscribing
+                                        ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : Icon(
+                                            _isRecording
+                                                ? Icons.stop_rounded
+                                                : Icons.mic_rounded,
+                                            color: Colors.white,
+                                            size: isDesktop ? 24 : 20,
+                                          ),
+                                    padding: EdgeInsets.all(
+                                      isDesktop ? 14 : 12,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: isDesktop ? 12 : 8),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
                                   child: BackdropFilter(

@@ -58,4 +58,30 @@ void main() {
       ),
     );
   });
+
+  test('uploads a browser Opus/WebM blob as multipart', () async {
+    final methods = <String>[];
+    final client = MockClient((request) async {
+      methods.add(request.method);
+      if (request.method == 'GET') {
+        expect(request.url.scheme, 'blob');
+        return http.Response.bytes([5, 6, 7, 8], 200);
+      }
+      expect(request.url.path, '/chat/transcribe');
+      expect(request.headers['content-type'], contains('multipart/form-data'));
+      return http.Response('{"text":"mujhe basic laptop chahiye"}', 200);
+    });
+    final service = ChatService(
+      httpClient: client,
+      tokenProvider: () async => null,
+    );
+
+    final transcript = await service.transcribeAudio(
+      'blob:https://example.test/voice-recording',
+      uploadFilename: 'voice.webm',
+    );
+
+    expect(transcript, 'mujhe basic laptop chahiye');
+    expect(methods, ['GET', 'POST']);
+  });
 }

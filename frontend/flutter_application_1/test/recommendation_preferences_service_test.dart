@@ -9,13 +9,23 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  test('defaults preserve existing voice auto-send behavior', () async {
+  test('voice transcripts require review by default', () async {
     final value = await RecommendationPreferencesService().load();
 
     expect(value.category, 'any');
     expect(value.budget, isNull);
-    expect(value.voiceAutoSend, isTrue);
+    expect(value.voiceAutoSend, isFalse);
     expect(value.hasRecommendationDetails, isFalse);
+  });
+
+  test('migrates the old auto-send default to review-first once', () async {
+    SharedPreferences.setMockInitialValues({'voice_auto_send': true});
+    final service = RecommendationPreferencesService();
+
+    expect((await service.load()).voiceAutoSend, isFalse);
+
+    await service.save(const RecommendationPreferences(voiceAutoSend: true));
+    expect((await service.load()).voiceAutoSend, isTrue);
   });
 
   test('saved preferences produce a constrained recommendation query',
@@ -50,6 +60,6 @@ void main() {
 
     final value = await service.load();
     expect(value.hasRecommendationDetails, isFalse);
-    expect(value.voiceAutoSend, isTrue);
+    expect(value.voiceAutoSend, isFalse);
   });
 }

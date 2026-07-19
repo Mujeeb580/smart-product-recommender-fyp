@@ -12,7 +12,7 @@ class RecommendationPreferences {
     this.priority = 'balanced',
     this.budget,
     this.seniorFriendly = false,
-    this.voiceAutoSend = true,
+    this.voiceAutoSend = false,
   });
 
   bool get hasRecommendationDetails =>
@@ -83,16 +83,26 @@ class RecommendationPreferencesService {
   static const _budgetKey = 'recommendation_budget';
   static const _seniorKey = 'recommendation_senior_friendly';
   static const _voiceAutoSendKey = 'voice_auto_send';
+  static const _voiceReviewMigrationKey = 'voice_review_default_v2';
 
   Future<RecommendationPreferences> load() async {
     final preferences = await SharedPreferences.getInstance();
     final budget = preferences.getInt(_budgetKey);
+    final migrated = preferences.getBool(_voiceReviewMigrationKey) ?? false;
+    final voiceAutoSend =
+        migrated ? preferences.getBool(_voiceAutoSendKey) ?? false : false;
+    if (!migrated) {
+      await Future.wait([
+        preferences.setBool(_voiceAutoSendKey, false),
+        preferences.setBool(_voiceReviewMigrationKey, true),
+      ]);
+    }
     return RecommendationPreferences(
       category: preferences.getString(_categoryKey) ?? 'any',
       priority: preferences.getString(_priorityKey) ?? 'balanced',
       budget: budget != null && budget > 0 ? budget : null,
       seniorFriendly: preferences.getBool(_seniorKey) ?? false,
-      voiceAutoSend: preferences.getBool(_voiceAutoSendKey) ?? true,
+      voiceAutoSend: voiceAutoSend,
     );
   }
 
@@ -103,6 +113,7 @@ class RecommendationPreferencesService {
       preferences.setString(_priorityKey, value.priority),
       preferences.setBool(_seniorKey, value.seniorFriendly),
       preferences.setBool(_voiceAutoSendKey, value.voiceAutoSend),
+      preferences.setBool(_voiceReviewMigrationKey, true),
       if (value.budget != null)
         preferences.setInt(_budgetKey, value.budget!)
       else

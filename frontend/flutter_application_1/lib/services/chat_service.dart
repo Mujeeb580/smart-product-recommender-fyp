@@ -77,7 +77,10 @@ class ChatService {
   }
 
   /// Uploads a voice recording to the backend and returns its transcript.
-  Future<String> transcribeAudio(String audioPath) async {
+  Future<String> transcribeAudio(
+    String audioPath, {
+    String? uploadFilename,
+  }) async {
     try {
       final token = await _tokenProvider();
       final request = http.MultipartRequest(
@@ -88,7 +91,21 @@ class ChatService {
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
       }
-      request.files.add(await http.MultipartFile.fromPath('file', audioPath));
+      if (audioPath.startsWith('blob:')) {
+        final audioResponse = await _httpClient.get(Uri.parse(audioPath));
+        if (audioResponse.statusCode < 200 || audioResponse.statusCode >= 300) {
+          throw ApiException('Could not read the browser voice recording.');
+        }
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'file',
+            audioResponse.bodyBytes,
+            filename: uploadFilename ?? 'voice.webm',
+          ),
+        );
+      } else {
+        request.files.add(await http.MultipartFile.fromPath('file', audioPath));
+      }
 
       final streamedResponse =
           await _httpClient.send(request).timeout(ApiConfig.receiveTimeout);
