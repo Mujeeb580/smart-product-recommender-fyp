@@ -2,8 +2,10 @@
 
 import torch
 from transformers import AutoModel, AutoTokenizer
+from threading import Lock
 
 _model = None
+_model_lock = Lock()
 
 
 class SentenceBertEmbedder:
@@ -41,5 +43,7 @@ class SentenceBertEmbedder:
 def get_model():
     global _model
     if _model is None:
-        _model = SentenceBertEmbedder()
+        with _model_lock:
+            if _model is None:
+                _model = SentenceBertEmbedder()
     return _model

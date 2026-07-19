@@ -1,9 +1,12 @@
+import os
+from threading import Thread
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from app.api.auth.auth_routes import router as auth_router
 from app.api.product_routes import router as product_router
-from app.api.chat_routes import router as chat_router
+from app.api.chat_routes import router as chat_router, warm_chat_pipeline
 from app.api.admin_routes import router as admin_router
 
 load_dotenv()
@@ -29,6 +32,14 @@ app.include_router(auth_router)
 app.include_router(product_router)
 app.include_router(chat_router)
 app.include_router(admin_router)
+
+
+@app.on_event("startup")
+def start_chat_warmup():
+    if os.getenv("CHAT_WARMUP_ON_STARTUP", "true").strip().lower() not in {
+        "0", "false", "no", "off"
+    }:
+        Thread(target=warm_chat_pipeline, name="chat-warmup", daemon=True).start()
 
 @app.get("/")
 def root():

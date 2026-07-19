@@ -79,6 +79,73 @@ def _product_response(document_id: str, collection: str, data: Dict[str, Any]) -
     return result
 
 
+def _catalog_quality(rows_by_collection: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
+    """Build read-only catalog diagnostics for the admin dashboard."""
+    totals = {
+        "items": 0,
+        "missing_price": 0,
+        "missing_image": 0,
+        "missing_details": 0,
+        "duplicates": 0,
+    }
+    collection_stats: List[Dict[str, Any]] = []
+
+    for collection, rows in sorted(rows_by_collection.items()):
+        seen: set[str] = set()
+        stats = {
+            "name": collection,
+            "items": len(rows),
+            "missing_price": 0,
+            "missing_image": 0,
+            "missing_details": 0,
+            "duplicates": 0,
+        }
+        for row in rows:
+            try:
+                price = float(row.get("price_numeric", row.get("price", 0)) or 0)
+            except (TypeError, ValueError):
+                price = 0
+            if price <= 0:
+                stats["missing_price"] += 1
+            if not str(row.get("image_url") or row.get("image") or "").strip():
+                stats["missing_image"] += 1
+            if not any(
+                str(row.get(field) or "").strip()
+                for field in ("specs", "description", "processor", "ram", "storage")
+            ):
+                stats["missing_details"] += 1
+
+            identity = "|".join(
+                str(row.get(field) or "").strip().casefold()
+                for field in ("brand", "name")
+            )
+            if identity != "|":
+                if identity in seen:
+                    stats["duplicates"] += 1
+                seen.add(identity)
+
+        for key in totals:
+            if key == "items":
+                totals[key] += stats[key]
+            else:
+                totals[key] += stats[key]
+        collection_stats.append(stats)
+
+    total_items = totals["items"]
+    issue_count = sum(
+        totals[key]
+        for key in ("missing_price", "missing_image", "missing_details", "duplicates")
+    )
+    possible_checks = max(total_items * 4, 1)
+    quality_score = max(0, round(100 * (1 - issue_count / possible_checks)))
+    return {
+        **totals,
+        "quality_score": quality_score,
+        "collections": collection_stats,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def _clean_product_payload(payload: Dict[str, Any]) -> tuple[str, Dict[str, Any]]:
     data = dict(payload)
     collection = _validate_collection(data.pop("collection", "products"))
@@ -143,6 +210,22 @@ async def admin_overview():
         return counts
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Error loading admin overview: {exc}")
+
+
+@protected_router.get("/health")
+async def admin_health():
+    try:
+        rows_by_collection = {
+            name: fetch_products(name, limit=5000)
+            for name in sorted(_product_collections)
+        }
+        return {
+            "ok": True,
+            "firestore": "connected",
+            **_catalog_quality(rows_by_collection),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error checking catalog health: {exc}")
 
 
 @protected_router.get("/products")

@@ -1,6 +1,7 @@
 import numpy as np
 import re
 import hashlib
+from difflib import SequenceMatcher
 from threading import RLock
 
 from .model import get_model
@@ -14,7 +15,10 @@ from .processor_engine import (
 from .query_language import normalize_user_query
 
 
-PHONE_HINTS = ("phone", "phones", "mobile", "mobiles", "smartphone")
+PHONE_HINTS = (
+    "phone", "phones", "mobile", "mobiles", "smartphone", "iphone",
+    "galaxy", "pixel", "redmi", "poco",
+)
 LAPTOP_HINTS = ("laptop", "laptops", "notebook", "ultrabook", "macbook")
 
 GAMING_HINTS = (
@@ -138,6 +142,14 @@ BASIC_PHONE_USE_HINTS = (
     "tiktok",
 )
 
+SENIOR_PHONE_HINTS = (
+    "senior",
+    "elderly",
+    "senior citizen",
+    "older person",
+    "easy to use",
+)
+
 HIGH_PERFORMANCE_HINTS = (
     "gaming",
     "rendering",
@@ -224,12 +236,12 @@ def _price_to_float(price) -> float:
     if isinstance(price, (int, float)):
         return float(price)
     raw = str(price or "").lower().replace(",", "").strip()
-    match = re.search(r"(\d+(?:\.\d+)?)\s*(crore|lakhs?|lacs?|laac|lak|million|m|k)?", raw)
+    match = re.search(r"(\d+(?:\.\d+)?)\s*(crore|lakhs?|lacs?|laac|lak|million|m|k|thousands?|hazar|hazaar)?", raw)
     if not match:
         return 0.0
     value = float(match.group(1))
     unit = match.group(2) or ""
-    if unit == "k":
+    if unit in ("k", "thousand", "thousands", "hazar", "hazaar"):
         value *= 1_000
     elif unit in ("m", "million"):
         value *= 1_000_000
@@ -264,14 +276,14 @@ def _query_has_any(query: str, words) -> bool:
     return any(re.search(rf"\b{re.escape(w)}\b", q) for w in words)
 
 
-_MONEY_TOKEN = r"(?:rs\.?|pkr)?\s*\d[\d,]*(?:\.\d+)?\s*(?:crore|lakhs?|lacs?|laac|lak|million|m|k)?"
+_MONEY_TOKEN = r"(?:rs\.?|pkr)?\s*\d[\d,]*(?:\.\d+)?\s*(?:crore|lakhs?|lacs?|laac|lak|million|m|k|thousands?|hazar|hazaar)?"
 
 
 def _money_value(token: str, inherited_unit: str = "") -> float:
     value = _price_to_float(token)
     if value <= 0:
         return 0.0
-    if inherited_unit and not re.search(r"(?:crore|lakhs?|lacs?|laac|lak|million|m|k)\s*$", token.strip(), re.IGNORECASE):
+    if inherited_unit and not re.search(r"(?:crore|lakhs?|lacs?|laac|lak|million|m|k|thousands?|hazar|hazaar)\s*$", token.strip(), re.IGNORECASE):
         return _price_to_float(f"{token}{inherited_unit}")
     return value
 
@@ -286,7 +298,7 @@ def _extract_price_constraints(query: str):
     )
     if range_match:
         high_token = range_match.group(2)
-        unit_match = re.search(r"(crore|lakhs?|lacs?|laac|lak|million|m|k)\s*$", high_token)
+        unit_match = re.search(r"(crore|lakhs?|lacs?|laac|lak|million|m|k|thousands?|hazar|hazaar)\s*$", high_token)
         inherited_unit = unit_match.group(1) if unit_match else ""
         first = _money_value(range_match.group(1), inherited_unit)
         second = _money_value(high_token)
@@ -353,6 +365,58 @@ def _extract_ram_storage_constraints(query: str):
     return ram, storage
 
 
+def _product_feature_text(product: dict) -> str:
+    """Return normalized searchable catalog facts, including nested specs."""
+    values = []
+    for key in (
+        "name", "normalized_name", "description", "display", "screen",
+        "network", "connectivity", "charging", "os", "operating_system",
+        "features", "keyboard", "ports", "fingerprint", "camera",
+    ):
+        value = product.get(key)
+        if value:
+            values.append(str(value))
+    specs = product.get("specs")
+    if isinstance(specs, dict):
+        for key, value in specs.items():
+            values.extend((str(key), str(value)))
+    return _clean_text(" ".join(values)).lower().replace("‑", "-")
+
+
+def _extract_required_features(query: str) -> tuple[str, ...]:
+    q = query.lower()
+    features = []
+    simple_features = (
+        "5g", "4g", "amoled", "oled", "nfc", "wifi 6", "wi-fi 6",
+        "thunderbolt", "backlit keyboard", "fingerprint",
+    )
+    for feature in simple_features:
+        if re.search(rf"\b{re.escape(feature)}\b", q):
+            features.append(feature)
+    refresh_rate = re.search(r"\b(60|90|120|144|165|240)\s*hz\b", q)
+    if refresh_rate:
+        features.append(f"{refresh_rate.group(1)}hz")
+    charging = re.search(r"\b(\d{2,3})\s*w(?:att)?\s*(?:fast\s*)?charg", q)
+    if charging:
+        features.append(f"{charging.group(1)}w charging")
+    return tuple(dict.fromkeys(features))
+
+
+def _matches_required_feature(product: dict, feature: str) -> bool:
+    text = _product_feature_text(product)
+    compact = re.sub(r"\s+", "", text)
+    if feature in ("wifi 6", "wi-fi 6"):
+        return bool(re.search(r"\bwi-?fi\s*6\b|\bwifi\s*6\b", text))
+    if feature.endswith("hz"):
+        return feature in compact
+    if feature.endswith("w charging"):
+        watts = feature.split("w", 1)[0]
+        return bool(re.search(rf"\b{re.escape(watts)}\s*w(?:att)?\b", text))
+    if feature == "oled":
+        return "oled" in text  # AMOLED is also an OLED display.
+    return bool(re.search(rf"\b{re.escape(feature)}\b", text))
+
+
 def _capacity_gb(value) -> int:
     text = _clean_text(value).lower()
     match = re.search(r"(\d+(?:\.\d+)?)\s*(tb|gb)?", text)
@@ -370,6 +434,7 @@ def _parse_query_constraints(query: str):
     required_gpu = _extract_required_gpu(q)
     required_processor = _extract_required_processor(q)
     min_ram, min_storage = _extract_ram_storage_constraints(q)
+    required_features = _extract_required_features(q)
 
     query_category = "unknown"
     if _query_has_any(q, PHONE_HINTS) and not _query_has_any(q, LAPTOP_HINTS):
@@ -384,8 +449,71 @@ def _parse_query_constraints(query: str):
         "required_processor": required_processor,
         "min_ram": min_ram,
         "min_storage": min_storage,
+        "required_features": required_features,
         "query_category": query_category,
     }
+
+
+_BRAND_FUZZY_STOPWORDS = {
+    "phone", "phones", "mobile", "mobiles", "smartphone", "laptop", "laptops",
+    "notebook", "under", "below", "budget", "best", "good", "cheap", "want",
+    "show", "with", "without", "basic", "student", "gaming", "camera", "battery",
+    "social", "media", "calling", "daily", "office", "work", "study", "thousand",
+    "lakh", "price", "range", "recommend", "available",
+}
+
+_PRODUCT_FAMILY_BRANDS = {
+    "iphone": "apple",
+    "macbook": "apple",
+    "galaxy": "samsung",
+    "pixel": "google",
+    "redmi": "xiaomi",
+    "poco": "xiaomi",
+}
+
+
+def _extract_requested_brands(query: str, products: list) -> set[str]:
+    """Resolve explicit and conservatively misspelled brands from this catalog.
+
+    Catalog-derived matching keeps this generic when new brands are added. A
+    fuzzy match is accepted only when it is strong and clearly better than the
+    next brand, preventing ordinary requirement words from becoming brands.
+    """
+    q = _clean_text(query).lower()
+    brands = sorted({
+        _clean_text(product.get("brand", "")).lower()
+        for product in products
+        if _clean_text(product.get("brand", "")).lower() not in ("", "unknown", "n/a")
+    })
+    family_brands = {
+        brand for family, brand in _PRODUCT_FAMILY_BRANDS.items()
+        if brand in brands and re.search(rf"\b{re.escape(family)}\b", q)
+    }
+    if family_brands:
+        return family_brands
+    exact = {brand for brand in brands if re.search(rf"\b{re.escape(brand)}\b", q)}
+    if exact:
+        return exact
+
+    query_tokens = {
+        token for token in re.findall(r"[a-z][a-z0-9-]*", q)
+        if len(token) >= 3 and token not in _BRAND_FUZZY_STOPWORDS
+    }
+    fuzzy = set()
+    for token in query_tokens:
+        candidates = []
+        for brand in brands:
+            compact_brand = re.sub(r"[^a-z0-9]", "", brand)
+            if len(compact_brand) < 3 or abs(len(token) - len(compact_brand)) > 2:
+                continue
+            score = SequenceMatcher(None, token, compact_brand).ratio()
+            threshold = 0.86 if min(len(token), len(compact_brand)) == 3 else 0.78
+            if score >= threshold:
+                candidates.append((score, brand))
+        candidates.sort(reverse=True)
+        if candidates and (len(candidates) == 1 or candidates[0][0] - candidates[1][0] >= 0.08):
+            fuzzy.add(candidates[0][1])
+    return fuzzy
 
 
 def _apply_hard_constraints(query: str, products: list) -> list:
@@ -395,15 +523,7 @@ def _apply_hard_constraints(query: str, products: list) -> list:
     if constraints["query_category"] != "unknown":
         constrained = [p for p in constrained if _category_of(p) == constraints["query_category"]]
 
-    requested_brands = {
-        _clean_text(product.get("brand", "")).lower()
-        for product in products
-        if _clean_text(product.get("brand", "")).lower() not in ("", "unknown", "n/a")
-        and re.search(
-            rf"\b{re.escape(_clean_text(product.get('brand', '')).lower())}\b",
-            query.lower(),
-        )
-    }
+    requested_brands = _extract_requested_brands(query, products)
     if requested_brands:
         constrained = [
             p for p in constrained
@@ -450,6 +570,12 @@ def _apply_hard_constraints(query: str, products: list) -> list:
             if _memory_values(p)[1] >= constraints["min_storage"]
         ]
 
+    for feature in constraints["required_features"]:
+        constrained = [
+            product for product in constrained
+            if _matches_required_feature(product, feature)
+        ]
+
     return constrained
 
 
@@ -475,6 +601,94 @@ def _has_any(query: str, words) -> bool:
         re.search(rf"(?<![a-z]){re.escape(word)}(?![a-z])", q)
         for word in words
     )
+
+
+def _term_is_negated(query: str, start: int, end: int | None = None) -> bool:
+    """Detect common negation close to an intent term."""
+    prefix = query[max(0, start - 70):start].lower()
+    prefix_negated = bool(
+        re.search(
+            r"(?:\b(?:no|not|never|without|dont|don't|do\s+not|hardly)\b)"
+            r"(?:[^.!?,;]*\b\w+\b){0,10}[^.!?,;]*$",
+            prefix,
+        )
+    )
+    if prefix_negated:
+        return True
+    suffix = query[end if end is not None else start:start + 35].lower()
+    return bool(
+        re.match(
+            r"^\s*(?:(?:is|was|should\s+be)\s+)?"
+            r"(?:\b(?:no|not|never|without|dont|don't|do\s+not)\b)",
+            suffix,
+        )
+    )
+
+
+def _has_positive_any(query: str, words) -> bool:
+    """Return True when an intent appears outside nearby negation."""
+    q = query.lower()
+    for word in words:
+        pattern = rf"(?<![a-z]){re.escape(word)}(?![a-z])"
+        if any(
+            not _term_is_negated(q, match.start(), match.end())
+            for match in re.finditer(pattern, q)
+        ):
+            return True
+    return False
+
+
+def _workload_level(query: str) -> str | None:
+    """Map free-form needs onto capability levels instead of query templates."""
+    q = query.lower()
+    if _has_positive_any(q, HIGH_PERFORMANCE_HINTS):
+        return "high"
+
+    light_language = bool(
+        re.search(
+            r"\b(?:basic\w*|simple|minimal|light\s+(?:use|tasks?|work)|"
+            r"nothing\s+heavy|casual|just\s+need|only\s+need)\b",
+            q,
+        )
+    )
+    negative_workload = bool(
+        re.search(
+            r"\b(?:dont|don't|do\s+not|not)\b[^.!?,;]{0,55}"
+            r"\b(?:much|lot|heavy|demanding|intensive|work|tasks?)\b",
+            q,
+        )
+    )
+    medium_terms = (
+        "office",
+        "coding",
+        "programming",
+        "professional",
+        "business",
+        "development",
+        "multitasking",
+    )
+    medium_work = _has_positive_any(q, medium_terms)
+    study = _has_positive_any(q, STUDY_HINTS)
+    routine_tasks = _has_positive_any(
+        q,
+        (
+            "browsing",
+            "email",
+            "typing",
+            "documents",
+            "assignments",
+            "presentations",
+            "online class",
+            "classes",
+            "zoom",
+        ),
+    )
+
+    if light_language or negative_workload or ((study or routine_tasks) and not medium_work):
+        return "light"
+    if medium_work or _has_positive_any(q, ("work", "meetings", "documents")):
+        return "standard"
+    return None
 
 
 def _battery_value(product: dict) -> int:
@@ -577,8 +791,8 @@ def _gpu_tier_score(gpu: str) -> float:
 
 def _camera_signal_score(product: dict) -> float:
     camera_text = _clean_text(product.get("camera", "")).lower()
+    name = _clean_text(product.get("name", "")).lower()
     if not camera_text:
-        name = _clean_text(product.get("name", "")).lower()
         if "ultra" in name:
             return 0.90
         if "pro max" in name or "pixel" in name:
@@ -595,12 +809,26 @@ def _camera_signal_score(product: dict) -> float:
         return 0.0
     best = max(mp_values)
     if best >= 200:
-        return 1.0
-    if best >= 108:
-        return 0.8
-    if best >= 64:
-        return 0.55
-    return 0.3
+        megapixel_score = 0.55
+    elif best >= 108:
+        megapixel_score = 0.52
+    elif best >= 64:
+        megapixel_score = 0.48
+    else:
+        megapixel_score = 0.35
+
+    # Camera hardware and image-processing signals matter more than a large MP
+    # number on its own. These bonuses only use explicit catalog facts.
+    feature_bonus = 0.0
+    if re.search(r"\bois\b|optical image stabil", camera_text):
+        feature_bonus += 0.22
+    if re.search(r"telephoto|optical zoom|periscope", camera_text):
+        feature_bonus += 0.18
+    if re.search(r"flagship camera|large sensor|leica|hasselblad", camera_text):
+        feature_bonus += 0.15
+    if "pixel" in name or "iphone" in name or "ultra" in name or "pro max" in name:
+        feature_bonus += 0.12
+    return min(megapixel_score + feature_bonus, 1.0)
 
 
 def _phone_gaming_score(product: dict) -> float:
@@ -634,12 +862,7 @@ def _laptop_gaming_score(product: dict) -> float:
 def _is_basic_laptop_use_query(query: str) -> bool:
     q = query.lower()
     wants_phone = _query_has_any(q, PHONE_HINTS)
-    basic_use = any(
-        _query_has_any(q, hints)
-        for hints in (BASIC_LAPTOP_USE_HINTS, STUDY_HINTS, GENERAL_HINTS)
-    )
-    high_performance = _query_has_any(q, HIGH_PERFORMANCE_HINTS)
-    return basic_use and not wants_phone and not high_performance
+    return _workload_level(q) == "light" and not wants_phone
 
 
 def _basic_laptop_value_score(product: dict) -> float:
@@ -693,7 +916,7 @@ def _is_basic_phone_use_query(query: str) -> bool:
         _query_has_any(q, hints)
         for hints in (BASIC_PHONE_USE_HINTS, STUDY_HINTS, GENERAL_HINTS, SOCIAL_HINTS)
     )
-    high_performance = _query_has_any(q, HIGH_PERFORMANCE_HINTS) or "camera" in q
+    high_performance = _has_positive_any(q, HIGH_PERFORMANCE_HINTS) or "camera" in q
     return wants_phone and basic_use and not high_performance
 
 
@@ -740,31 +963,216 @@ def _basic_phone_value_score(product: dict) -> float:
     return max(0.0, capability * 0.60 + affordability * 0.40 - premium_price_penalty)
 
 
+def _is_senior_phone_query(query: str) -> bool:
+    q = query.lower()
+    return (
+        _query_has_any(q, PHONE_HINTS)
+        and _query_has_any(q, SENIOR_PHONE_HINTS)
+        and not _query_has_any(q, HIGH_PERFORMANCE_HINTS)
+    )
+
+
+def _is_office_laptop_query(query: str) -> bool:
+    q = query.lower()
+    return (
+        _query_has_any(q, LAPTOP_HINTS)
+        and _has_positive_any(q, ("office", "coding", "programming", "business", "meetings", "work"))
+        and _workload_level(q) != "light"
+        and not _has_positive_any(q, HIGH_PERFORMANCE_HINTS)
+    )
+
+
+def _office_laptop_score(product: dict) -> float:
+    """Prefer capable, portable office laptops without drifting to gaming rigs."""
+    if _category_of(product) != "laptops":
+        return 0.0
+    price = _price_to_float(product.get("price"))
+    ram = _ram_value(product)
+    storage = _storage_value(product)
+    processor = laptop_cpu_performance(product)
+    gpu = _clean_text(product.get("gpu", "")).lower()
+    if price <= 0:
+        return 0.0
+    ram_score = min(ram / 16.0, 1.0) if ram else 0.25
+    storage_score = min(storage / 512.0, 1.0) if storage else 0.25
+    value = 1.0 if price <= 150_000 else 0.75 if price <= 220_000 else 0.35 if price <= 300_000 else 0.0
+    score = processor * 0.45 + ram_score * 0.25 + storage_score * 0.15 + value * 0.15
+    if re.search(r"\b(?:rtx|gtx)\s*\d", gpu):
+        score -= 0.18
+    if price > 300_000:
+        score -= 0.15
+    return max(0.0, score)
+
+
+def _display_size_inches(product: dict) -> float:
+    specs = product.get("specs") if isinstance(product.get("specs"), dict) else {}
+    display = _clean_text(
+        product.get("display") or product.get("screen") or specs.get("display") or specs.get("screen")
+    ).lower()
+    match = re.search(r"(\d(?:\.\d+)?)\s*(?:inch|inches|\")", display)
+    return float(match.group(1)) if match else 0.0
+
+
+def _senior_phone_score(product: dict) -> float:
+    """Rank practical, readable, dependable phones for older users.
+
+    The catalog does not consistently contain accessibility metadata, so the
+    score uses only defensible proxies: adequate memory/performance, battery,
+    screen size when known, and value. It avoids both underpowered devices and
+    expensive flagships that add little for calls and social media.
+    """
+    if _category_of(product) != "phones":
+        return 0.0
+    price = _price_to_float(product.get("price"))
+    if price <= 0:
+        return 0.0
+
+    ram, storage = _memory_values(product)
+    battery = _battery_value(product)
+    chipset = phone_chipset_performance(product)
+    display_size = _display_size_inches(product)
+
+    memory = (
+        (1.0 if 4 <= ram <= 12 else 0.85 if ram > 12 else 0.25)
+        + (1.0 if 64 <= storage <= 512 else 0.85 if storage > 512 else 0.30)
+    ) / 2
+    battery_score = 1.0 if battery >= 5000 else 0.78 if battery >= 4000 else 0.35
+    performance = min(chipset / 0.55, 1.0) if chipset else 0.35
+    readability = (
+        1.0
+        if display_size >= 6.5
+        else 0.82
+        if display_size >= 6.1
+        else 0.65
+        if display_size
+        else 0.70
+    )
+
+    if price <= 30_000:
+        value = 1.0
+    elif price <= 50_000:
+        value = 0.95
+    elif price <= 80_000:
+        value = 0.80
+    elif price <= 120_000:
+        value = 0.55
+    elif price <= 180_000:
+        value = 0.25
+    else:
+        value = 0.0
+
+    score = (
+        battery_score * 0.28
+        + memory * 0.23
+        + performance * 0.18
+        + readability * 0.13
+        + value * 0.18
+    )
+    if ram and ram < 4:
+        score -= 0.18
+    if battery and battery < 4000:
+        score -= 0.15
+    if price > 180_000:
+        score -= 0.15
+    return max(0.0, score)
+
+
+def _iphone_model_score(product: dict) -> float:
+    """Rank iPhone generations and tiers when the user explicitly asks for top/latest."""
+    name = _clean_text(product.get("name", "")).lower()
+    match = re.search(r"\biphone\s*(\d{1,2})(?:e\b|\b)", name)
+    generation = int(match.group(1)) if match else 0
+    tier = (
+        1.0 if "pro max" in name
+        else 0.92 if re.search(r"\bpro\b", name)
+        else 0.82 if re.search(r"\bplus\b", name)
+        else 0.78 if re.search(r"\bair\b", name)
+        else 0.62 if re.search(r"\biphone\s*\d+e\b", name)
+        else 0.50 if re.search(r"\bse\b", name)
+        else 0.75
+    )
+    generation_score = min(generation / 20.0, 1.0) if generation else 0.35
+    return generation_score * 0.72 + tier * 0.28
+
+
+def _is_macbook_work_query(query: str) -> bool:
+    q = query.lower()
+    return "macbook" in q and _has_positive_any(
+        q,
+        ("coding", "programming", "development", "developer", "editing", "video editing", "photo editing", "rendering"),
+    )
+
+
+def _macbook_work_score(query: str, product: dict) -> float:
+    """Rank MacBooks by editing capability or practical coding value."""
+    q = query.lower()
+    text = _product_feature_text(product)
+    name = _clean_text(product.get("name", "")).lower()
+    chip_match = re.search(r"\bm\s*([1-9])\s*(ultra|pro|max)?\b", text)
+    if chip_match:
+        generation = int(chip_match.group(1))
+        family = chip_match.group(2) or "base"
+        generation_score = min(generation / 4.0, 1.0)
+        family_bonus = {"base": 0.0, "pro": 0.15, "max": 0.23, "ultra": 0.28}[family]
+        chip_score = min(generation_score * 0.82 + family_bonus, 1.0)
+    else:
+        chip_score = 0.28 if "intel" in text else _device_quality_score(product)
+
+    ram = _ram_value(product)
+    storage = _storage_value(product)
+    ram_score = min(ram / 24.0, 1.0) if ram else 0.25
+    storage_score = min(storage / 1024.0, 1.0) if storage else 0.25
+    is_pro_model = "macbook pro" in name
+    price = _price_to_float(product.get("price"))
+    value = 1.0 if 0 < price <= 300_000 else 0.75 if price <= 420_000 else 0.50 if price <= 550_000 else 0.25
+
+    editing = _has_positive_any(q, ("editing", "video editing", "photo editing", "rendering"))
+    if editing:
+        return (
+            chip_score * 0.42
+            + ram_score * 0.25
+            + storage_score * 0.15
+            + (0.18 if is_pro_model else 0.0)
+        )
+    return chip_score * 0.45 + min(ram / 16.0, 1.0) * 0.25 + min(storage / 512.0, 1.0) * 0.10 + value * 0.20
+
+
 def _intent_priority(query: str, product: dict) -> float:
     q = query.lower()
     category = _category_of(product)
-    if _has_any(q, GAMING_HINTS):
+    if "iphone" in q and any(term in q for term in ("top", "best", "latest", "newest")):
+        return _iphone_model_score(product)
+    if _is_macbook_work_query(q):
+        return _macbook_work_score(q, product)
+    if _is_senior_phone_query(q):
+        return _senior_phone_score(product)
+    if _has_positive_any(q, GAMING_HINTS):
         if category == "phones":
             return _phone_gaming_score(product)
         if category == "laptops":
             return _laptop_gaming_score(product)
-    if any(term in q for term in ("performance", "fastest", "powerful", "processor", "chipset", "flagship")):
+    if "camera" in q and category == "phones":
+        # Explicit camera hardware signals lead. Overall device/chipset quality
+        # remains a supporting proxy for image processing, not the main score.
+        return (
+            _camera_signal_score(product) * 0.60
+            + _device_quality_score(product) * 0.22
+            + phone_chipset_performance(product) * 0.18
+        )
+    if _has_positive_any(
+        q,
+        ("performance", "fastest", "powerful", "processor", "chipset", "flagship"),
+    ):
         return _product_processor_score(product)
     if _has_any(q, BATTERY_HINTS):
         battery = _battery_value(product)
         return min(battery / (8500.0 if category == "phones" else 9000.0), 1.0) if battery else 0.0
-    if "camera" in q and category == "phones":
-        # Megapixels alone are not camera quality; combine the catalog camera
-        # signal with current device/chipset quality as a conservative proxy.
-        return (
-            _camera_signal_score(product) * 0.35
-            + _device_quality_score(product) * 0.35
-            + phone_chipset_performance(product) * 0.30
-        )
     if _is_basic_laptop_use_query(q):
         return _basic_laptop_value_score(product)
     if _is_basic_phone_use_query(q):
         return _basic_phone_value_score(product)
+    if _is_office_laptop_query(q):
+        return _office_laptop_score(product)
     budget_max = _extract_budget(q)
     if budget_max is not None:
         price = _price_to_float(product.get("price"))
@@ -811,12 +1219,15 @@ def _intent_boost(query: str, product: dict) -> float:
     if camera_intent and category == "phones":
         boost += _camera_signal_score(product) * 0.28
 
-    gaming_intent = _has_any(q, GAMING_HINTS)
-    processor_intent = any(k in q for k in ("processor", "chipset", "cpu", "flagship", "snapdragon", "core i7", "core i9", "ryzen"))
+    gaming_intent = _has_positive_any(q, GAMING_HINTS)
+    processor_intent = _has_positive_any(
+        q,
+        ("processor", "chipset", "cpu", "flagship", "snapdragon", "core i7", "core i9", "ryzen"),
+    )
     if processor_intent:
         boost += _product_processor_score(product) * 0.22
 
-    gpu_intent = any(k in q for k in ("gpu", "graphics", "rtx"))
+    gpu_intent = _has_positive_any(q, ("gpu", "graphics", "rtx"))
     if gaming_intent:
         if category == "phones":
             processor_score = _processor_tier_score(product.get("processor"), category)
@@ -837,6 +1248,9 @@ def _intent_boost(query: str, product: dict) -> float:
     if social_intent and category == "phones":
         boost += _balanced_phone_score(product) * 0.22
         boost += device_quality * 0.15
+
+    if _is_senior_phone_query(q) and category == "phones":
+        boost += _senior_phone_score(product) * 0.30
 
     study_intent = _has_any(q, STUDY_HINTS)
     if study_intent:
@@ -911,6 +1325,16 @@ def _normalize_output_product(product: dict) -> dict:
     item["processor"] = _clean_text(item.get("processor", ""))
     item["gpu"] = _clean_text(item.get("gpu", ""))
     item["battery"] = _clean_text(item.get("battery", ""))
+    raw_ram = _capacity_gb(item.get("ram"))
+    raw_storage = _capacity_gb(item.get("storage"))
+    if raw_ram > 128 and 0 < raw_storage <= 64:
+        repaired_ram, repaired_storage = _memory_values(item)
+        item["ram"] = f"{repaired_ram}GB"
+        item["storage"] = (
+            f"{repaired_storage // 1024}TB"
+            if repaired_storage >= 1024 and repaired_storage % 1024 == 0
+            else f"{repaired_storage}GB"
+        )
     item["image_url"] = (
         item.get("image_url")
         or item.get("image")
@@ -968,19 +1392,26 @@ def _get_product_embeddings(model, products: list, product_texts: list) -> np.nd
     return np.vstack([cached_embeddings[index] for index in range(len(products))])
 
 
-def recommend_products(query: str, products: list, top_n: int = 10):
+def recommend_products(
+    query: str,
+    products: list,
+    top_n: int = 10,
+    *,
+    query_is_normalized: bool = False,
+):
     """
     Returns top N products based on semantic similarity.
     """
-    query = normalize_user_query(query)
+    if not query_is_normalized:
+        query = normalize_user_query(query)
     if not products:
         return []
 
     constrained_products = _apply_hard_constraints(query, products)
     if not constrained_products:
         return []
-    gaming_intent = _has_any(query, GAMING_HINTS)
-    has_priority_intent = _extract_budget(query) is not None or gaming_intent or _is_basic_laptop_use_query(query) or _is_basic_phone_use_query(query) or _has_any(query, BATTERY_HINTS) or "camera" in query.lower() or any(
+    gaming_intent = _has_positive_any(query, GAMING_HINTS)
+    has_priority_intent = _extract_budget(query) is not None or gaming_intent or _is_basic_laptop_use_query(query) or _is_basic_phone_use_query(query) or _is_office_laptop_query(query) or _is_macbook_work_query(query) or _is_senior_phone_query(query) or _has_any(query, BATTERY_HINTS) or "camera" in query.lower() or ("iphone" in query.lower() and any(term in query.lower() for term in ("top", "best", "latest", "newest"))) or any(
         term in query.lower() for term in ("performance", "fastest", "powerful", "processor", "chipset", "flagship")
     )
     wants_both_categories = _query_has_any(query, PHONE_HINTS) and _query_has_any(query, LAPTOP_HINTS)

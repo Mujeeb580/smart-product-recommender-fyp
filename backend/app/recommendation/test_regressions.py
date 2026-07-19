@@ -7,7 +7,8 @@ import numpy as np
 from app.api import chat_routes, product_routes
 from app.recommendation import engine
 from app.recommendation.processor_engine import phone_chipset_performance
-from app.services import llm_service
+from app.recommendation.query_language import normalize_user_query, response_language
+from app.services import llm_service, web_verifier
 
 
 class _ZeroEmbedder:
@@ -42,6 +43,90 @@ class RecommendationConstraintTests(unittest.TestCase):
         self.assertEqual(engine._extract_price_constraints("between 50 and 80k"), (50_000, 80_000))
         self.assertEqual(engine._extract_budget("show phone in 30000"), 30_000)
         self.assertEqual(engine._extract_budget("show laptop for 30000"), 30_000)
+        self.assertEqual(engine._extract_budget("phone under 50 thousand"), 50_000)
+        self.assertEqual(engine._extract_budget("phone under 50 hazaar"), 50_000)
+        self.assertEqual(
+            engine._extract_budget(normalize_user_query("50 hazaar se kam phone")),
+            50_000,
+        )
+
+    def test_misspelled_brand_remains_a_hard_constraint(self):
+        products = [
+            _product("Samsung Galaxy A", "Phones", 49_999, brand="Samsung"),
+            _product("Samsung Galaxy Premium", "Phones", 120_000, brand="Samsung"),
+            _product("Xiaomi Cheaper", "Phones", 35_000, brand="Xiaomi"),
+        ]
+        for query in (
+            "samsung phone under 50 thousand",
+            "samsun phone under 50 thousand",
+            "samsng mobile below 50k",
+            "samung phone 50000 ke andar",
+        ):
+            results = engine.recommend_products(query, products)
+            self.assertEqual([item["name"] for item in results], ["Samsung Galaxy A"], query)
+            self.assertTrue(all(item["brand"] == "Samsung" for item in results), query)
+            self.assertTrue(all(engine._price_to_float(item["price"]) <= 50_000 for item in results), query)
+
+        unavailable = engine.recommend_products(
+            "samsun phone under 40 thousand",
+            products,
+        )
+        self.assertEqual(unavailable, [])
+
+    def test_urdu_brand_and_written_budget_are_hard_constraints(self):
+        products = [
+            _product("Xiaomi Note", "Phones", 175_000, brand="Xiaomi"),
+            _product("Xiaomi Ultra", "Phones", 250_000, brand="Xiaomi"),
+            _product("Samsung Alternative", "Phones", 150_000, brand="Samsung"),
+        ]
+        query = "\u06cc\u0627\u0631 \u0645\u062c\u06be\u06d2 \u0646\u0627 \u0634\u0627\u0648\u0645\u06cc \u06a9\u0627 \u0641\u0648\u0646 \u0686\u0627\u06c1\u06cc\u06d2 \u06a9\u0648\u0626\u06cc \u062f\u0648 \u0644\u0627\u06a9\u06be \u062a\u06a9 \u06a9\u0627."
+        normalized = normalize_user_query(query)
+        self.assertRegex(normalized, r"\bxiaomi\b")
+        self.assertEqual(engine._extract_budget(normalized), 200_000)
+
+        results = engine.recommend_products(query, products)
+        self.assertEqual([item["name"] for item in results], ["Xiaomi Note"])
+        self.assertTrue(all(item["brand"] == "Xiaomi" for item in results))
+        self.assertTrue(all(engine._price_to_float(item["price"]) <= 200_000 for item in results))
+
+    def test_iphone_family_implies_apple_phone_constraints(self):
+        products = [
+            _product("Apple iPhone 17 Pro Max", "Phones", 499_999, brand="Apple", device_score=0.95),
+            _product("Apple iPhone 17 Pro", "Phones", 473_999, brand="Apple", device_score=0.96),
+            _product("Apple iPhone 17", "Phones", 358_999, brand="Apple", device_score=0.95),
+            _product("Apple iPhone 15", "Phones", 263_500, brand="Apple", device_score=0.85),
+            _product("Apple MacBook Air", "Laptops", 299_999, brand="Apple", device_score=0.98),
+            _product("Samsung Galaxy S25", "Phones", 334_999, brand="Samsung", device_score=1.0),
+        ]
+        results = engine.recommend_products("top iphone recommendation", products)
+        self.assertEqual({item["brand"] for item in results}, {"Apple"})
+        self.assertTrue(all(engine._category_of(item) == "phones" for item in results))
+        self.assertTrue(all("iphone" in item["name"].lower() for item in results))
+        self.assertEqual(results[0]["name"], "Apple iPhone 17 Pro Max")
+
+        budget_results = engine.recommend_products("best iphone under 300k", products)
+        self.assertEqual([item["name"] for item in budget_results], ["Apple iPhone 15"])
+
+    def test_macbook_typos_and_workload_ranking(self):
+        products = [
+            _product("Apple MacBook Air M4", "Laptops", 299_999, brand="Apple", processor="M4", ram="16GB", storage="256GB"),
+            _product("Apple MacBook Pro M3 Pro", "Laptops", 544_999, brand="Apple", processor="M3 Pro", ram="18GB", storage="512GB"),
+            _product("Apple MacBook Air M1", "Laptops", 203_499, brand="Apple", processor="M1", ram="8GB", storage="256GB"),
+            _product("Dell Editing Laptop", "Laptops", 250_000, brand="Dell", processor="Core i7", ram="32GB", storage="1TB"),
+        ]
+        for typo in ("mackbook", "macbok", "mac book"):
+            normalized = normalize_user_query(f"{typo} for editing and coding")
+            self.assertIn("macbook", normalized)
+            results = engine.recommend_products(f"{typo} for editing and coding", products)
+            self.assertEqual(results[0]["name"], "Apple MacBook Pro M3 Pro")
+            self.assertEqual({item["brand"] for item in results}, {"Apple"})
+
+        coding = engine.recommend_products("best macbook for coding", products)
+        self.assertEqual(coding[0]["name"], "Apple MacBook Air M4")
+
+        budget = engine.recommend_products("macbook for editing under 300k", products)
+        self.assertEqual(budget[0]["name"], "Apple MacBook Air M4")
+        self.assertTrue(all(engine._price_to_float(item["price"]) <= 300_000 for item in budget))
 
     def test_prices_are_returned_with_pkr_currency(self):
         self.assertEqual(engine._format_price_pkr("Rs. 30,000"), "PKR 30,000")
@@ -399,6 +484,9 @@ class RecommendationConstraintTests(unittest.TestCase):
     def test_swapped_ram_and_storage_fields_are_repaired_for_ranking(self):
         product = _product("Swapped Phone", "Phones", 100_000, ram="1TB", storage="16GB")
         self.assertEqual(engine._memory_values(product), (16, 1024))
+        normalized = engine._normalize_output_product(product)
+        self.assertEqual(normalized["ram"], "16GB")
+        self.assertEqual(normalized["storage"], "1TB")
 
     def test_best_battery_query_prioritizes_actual_capacity(self):
         products = [
@@ -451,19 +539,116 @@ class RecommendationConstraintTests(unittest.TestCase):
         results = engine.recommend_products("best gaming laptop", products)
         self.assertEqual(results[0]["name"], "I7 RTX 4060")
 
+    def test_urdu_script_query_normalizes_scope_usage_and_budget(self):
+        query = normalize_user_query(
+            "میں بزرگ ہوں، کالنگ اور سوشل میڈیا کے لیے ۵۰۰۰۰ سے کم موبائل چاہیے"
+        )
+        self.assertIn("senior", query)
+        self.assertIn("calling", query)
+        self.assertIn("social media", query)
+        self.assertIn("phone", query)
+        self.assertEqual(engine._extract_budget(query), 50_000)
+        self.assertEqual(response_language("مجھے فون چاہیے"), "roman_urdu")
+
+    def test_senior_basic_phone_query_prefers_balanced_practical_phone(self):
+        products = [
+            _product(
+                "Underpowered Cheap", "Phones", 18_000, processor="Helio A22",
+                ram="2GB", storage="32GB", battery="3000mAh", display="5.5 inch",
+            ),
+            _product(
+                "Balanced Easy", "Phones", 42_000, processor="Snapdragon 695",
+                ram="6GB", storage="128GB", battery="5000mAh", display="6.7 inch",
+            ),
+            _product(
+                "Unnecessary Flagship", "Phones", 280_000, processor="Snapdragon 8 Elite",
+                ram="16GB", storage="512GB", battery="5000mAh", display="6.8 inch",
+            ),
+        ]
+        queries = (
+            "I am elderly and want a mobile for basic calling and social media",
+            "میں بزرگ ہوں، بنیادی کالنگ اور سوشل میڈیا کے لیے موبائل چاہیے",
+            "buzurg ke liye calling aur social media ka asan mobile chahiye",
+        )
+        for query in queries:
+            with self.subTest(query=query):
+                results = engine.recommend_products(query, products)
+                self.assertEqual(results[0]["name"], "Balanced Easy")
+
+    def test_fallback_answers_product_question_without_guessing(self):
+        product = _product(
+            "Catalog Phone", "Phones", 40_000, battery="5000mAh",
+            specs={"Warranty": "1 year"},
+        )
+        self.assertIn(
+            "1 year",
+            llm_service._fallback_explanation("What is its warranty?", [product]),
+        )
+        missing = llm_service._fallback_explanation("What is its weight?", [product])
+        self.assertIn("won't guess", missing)
+
+    def test_fallback_replies_in_roman_urdu_for_urdu_script_query(self):
+        product = _product(
+            "Asaan Phone", "Phones", 42_000, processor="Snapdragon 695",
+            ram="6GB", storage="128GB", battery="5000mAh",
+        )
+        reply = llm_service._fallback_explanation(
+            "میں بزرگ ہوں، کالنگ کے لیے موبائل چاہیے", [product]
+        )
+        self.assertNotRegex(reply, r"[\u0600-\u06ff]")
+        self.assertIn("Aap ki requirement", reply)
+
 
 class ChatContextTests(unittest.TestCase):
     def setUp(self):
         chat_routes._SESSION_CONTEXT.clear()
+        chat_routes._PRODUCT_CACHE.clear()
         self.products = [
             _product("Phone A", "Phones", 50_000, battery="5000 mAh"),
             _product("Phone B", "Phones", 60_000, battery="6000 mAh"),
         ]
 
-    def _recommend(self, query, products, top_n=5):
+    def _recommend(self, query, products, top_n=5, **_kwargs):
         if "battery" in query.lower():
             return sorted(products, key=lambda item: engine._battery_value(item), reverse=True)[:top_n]
         return list(products)[:top_n]
+
+    def test_acknowledgements_never_trigger_recommendations(self):
+        for message in ("Alright", "okay", "thanks", "theek hai", "ٹھیک ہے"):
+            with self.subTest(message=message), patch.object(
+                chat_routes, "_load_products"
+            ) as load, patch.object(chat_routes, "recommend_products") as rank:
+                response = asyncio.run(
+                    chat_routes.send_chat_message(
+                        chat_routes.ChatMessage(message=message)
+                    )
+                )
+            self.assertEqual(response["products"], [])
+            self.assertNotIn("Xiaomi", response["reply"])
+            if message in ("theek hai", "ٹھیک ہے"):
+                self.assertTrue(response["reply"].startswith("Theek hai"))
+            load.assert_not_called()
+            rank.assert_not_called()
+
+    def test_identity_questions_always_answer_fyndo_without_recommendations(self):
+        questions = (
+            "What is your name?",
+            "What's your name",
+            "Who are you?",
+            "tumhara naam kya hai",
+            "aap ka naam kya hai?",
+            "\u0622\u067e \u06a9\u0627 \u0646\u0627\u0645 \u06a9\u06cc\u0627 \u06c1\u06d2\u061f",
+        )
+        for question in questions:
+            with self.subTest(question=question), patch.object(
+                chat_routes, "_load_products"
+            ) as load, patch.object(chat_routes, "recommend_products") as rank:
+                response = asyncio.run(chat_routes.send_chat_message(
+                    chat_routes.ChatMessage(message=question)
+                ))
+            self.assertEqual(response, {"reply": "I am Fyndo.", "products": []})
+            load.assert_not_called()
+            rank.assert_not_called()
 
     def test_typed_follow_up_uses_prior_recommendations(self):
         with patch.object(chat_routes, "_load_products", return_value=self.products), patch.object(
@@ -481,6 +666,29 @@ class ChatContextTests(unittest.TestCase):
         self.assertEqual(len(first["products"]), 2)
         self.assertEqual(follow_up["products"][0]["name"], "Phone B")
         self.assertEqual(follow_up["reply"], "Phone B has the larger battery.")
+
+    def test_chat_normalizes_once_before_calling_the_ranker(self):
+        raw_query = "mujhe laptopn 1 lac ke under chahiye"
+        with patch.object(chat_routes, "_load_products", return_value=self.products), patch.object(
+            chat_routes, "recommend_products", return_value=self.products
+        ) as ranker, patch.object(
+            chat_routes, "build_verification_context", return_value={}
+        ), patch.object(chat_routes, "generate_explanation", return_value="Done"):
+            asyncio.run(chat_routes.send_chat_message(chat_routes.ChatMessage(message=raw_query)))
+
+        args, kwargs = ranker.call_args
+        self.assertEqual(args[0], normalize_user_query(raw_query))
+        self.assertTrue(kwargs["query_is_normalized"])
+
+    def test_product_collection_cache_avoids_repeated_firestore_reads(self):
+        chat_routes._PRODUCT_CACHE.clear()
+        with patch.object(chat_routes, "fetch_products", return_value=self.products) as fetch:
+            first = chat_routes._load_products("phones")
+            second = chat_routes._load_products("phones")
+
+        self.assertEqual(fetch.call_count, 1)
+        self.assertEqual(first, second)
+        self.assertIsNot(first, second)
 
     def test_product_id_can_match_firestore_document_id(self):
         with patch.object(chat_routes, "_load_products", return_value=self.products), patch.object(
@@ -545,6 +753,55 @@ class ChatContextTests(unittest.TestCase):
         )
         web_check.assert_not_called()
         llm.assert_not_called()
+
+
+class WebVerificationPerformanceTests(unittest.TestCase):
+    def setUp(self):
+        web_verifier._VERIFICATION_CACHE.clear()
+        chat_routes._SESSION_CONTEXT.clear()
+        self.products = [
+            _product("Phone A", "Phones", 50_000, battery="5000 mAh"),
+            _product("Phone B", "Phones", 60_000, battery="6000 mAh"),
+        ]
+
+    def test_live_verification_result_is_reused(self):
+        product = {
+            "name": "Example Phone",
+            "brand": "Example",
+            "url": "https://example.test/phone",
+        }
+
+        class _Response:
+            text = "<title>Example Phone</title>"
+
+            @staticmethod
+            def raise_for_status():
+                return None
+
+        with patch.object(web_verifier.requests, "get", return_value=_Response()) as request:
+            first = web_verifier.verify_product_against_web(product)
+            second = web_verifier.verify_product_against_web(product)
+
+        self.assertEqual(request.call_count, 1)
+        self.assertEqual(first, second)
+
+    def test_urdu_greeting_and_no_match_reply_use_roman_urdu(self):
+        greeting = asyncio.run(chat_routes.send_chat_message(
+            chat_routes.ChatMessage(message="السلام علیکم")
+        ))
+        self.assertEqual(greeting["products"], [])
+        self.assertNotRegex(greeting["reply"], r"[\u0600-\u06ff]")
+        self.assertIn("Assalam-o-alaikum", greeting["reply"])
+
+        with patch.object(chat_routes, "_load_products", return_value=self.products), patch.object(
+            chat_routes, "recommend_products", return_value=[]
+        ):
+            no_match = asyncio.run(chat_routes.send_chat_message(
+                chat_routes.ChatMessage(message="مجھے ۱۰۰۰ سے کم فون چاہیے")
+            ))
+        self.assertEqual(no_match["products"], [])
+        self.assertIn("PKR 1,000", no_match["reply"])
+        self.assertNotRegex(no_match["reply"], r"[\u0600-\u06ff]")
 
 
 class ProductRouteResponseTests(unittest.TestCase):

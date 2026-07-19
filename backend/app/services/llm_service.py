@@ -4,7 +4,12 @@ import re
 from typing import List, Dict, Any
 
 import requests
-from app.recommendation.query_language import normalize_user_query, prefers_roman_urdu
+from app.recommendation.query_language import (
+    contains_urdu_script,
+    normalize_user_query,
+    response_language,
+)
+from app.recommendation.engine import _has_positive_any, _workload_level
 
 
 def _build_product_payload(products: List[Dict[str, Any]]) -> str:
@@ -85,9 +90,27 @@ def _has_dedicated_laptop_gpu(product: Dict[str, Any]) -> bool:
     )
 
 
+def _catalog_value(product: Dict[str, Any], *keys: str) -> Any:
+    """Read a fact from normal fields or a nested catalog specs dictionary."""
+    specs = product.get("specs") if isinstance(product.get("specs"), dict) else {}
+    lowered_specs = {str(key).strip().lower(): value for key, value in specs.items()}
+    for key in keys:
+        value = product.get(key)
+        if value not in (None, "", "unknown", "Unknown", "N/A"):
+            return value
+        value = lowered_specs.get(key.lower())
+        if value not in (None, "", "unknown", "Unknown", "N/A"):
+            return value
+    return None
+
+
 def _fallback_explanation(user_query: str, products: List[Dict[str, Any]]) -> str:
-    roman_urdu = prefers_roman_urdu(user_query)
+    language = response_language(user_query)
+    roman_urdu = language == "roman_urdu"
+    urdu = language == "urdu"
     if not products:
+        if urdu:
+            return "ابھی کوئی مناسب پراڈکٹ نہیں ملا۔ بجٹ یا ضرورت تھوڑی تبدیل کر کے دوبارہ پوچھیں۔"
         if roman_urdu:
             return "Abhi matching product nahi mila. Budget ya requirement thori change karke dobara poochain."
         return "I could not find matching products right now. Please try a different query."
@@ -97,12 +120,17 @@ def _fallback_explanation(user_query: str, products: List[Dict[str, Any]]) -> st
     price = top.get("price")
     display_price = _display_price(price)
     query = normalize_user_query(user_query)
-    asks_for_gaming_laptop = "laptop" in query and bool(
-        re.search(r"\b(?:gaming|game|gamer)\b", query)
+    asks_for_gaming_laptop = "laptop" in query and _has_positive_any(
+        query, ("gaming", "game", "gamer")
     )
     if asks_for_gaming_laptop and not any(
         _has_dedicated_laptop_gpu(product) for product in products
     ):
+        if urdu:
+            return (
+                f"اس بجٹ کے نتائج میں dedicated-GPU gaming laptop نہیں ملا۔ {name} دستیاب آپشنز میں مضبوط ہے، "
+                "لیکن integrated graphics کی وجہ سے یہ ہلکی یا esports gaming کے لیے بہتر ہے، demanding AAA games کے لیے نہیں۔"
+            )
         if roman_urdu:
             return (
                 f"Is budget ke matching results mein dedicated-GPU gaming laptop nahi mila. "
@@ -125,11 +153,47 @@ def _fallback_explanation(user_query: str, products: List[Dict[str, Any]]) -> st
         "graphics": ("GPU", "gpu"),
         "display": ("display", "display"),
         "screen": ("display", "display"),
+        "price": ("price", "price"),
+        "cost": ("price", "price"),
+        "operating system": ("operating system", "operating_system"),
+        "warranty": ("warranty", "warranty"),
+        "weight": ("weight", "weight"),
+        "color": ("color", "color"),
+        "colour": ("color", "color"),
+        "network": ("network", "network"),
+        "5g": ("network", "network"),
+        "rating": ("rating", "rating"),
+        "nfc": ("NFC", "nfc"),
+        "fingerprint": ("fingerprint sensor", "fingerprint"),
+        "charging": ("charging", "charging"),
+        "charger": ("charging", "charging"),
+        "refresh rate": ("refresh rate", "refresh_rate"),
+        "resolution": ("resolution", "resolution"),
+        "sim": ("SIM", "sim"),
+        "bluetooth": ("Bluetooth", "bluetooth"),
+        "port": ("ports", "ports"),
+        "keyboard": ("keyboard", "keyboard"),
+        "webcam": ("webcam", "webcam"),
     }
     requested_details = []
+    requested_labels = []
     for keyword, (label, field) in detail_fields.items():
-        value = top.get(field)
-        if keyword in query and value and (label, value) not in requested_details:
+        if not re.search(rf"\b{re.escape(keyword)}\b", query):
+            continue
+        requested_labels.append(label)
+        field_aliases = {
+            "operating_system": ("operating_system", "os", "software"),
+            "display": ("display", "screen"),
+            "network": ("network", "connectivity"),
+            "color": ("color", "colour"),
+            "fingerprint": ("fingerprint", "fingerprint_sensor"),
+            "refresh_rate": ("refresh_rate", "refresh rate"),
+            "sim": ("sim", "sim_type"),
+            "ports": ("ports", "port"),
+            "webcam": ("webcam",),
+        }
+        value = _catalog_value(top, *field_aliases.get(field, (field,)))
+        if value and (label, value) not in requested_details:
             requested_details.append((label, value))
 
     is_follow_up = bool(
@@ -139,6 +203,13 @@ def _fallback_explanation(user_query: str, products: List[Dict[str, Any]]) -> st
         re.search(r"\b(?:cheap|cheaper|affordable|another|other option|more option|instead)\b", query)
     )
     is_follow_up = is_follow_up and not is_refinement
+    if requested_labels and not requested_details:
+        missing = ", ".join(dict.fromkeys(requested_labels))
+        if urdu:
+            return f"{name} کی {missing} کی معلومات کیٹلاگ میں موجود نہیں ہیں، اس لیے میں اندازہ نہیں لگاؤں گا۔"
+        if roman_urdu:
+            return f"{name} ki {missing} detail catalog mein available nahi hai, is liye main andaza nahi lagaunga."
+        return f"The catalog does not list {missing} for {name}, so I won't guess."
     asks_comparison = bool(
         len(products) >= 2
         and re.search(r"\b(?:compare|comparison|difference|better)\b", query)
@@ -170,6 +241,9 @@ def _fallback_explanation(user_query: str, products: List[Dict[str, Any]]) -> st
         winner = max(products[:2], key=comparison_score)
         has_ranking_score = any(comparison_score(product) != (0.0, 0.0, 0.0) for product in products[:2])
         winner_name = winner.get("name", name)
+        if urdu:
+            verdict = f" آپ کی موجودہ ضرورت کے لیے ranking میں {winner_name} بہتر ہے۔" if has_ranking_score else ""
+            return f"{name}: {first_details}۔ {other_name}: {other_details}۔{verdict}"
         if roman_urdu:
             verdict = (
                 f" Aap ki current requirement ke liye ranking mein {winner_name} upar hai."
@@ -185,7 +259,9 @@ def _fallback_explanation(user_query: str, products: List[Dict[str, Any]]) -> st
         return f"{name}: {first_details}. {other_name}: {other_details}.{verdict}"
     asks_gaming_suitability = bool(
         re.search(r"\b(?:worth|good|suitable|acha|behtar)\b", query)
-        and re.search(r"\b(?:gaming|game|pubg|bgmi|fortnite|cod)\b", query)
+        and _has_positive_any(
+            query, ("gaming", "game", "pubg", "bgmi", "fortnite", "cod")
+        )
     )
     if asks_gaming_suitability:
         device_score = float(top.get("device_score") or 0)
@@ -199,15 +275,22 @@ def _fallback_explanation(user_query: str, products: List[Dict[str, Any]]) -> st
         else:
             verdict_en = "It is not an ideal choice for demanding gaming"
             verdict_ur = "Demanding gaming ke liye yeh ideal choice nahi hai"
+        if urdu:
+            verdict = "ہاں، یہ مضبوط انتخاب ہے" if device_score >= 0.65 else "یہ درمیانی settings پر مناسب ہے" if device_score >= 0.45 else "یہ demanding gaming کے لیے موزوں نہیں ہے"
+            return f"{verdict}۔ {name} میں {processor} ہے؛ PUBG کے لیے graphics اور frame-rate اس کی performance کے مطابق رکھیں۔"
         if roman_urdu:
             return f"{verdict_ur}. {name} mein {processor} hai; PUBG mein graphics aur frame-rate moderate rakhna behtar hoga."
         return f"{verdict_en}. {name} uses {processor}; for PUBG, adjust graphics and frame rate to match its performance."
     if requested_details:
         details = ", ".join(f"{label}: {value}" for label, value in requested_details)
         if len(products) > 1 and any(word in query for word in ("which", "best", "better", "compare")):
+            if urdu:
+                return f"دکھائے گئے آپشنز میں {name} اس درخواست کے لیے سب سے بہتر ہے ({details})۔"
             if roman_urdu:
                 return f"Dikhaye gaye options mein {name} sab se behtar hai ({details})."
             return f"Among the shown options, {name} ranks highest for this request ({details})."
+        if urdu:
+            return f"{name} کی کیٹلاگ میں موجود تفصیل: {details}۔"
         if roman_urdu:
             return f"{name} ki catalog details yeh hain: {details}."
         return f"{name} has {details}. This answer uses the specifications stored in the product catalog."
@@ -220,25 +303,65 @@ def _fallback_explanation(user_query: str, products: List[Dict[str, Any]]) -> st
         detail_text = ", ".join(available)
         price_text = f", price: {display_price}" if display_price else ""
         if detail_text:
+            if urdu:
+                return f"{name} کی کیٹلاگ تفصیل: {detail_text}{price_text}۔"
             if roman_urdu:
                 return f"{name} ki catalog details: {detail_text}{price_text}."
             return f"For {name}, the catalog lists {detail_text}{price_text}."
+    senior_query = bool(re.search(r"\b(?:senior|elderly)\b", query))
+    light_use_query = _workload_level(query) == "light"
+    if urdu:
+        price_text = f" اس کی قیمت {display_price} ہے۔" if display_price else ""
+        reason = (
+            " یہ بنیادی یا ہلکے استعمال کے لیے مناسب کارکردگی اور قیمت کا متوازن انتخاب ہے۔"
+            if light_use_query
+            else " یہ کالنگ، پیغام رسانی اور سوشل میڈیا جیسے بنیادی استعمال کے لیے متوازن انتخاب ہے۔"
+            if senior_query
+            else ""
+        )
+        lead = "ایک عملی اور مناسب match" if light_use_query else "سب سے بہتر match"
+        return f"آپ کی ضرورت کے لیے {name} {lead} ہے۔{price_text}{reason} نیچے ملتے جلتے آپشنز بھی موازنے کے لیے دیے گئے ہیں۔"
     if roman_urdu:
         price_text = f" Is ki price {display_price} hai." if display_price else ""
+        reason = (
+            " Yeh basic ya halkay istemal ke liye munasib performance aur price ka balanced option hai."
+            if light_use_query
+            else " Yeh calling, messaging aur social media jaise basic use ke liye balanced choice hai."
+            if senior_query
+            else ""
+        )
+        lead = "practical aur munasib match" if light_use_query else "sab se behtar match"
+        comparison = (
+            " Neeche milte-julte options bhi diye gaye hain taa-ke aap compare kar saken."
+            if len(products) > 1 else ""
+        )
         return (
-            f"Aap ki requirement ke liye {name} sab se behtar match hai.{price_text} "
-            "Neeche milte-julte options bhi diye gaye hain taa-ke aap compare kar saken."
+            f"Aap ki requirement ke liye {name} {lead} hai.{price_text}{reason}{comparison}"
         )
     if display_price:
+        reason = (
+            " It offers enough capability for basic or light use without paying for unnecessary high-end hardware."
+            if light_use_query
+            else " It balances calling, messaging, social media, battery life, and value for an older user."
+            if senior_query
+            else ""
+        )
+        lead = "a practical match" if light_use_query else "the strongest match"
+        comparison = (
+            " I also included a few similar options so you can compare value and features."
+            if len(products) > 1 else ""
+        )
         return (
-            f"Based on your request, {name} looks like the strongest match. "
-            f"It appears to fit your needs and is currently listed around {display_price}. "
-            "I also included a few similar options so you can compare value and features."
+            f"Based on your request, {name} looks like {lead}. "
+            f"It appears to fit your needs and is currently listed around {display_price}.{reason}{comparison}"
         )
 
+    comparison = (
+        " I also included similar options so you can compare features and choose confidently."
+        if len(products) > 1 else ""
+    )
     return (
-        f"Based on your request, {name} looks like the strongest match. "
-        "I also included similar options so you can compare features and choose confidently."
+        f"Based on your request, {name} looks like the strongest match.{comparison}"
     )
 
 
@@ -278,7 +401,9 @@ def generate_explanation(
                     "When ranked products are supplied, do not tell the user to increase the budget. "
                     "If a gaming-laptop query only has integrated-graphics results, clearly state that no dedicated-GPU option matched the budget and do not call those products ideal for demanding gaming. "
                     "Prefer the product ranking and scores shown in the input JSON when explaining the choice."
-                    " Detect Roman Urdu written in Latin script and reply naturally in Roman Urdu; otherwise reply in the user's language."
+                    "Reply in English when the user writes English. "
+                    "For every Urdu query, whether written in Roman Urdu or Urdu script, reply in natural Roman Urdu using Latin characters only. "
+                    "Never reply using Urdu or Arabic script."
                 ),
             },
             {
@@ -316,7 +441,15 @@ def generate_explanation(
         )
         response.raise_for_status()
         data = response.json()
-        return _normalize_currency_labels(data["choices"][0]["message"]["content"].strip())
+        reply = _normalize_currency_labels(
+            data["choices"][0]["message"]["content"].strip()
+        )
+        if (
+            response_language(user_query) == "roman_urdu"
+            and contains_urdu_script(reply)
+        ):
+            return _normalize_currency_labels(_fallback_explanation(user_query, products))
+        return reply
     except Exception:
         reply = _fallback_explanation(user_query, products)
         if verification_context and verification_context.get("verified_count") is not None:

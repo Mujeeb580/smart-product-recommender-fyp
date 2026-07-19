@@ -98,6 +98,7 @@ class AdminRouteTests(unittest.IsolatedAsyncioTestCase):
         self.old_auth = routes.auth
         self.old_phone_scraper = routes.scrape_phones
         self.old_laptop_scraper = routes.scrape_laptops
+        self.old_fetch_products = routes.fetch_products
         self.db = _Firestore()
         self.auth = _FirebaseAuth()
         routes.firestore_db = self.db
@@ -109,6 +110,7 @@ class AdminRouteTests(unittest.IsolatedAsyncioTestCase):
         routes.auth = self.old_auth
         routes.scrape_phones = self.old_phone_scraper
         routes.scrape_laptops = self.old_laptop_scraper
+        routes.fetch_products = self.old_fetch_products
         routes._admin_sessions.clear()
 
     async def test_login_session_and_logout(self):
@@ -171,6 +173,54 @@ class AdminRouteTests(unittest.IsolatedAsyncioTestCase):
 
         await routes.delete_user("user-1")
         self.assertEqual(self.auth.deleted, ["user-1"])
+
+    def test_catalog_quality_reports_missing_fields_and_duplicates(self):
+        result = routes._catalog_quality(
+            {
+                "phones": [
+                    {
+                        "name": "Phone One",
+                        "brand": "Acme",
+                        "price": 50000,
+                        "image": "https://example.com/phone.jpg",
+                        "processor": "Chip A",
+                    },
+                    {
+                        "name": "Phone One",
+                        "brand": "Acme",
+                        "price": 0,
+                        "image": "",
+                    },
+                ],
+                "laptops": [],
+            }
+        )
+
+        self.assertEqual(result["items"], 2)
+        self.assertEqual(result["missing_price"], 1)
+        self.assertEqual(result["missing_image"], 1)
+        self.assertEqual(result["missing_details"], 1)
+        self.assertEqual(result["duplicates"], 1)
+        self.assertEqual(result["quality_score"], 50)
+
+    async def test_admin_health_checks_every_catalog_collection(self):
+        calls = []
+
+        def fake_fetch(collection, limit=5000):
+            calls.append((collection, limit))
+            return [{"name": collection, "brand": "FYNDO", "price": 1, "image": "x", "specs": "x"}]
+
+        routes.fetch_products = fake_fetch
+        result = await routes.admin_health()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["firestore"], "connected")
+        self.assertEqual(result["items"], 3)
+        self.assertEqual(result["quality_score"], 100)
+        self.assertEqual(
+            calls,
+            [("laptops", 5000), ("phones", 5000), ("products", 5000)],
+        )
 
     async def test_each_scraper_mode_dispatches_correctly(self):
         calls = []

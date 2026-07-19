@@ -64,6 +64,11 @@ def product_to_text(product: dict) -> str:
     processor = _clean_text(product.get('normalized_processor') or product.get('processor', ''))
     gpu = _clean_text(product.get('gpu', ''))
     battery = _clean_text(product.get('battery', ''))
+    camera = _clean_text(product.get('camera', ''))
+    display = _clean_text(product.get('display') or product.get('screen', ''))
+    network = _clean_text(product.get('network') or product.get('connectivity', ''))
+    charging = _clean_text(product.get('charging', ''))
+    operating_system = _clean_text(product.get('operating_system') or product.get('os', ''))
     category = product.get('category', 'product')
     category_label = _category_label(category)
     price = _to_numeric_price(product.get('price', 0))
@@ -116,6 +121,22 @@ def product_to_text(product: dict) -> str:
             parts.append("very strong battery backup")
         elif battery_value >= 5000:
             parts.append("strong battery backup")
+
+    for label, value in (
+        ("camera", camera), ("display", display), ("network", network),
+        ("charging", charging), ("operating system", operating_system),
+    ):
+        if value:
+            parts.append(f"{label} {value}")
+
+    specs = product.get("specs")
+    if isinstance(specs, dict):
+        useful_specs = [
+            f"{_clean_text(key)} {_clean_text(value)}"
+            for key, value in specs.items()
+            if _clean_text(key) and _clean_text(value)
+        ]
+        parts.extend(useful_specs[:20])
     
     # Add category-aware price context
     price_context = _price_context(price, category_label)
