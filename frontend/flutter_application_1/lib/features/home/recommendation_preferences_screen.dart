@@ -94,6 +94,8 @@ class _RecommendationPreferencesScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final gradient = context.watch<ThemeProvider>().currentGradient;
     return Scaffold(
       body: Container(
@@ -147,6 +149,7 @@ class _RecommendationPreferencesScreenState
                           DropdownButtonFormField<String>(
                             initialValue: _category,
                             decoration: _decoration('Choose a category'),
+                            style: theme.textTheme.bodyLarge,
                             items: const [
                               DropdownMenuItem(
                                   value: 'any',
@@ -165,6 +168,7 @@ class _RecommendationPreferencesScreenState
                           TextField(
                             controller: _budgetController,
                             keyboardType: TextInputType.number,
+                            style: theme.textTheme.bodyLarge,
                             decoration: _decoration('Example: 50000'),
                           ),
                           const SizedBox(height: 16),
@@ -173,6 +177,7 @@ class _RecommendationPreferencesScreenState
                           DropdownButtonFormField<String>(
                             initialValue: _priority,
                             decoration: _decoration('Choose a priority'),
+                            style: theme.textTheme.bodyLarge,
                             items: const [
                               DropdownMenuItem(
                                   value: 'balanced',
@@ -209,7 +214,11 @@ class _RecommendationPreferencesScreenState
                             onChanged: (value) =>
                                 setState(() => _seniorFriendly = value),
                           ),
-                          const Divider(),
+                          Divider(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.16)
+                                : Colors.black.withValues(alpha: 0.12),
+                          ),
                           SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,
                             title: const Text(
@@ -249,12 +258,32 @@ class _RecommendationPreferencesScreenState
     );
   }
 
-  InputDecoration _decoration(String hint) => InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      );
+  InputDecoration _decoration(String hint) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.20)
+        : Colors.black.withValues(alpha: 0.14);
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: theme.textTheme.bodyLarge?.copyWith(
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+      ),
+      filled: true,
+      fillColor: isDark
+          ? const Color(0xFF111827).withValues(alpha: 0.82)
+          : Colors.white,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+      ),
+    );
+  }
 }
 
 class _PreferenceCard extends StatelessWidget {
@@ -262,21 +291,28 @@ class _PreferenceCard extends StatelessWidget {
   const _PreferenceCard({required this.child});
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF151A2F).withValues(alpha: 0.90)
+                : Colors.white.withValues(alpha: 0.90),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: isDark ? 0.16 : 0.50),
             ),
-            child: child,
           ),
+          child: child,
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _Label extends StatelessWidget {
@@ -286,6 +322,8 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: const TextStyle(fontWeight: FontWeight.w700),
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
       );
 }
