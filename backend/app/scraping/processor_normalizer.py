@@ -12,14 +12,6 @@ GENERIC_PROCESSOR_PATTERNS = (
     r"^none$",
 )
 
-PHONE_NAME_NOISE_PATTERNS = (
-    r"(?:\s*[-|,/]\s*)?(?:mobile\s+phone|smartphone|cell\s+phone|phone)\s*$",
-)
-
-LAPTOP_NAME_NOISE_PATTERNS = (
-    r"(?:\s*[-|,/]\s*)?(?:laptop|notebook|ultrabook)\s*$",
-)
-
 
 def normalize_spec_text(value: str) -> str:
     """Normalize escaped/unicode-noisy spec text into stable plain text."""
@@ -49,26 +41,6 @@ def normalize_generic_processor(value: str) -> str:
     if any(re.match(pattern, normalized, re.IGNORECASE) for pattern in GENERIC_PROCESSOR_PATTERNS):
         return "Unknown"
     return text
-
-
-def normalize_product_name(value: str, category: str = "") -> str:
-    text = normalize_spec_text(value)
-    if not text:
-        return ""
-
-    category_text = normalize_spec_text(category).lower()
-    noise_patterns = ()
-    if any(keyword in category_text for keyword in ("phone", "mobile", "smartphone")):
-        noise_patterns = PHONE_NAME_NOISE_PATTERNS
-    elif any(keyword in category_text for keyword in ("laptop", "notebook")):
-        noise_patterns = LAPTOP_NAME_NOISE_PATTERNS
-
-    normalized = text
-    for pattern in noise_patterns:
-        normalized = re.sub(pattern, "", normalized, flags=re.IGNORECASE)
-
-    normalized = re.sub(r"\s{2,}", " ", normalized).strip(" -|,/")
-    return normalized
 
 
 def parse_price_numeric(value: Any) -> float | None:
@@ -104,5 +76,4 @@ def normalize_scraped_product_fields(product: Dict[str, Any]) -> Dict[str, Any]:
         "gpu_memory": normalize_spec_text(specs.get("gpu_memory", "Unknown")) or "Unknown",
         "price_numeric": parse_price_numeric(product.get("price")),
         "image_url": normalize_spec_text(product.get("image_url", "")),
-        "name": normalize_product_name(product.get("name", ""), product.get("category", "")),
     }

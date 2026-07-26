@@ -10,8 +10,7 @@ import hashlib
 
 def generate_product_id(product):
     """Generate a unique ID based on product name and URL to prevent duplicates"""
-    unique_name = product.get('normalized_name') or product.get('name', '')
-    unique_string = product.get('url', '') + unique_name
+    unique_string = product.get('url', '') + product.get('name', '')
     return hashlib.md5(unique_string.encode()).hexdigest()
 
 
@@ -23,14 +22,6 @@ def save_products_to_firestore(products, source):
         
         for product in products:
             try:
-                product['raw_name'] = product.get('raw_name') or product.get('name', '')
-
-                normalized_snapshot = normalize_scraped_product_fields(product)
-                normalized_name = normalized_snapshot.get('name', '')
-                if normalized_name:
-                    product['normalized_name'] = normalized_name
-                    product['name'] = normalized_name
-
                 # Generate unique document ID to prevent duplicates
                 doc_id = generate_product_id(product)
                 
@@ -46,7 +37,6 @@ def save_products_to_firestore(products, source):
                 # Normalize all core fields before persistence.
                 normalized = normalize_scraped_product_fields(product)
                 product.update({
-                    'normalized_name': normalized['name'],
                     'brand': normalized['brand'],
                     'ram': normalized['ram'],
                     'storage': normalized['storage'],
